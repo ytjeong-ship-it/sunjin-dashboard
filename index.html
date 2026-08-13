@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+   
     <script>
         tailwind.config = {
             theme: {
@@ -157,8 +157,7 @@
                             <path transform="matrix(1,0,0,-1,0,425.197)" d="M0 425.197H1360.63V0H0Z"/>
                             </clipPath>
                             </defs>
-                            <g inkscape:groupmode="layer" inkscape:label="Layer 1">
-                            </g>
+                            <g inkscape:groupmode="layer" inkscape:label="Layer 1"></g>
                             <g inkscape:groupmode="layer" inkscape:label="Layer 2">
                             <g clip-path="url(#clip_1)">
                             <path transform="matrix(1,0,0,-1,296.0934,142.8121)" d="M0 0C-7.222-6.486-11.592-14.974-12.685-24.565L-12.915-28.406C-12.915-44.449-.425-49.831 10.586-54.604 18.705-58.191 27.164-61.998 26.98-69.508L26.681-72.314C25.485-78.524 19.217-82.561 12.225-82.952 4.692-83.527-2.277-81.032-6.262-76.926-10.442-72.314-12.202-66.449-12.513-62.804-12.513-62.78-12.616-60.147-12.616-60.147H-18.826L-23.875-88.783-22.645-89.76C-14.996-95.683-5.083-98.822 6.038-98.822 32.212-98.822 51.763-84.493 55.857-62.309 59.911-40.263 42.879-32.822 30.453-27.405 20.597-23.104 14.813-19.942 15.75-13.938 16.561-8.522 22.23-4.071 29.619-3.484 44.886-2.116 50.693-12.72 52.051-21.288 52.057-21.311 52.448-23.587 52.448-23.587H59.106L63.367 .598 62.274 1.564C54.897 8.188 44.138 11.983 32.765 11.983 20.442 11.983 7.89 7.349 0 0" fill="#e5211b"/>
@@ -187,7 +186,6 @@
                     <button onclick="handleLogout()" title="로그아웃 후 로그인 화면으로 이동합니다." class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center no-print">
                         <i data-lucide="log-out" class="w-3.5 h-3.5 mr-1 text-slate-600"></i>로그아웃
                     </button>
-                    <!-- 🎯 요구사항 3 반영: 버튼명을 "홈 으로" 로 변경 및 클릭 시 전체 필터 초기화 & 페이지 상단 스크롤 -->
                     <button onclick="resetWholePageToInitialState()" title="페이지를 데이터 초기 로드 및 대시보드 홈 상태로 복원합니다." class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center no-print">
                         <i data-lucide="home" class="w-3.5 h-3.5 mr-1 text-amber-600"></i>홈 으로
                     </button>
@@ -207,19 +205,25 @@
                     </button>
                 </div>
 
-                <div class="relative no-print">
-                    <button id="verif-dropdown-btn" onclick="toggleVerifDropdown()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition shadow-sm flex items-center gap-1.5">
-                        <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-500"></i>데이터 검증
-                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                <div class="flex items-center space-x-2 no-print">
+                    <button onclick="openSuggestionModal()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition shadow-sm flex items-center gap-1.5">
+                        <i data-lucide="help-circle" class="w-3.5 h-3.5 text-blue-600"></i>건의사항
                     </button>
 
-                    <div id="verif-dropdown-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 z-50 py-1.5 fade-in-section">
-                        <button onclick="openRawDataModal()" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-sunjin-red transition flex items-center gap-2">
-                            <i data-lucide="table" class="w-4 h-4 text-slate-400"></i>전체 원본 데이터 테이블
+                    <div class="relative">
+                        <button id="verif-dropdown-btn" onclick="toggleVerifDropdown()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition shadow-sm flex items-center gap-1.5">
+                            <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-500"></i>데이터 검증
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
                         </button>
-                        <button onclick="openTelemetryModal()" class="w-full text-left px-4 py-2 text-xs font-bold text-sunjin-orange hover:bg-orange-50 transition flex items-center gap-2 border-t border-slate-100">
-                            <i data-lucide="activity" class="w-4 h-4 text-sunjin-orange"></i>데이터 검증 / Pipeline Status
-                        </button>
+
+                        <div id="verif-dropdown-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 z-50 py-1.5 fade-in-section">
+                            <button onclick="openRawDataModal()" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-sunjin-red transition flex items-center gap-2">
+                                <i data-lucide="table" class="w-4 h-4 text-slate-400"></i>전체 원본 데이터 테이블
+                            </button>
+                            <button onclick="openTelemetryModal()" class="w-full text-left px-4 py-2 text-xs font-bold text-sunjin-orange hover:bg-orange-50 transition flex items-center gap-2 border-t border-slate-100">
+                                <i data-lucide="activity" class="w-4 h-4 text-sunjin-orange"></i>데이터 검증 / Pipeline Status
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -487,9 +491,16 @@
                         <span id="selected-farm-badge" class="bg-white/20 text-white font-bold px-3 py-1 rounded-full text-[10px] tracking-wide"></span>
                         <h3 id="selected-farm-title" class="text-lg font-black mt-1.5 italic"></h3>
                     </div>
-                    <button onclick="document.getElementById('inline-detail-section').classList.add('hidden');" class="text-red-200 hover:text-white transition no-print">
-                        <i data-lucide="x-circle" class="w-6 h-6"></i>
-                    </button>
+                    <div class="flex items-center gap-2 no-print">
+                        <button onclick="openCommentDrawer()" class="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            <span>의견 소통</span>
+                            <span id="detail-comment-badge" class="bg-white text-sunjin-red px-1.5 py-0.5 rounded-full text-[10px] font-black">0</span>
+                        </button>
+                        <button onclick="document.getElementById('inline-detail-section').classList.add('hidden');" class="text-red-200 hover:text-white transition">
+                            <i data-lucide="x-circle" class="w-6 h-6"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="p-6 space-y-8">
@@ -942,6 +953,93 @@
 
     </main>
 
+    <!-- 슬라이드 오버 형태의 농장 의견 소통 드로어 (Drawer) 패널 -->
+    <div id="comment-drawer" class="fixed inset-0 z-50 overflow-hidden hidden no-print">
+        <div id="comment-drawer-overlay" onclick="closeCommentDrawer()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300"></div>
+
+        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out border-l border-slate-200">
+                <!-- 드로어 헤더 -->
+                <div class="p-5 bg-slate-800 text-white flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-2 bg-slate-700 rounded-xl text-sunjin-orange">
+                            <i data-lucide="message-square" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 id="comment-drawer-farm-name" class="font-extrabold text-sm text-white">농장 의견 소통</h3>
+                            <p class="text-[10px] text-slate-300 mt-0.5">실시간 담당자 특이사항 및 소통 내역 (3초 간격 동기화)</p>
+                        </div>
+                    </div>
+                    <button onclick="closeCommentDrawer()" class="text-slate-400 hover:text-white transition">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- 의견 작성 Input 영역 -->
+                <div class="p-4 bg-slate-50 border-b border-slate-200">
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1.5 flex items-center gap-1">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5 text-sunjin-red"></i> 새 의견 작성
+                    </label>
+                    <textarea id="comment-input-content" rows="3" placeholder="농장에 관한 의견이나 특이사항을 입력하세요..." class="w-full p-3 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-sunjin-red bg-white font-medium resize-none transition"></textarea>
+                    <div class="mt-2 flex justify-between items-center">
+                        <span id="comment-current-user-info" class="text-[10px] font-bold text-slate-400">작성자: -</span>
+                        <button onclick="submitFarmComment()" id="btn-submit-comment" class="px-4 py-1.5 bg-sunjin-red hover:bg-red-700 text-white rounded-xl text-xs font-extrabold shadow transition flex items-center gap-1.5 disabled:opacity-50">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i> 등록
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 의견 목록 스크롤 영역 -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-100/50" id="comments-list-container">
+                    <!-- 자바스크립트로 동적 렌더링 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1:1 비공개 건의사항 제출 팝업 모달 -->
+    <div id="suggestion-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 fade-in-section">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center space-x-2.5">
+                    <div class="p-2 bg-blue-50 text-blue-600 rounded-2xl">
+                        <i data-lucide="help-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-800">1:1 비공개 건의사항 작성</h3>
+                        <p class="text-[11px] text-slate-400">작성하신 내용은 타인에게 공개되지 않고 시스템 관리자에게만 비공개 전달됩니다.</p>
+                    </div>
+                </div>
+                <button onclick="closeSuggestionModal()" class="text-slate-400 hover:text-slate-600 transition">
+                    <i data-lucide="x-circle" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="py-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">건의자 정보</label>
+                    <div id="suggestion-user-display" class="p-2.5 bg-slate-100 rounded-xl text-xs font-bold text-slate-600">
+                        작성자: -
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">건의 내용 및 개선 요청</label>
+                    <textarea id="suggestion-input-content" rows="5" placeholder="시스템 사용 중 개선이 필요한 사항이나 문의내용을 자유롭게 적어주세요..." class="w-full p-3 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-blue-600 bg-white font-medium resize-none transition"></textarea>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                <button onclick="closeSuggestionModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                    취소
+                </button>
+                <button onclick="submitSuggestion()" id="btn-submit-suggestion" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow transition flex items-center gap-1.5">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i> 전달하기
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ─── 최하단 문의처 푸터 바 (Footer) ─── -->
     <footer class="bg-white border-t border-slate-200 py-3.5 mt-auto no-print">
         <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -961,6 +1059,7 @@
 
         const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbz1MVbZebgm9_w_0E27HBD7ZcvdukkL5d2vAf6kpPxQW4nv5ejHMT-Le0EPbaU6yNbM/exec";
         const AUTO_REFRESH_INTERVAL = 3600000;
+        const COMMENT_REALTIME_INTERVAL = 3000;
 
         let currentUserEmail = sessionStorage.getItem('user_email') || "";
         let currentUserPassword = sessionStorage.getItem('user_password') || "";
@@ -979,6 +1078,8 @@
 
         let farmSizeSummaryRows = [];
         let selectedModalSizeCategory = 'ALL';
+        let currentSelectedFarmCode = "";
+        let commentPollingTimer = null;
 
         let buSummaryData = {
             farmCount: 97,
@@ -1019,7 +1120,7 @@
         const mappings = {
             dept: 1, region: 2, farmCode: 3, farmName: 4, manager: 5, farmSize: 6, breedingSize: 7, rearingGrade: 8, avgRearingRate: 9,
             medicineCost: 10, shipmentCost: 11, gradeCategory: 12, vsMedian: 13, ratios: [14, 15, 16, 17, 18],
-            costTrend: [], headcount: [], headcountTotal: -1, purchase: [], purchaseTotal: -1, supportInflow: [], supportInflowTotal: -1, supportMed: [], supportMedTotal: -1, supportMedRatio: 93
+            costTrend: [], headcount: [], headcountTotal: -1, purchase: [], purchaseTotal: -1, supportInflow: [], supportInflowTotal: -1, supportMed: [], supportMedTotal: -1, supportMedRatio: -1
         };
 
         const ratioLabels = ['백신', '항생제', '치료제', '영양제', '기타외품'];
@@ -1155,14 +1256,298 @@
             document.getElementById('raw-data-modal').classList.add('hidden');
         }
 
+        // 🎯 팝업 차단 원인 해결: 모달 활성화 후 비동기로 렌더링 호출
         function openFarmSizeModal() {
             selectedModalSizeCategory = 'ALL';
-            renderFarmSizeModalContent();
-            document.getElementById('farm-size-modal').classList.remove('hidden');
+            const modal = document.getElementById('farm-size-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    renderFarmSizeModalContent();
+                }, 50);
+            }
         }
 
         function closeFarmSizeModal() {
             document.getElementById('farm-size-modal').classList.add('hidden');
+        }
+
+        function openSuggestionModal() {
+            const modal = document.getElementById('suggestion-modal');
+            const userDisplay = document.getElementById('suggestion-user-display');
+            if (userDisplay) {
+                userDisplay.textContent = `작성자: ${currentUserEmail || '미인증'}`;
+            }
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeSuggestionModal() {
+            const modal = document.getElementById('suggestion-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function submitSuggestion() {
+            const contentInput = document.getElementById('suggestion-input-content');
+            const btnSubmit = document.getElementById('btn-submit-suggestion');
+            const content = contentInput ? contentInput.value.trim() : '';
+
+            if (!content) {
+                showNotification('⚠️ 건의 내용을 입력해 주세요.', 'error');
+                return;
+            }
+
+            if (btnSubmit) btnSubmit.disabled = true;
+
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('action', 'addSuggestion');
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+            urlObj.searchParams.set('content', content);
+            urlObj.searchParams.set('t', new Date().getTime());
+
+            fetch(urlObj.toString())
+                .then(res => res.json())
+                .then(res => {
+                    if (res.error) throw new Error(res.error);
+                    showNotification('🔒 건의사항이 비공개로 안전하게 전달되었습니다.', 'success');
+                    if (contentInput) contentInput.value = '';
+                    closeSuggestionModal();
+                })
+                .catch(err => {
+                    showNotification(`❌ 전달 실패: ${err.message}`, 'error');
+                })
+                .finally(() => {
+                    if (btnSubmit) btnSubmit.disabled = false;
+                });
+        }
+
+        function openCommentDrawer() {
+            const drawer = document.getElementById('comment-drawer');
+            if (!drawer) return;
+
+            if (!currentSelectedFarmCode) {
+                showNotification('⚠️ 선택된 농장이 없습니다.', 'error');
+                return;
+            }
+
+            const farmObj = parsedData.find(f => String(f.farmCode).trim().toLowerCase() === String(currentSelectedFarmCode).trim().toLowerCase());
+            const titleEl = document.getElementById('comment-drawer-farm-name');
+            const userInfoEl = document.getElementById('comment-current-user-info');
+
+            if (titleEl && farmObj) {
+                titleEl.textContent = `[${farmObj.farmCode}] ${farmObj.farmName} 의견 소통`;
+            }
+            if (userInfoEl) {
+                userInfoEl.textContent = `작성자: ${currentUserEmail || '미인증'}`;
+            }
+
+            drawer.classList.remove('hidden');
+            fetchFarmComments(currentSelectedFarmCode);
+
+            if (commentPollingTimer) clearInterval(commentPollingTimer);
+            commentPollingTimer = setInterval(() => {
+                if (currentSelectedFarmCode) {
+                    fetchFarmComments(currentSelectedFarmCode, true);
+                }
+            }, COMMENT_REALTIME_INTERVAL);
+        }
+
+        function closeCommentDrawer() {
+            const drawer = document.getElementById('comment-drawer');
+            if (drawer) drawer.classList.add('hidden');
+
+            if (commentPollingTimer) {
+                clearInterval(commentPollingTimer);
+                commentPollingTimer = null;
+            }
+        }
+
+        function fetchFarmComments(farmCode, isSilent = false) {
+            const container = document.getElementById('comments-list-container');
+            if (!container || !farmCode) return;
+
+            if (!isSilent) {
+                container.innerHTML = '<div class="py-8 text-center text-xs text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> 의견을 불러오는 중입니다...</div>';
+            }
+
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('action', 'getComments');
+            urlObj.searchParams.set('farmCode', farmCode);
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+            urlObj.searchParams.set('t', new Date().getTime());
+
+            fetch(urlObj.toString())
+                .then(res => res.json())
+                .then(comments => {
+                    const badge = document.getElementById('detail-comment-badge');
+                    if (badge) badge.textContent = Array.isArray(comments) ? comments.length : 0;
+
+                    if (!Array.isArray(comments) || comments.length === 0) {
+                        container.innerHTML = '<div class="py-12 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200/60 p-6">등록된 의견이 없습니다.<br>첫 번째 의견을 작성해 보세요!</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    comments.forEach(c => {
+                        const isOwner = (c.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
+                        
+                        const actionButtons = isOwner ? `
+                            <div class="flex items-center space-x-1.5 text-[10px]">
+                                <button onclick="enableCommentEditMode('${c.commentId}')" class="text-slate-400 hover:text-blue-600 font-bold transition">수정</button>
+                                <span class="text-slate-300">|</span>
+                                <button onclick="deleteFarmComment('${c.commentId}')" class="text-slate-400 hover:text-sunjin-red font-bold transition">삭제</button>
+                            </div>
+                        ` : '';
+
+                        html += `
+                            <div id="comment-card-${c.commentId}" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2 fade-in-section">
+                                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-6 h-6 rounded-full bg-red-100 text-sunjin-red flex items-center justify-center text-[10px] font-black">
+                                            ${(c.userName || '담')[0]}
+                                        </div>
+                                        <div>
+                                            <span class="text-xs font-black text-slate-800">${c.userName || '담당자'}</span>
+                                            <span class="text-[10px] text-slate-400 ml-1">(${c.email})</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-[10px] font-semibold text-slate-400">${c.dateTime}</span>
+                                        ${actionButtons}
+                                    </div>
+                                </div>
+                                <p id="comment-text-${c.commentId}" class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap pl-1">${c.content}</p>
+                                
+                                <div id="comment-edit-box-${c.commentId}" class="hidden pt-1 space-y-2">
+                                    <textarea id="comment-edit-input-${c.commentId}" rows="2" class="w-full p-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-sunjin-red resize-none font-medium">${c.content}</textarea>
+                                    <div class="flex justify-end gap-1.5">
+                                        <button onclick="cancelCommentEditMode('${c.commentId}')" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold transition">취소</button>
+                                        <button onclick="saveUpdatedComment('${c.commentId}')" class="px-2.5 py-1 bg-sunjin-red hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition">저장</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    lucide.createIcons();
+                })
+                .catch(err => {
+                    console.error('Comment fetch error:', err);
+                    if (!isSilent) {
+                        container.innerHTML = '<div class="py-6 text-center text-xs text-red-500 font-bold">의견 수신에 실패했습니다.</div>';
+                    }
+                });
+        }
+
+        function submitFarmComment() {
+            const contentInput = document.getElementById('comment-input-content');
+            const btnSubmit = document.getElementById('btn-submit-comment');
+            const content = contentInput ? contentInput.value.trim() : '';
+
+            if (!content) {
+                showNotification('⚠️ 의견 내용을 입력해 주세요.', 'error');
+                return;
+            }
+
+            if (!currentSelectedFarmCode) {
+                showNotification('⚠️ 선택된 농장 정보가 없습니다.', 'error');
+                return;
+            }
+
+            if (btnSubmit) btnSubmit.disabled = true;
+
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('action', 'addComment');
+            urlObj.searchParams.set('farmCode', currentSelectedFarmCode);
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+            urlObj.searchParams.set('content', content);
+            urlObj.searchParams.set('t', new Date().getTime());
+
+            fetch(urlObj.toString())
+                .then(res => res.json())
+                .then(res => {
+                    if (res.error) throw new Error(res.error);
+                    showNotification('✅ 의견이 등록되었습니다.', 'success');
+                    if (contentInput) contentInput.value = '';
+                    fetchFarmComments(currentSelectedFarmCode);
+                })
+                .catch(err => {
+                    showNotification(`❌ 등록 실패: ${err.message}`, 'error');
+                })
+                .finally(() => {
+                    if (btnSubmit) btnSubmit.disabled = false;
+                });
+        }
+
+        function enableCommentEditMode(commentId) {
+            const textEl = document.getElementById(`comment-text-${commentId}`);
+            const editBox = document.getElementById(`comment-edit-box-${commentId}`);
+            if (textEl && editBox) {
+                textEl.classList.add('hidden');
+                editBox.classList.remove('hidden');
+            }
+        }
+
+        function cancelCommentEditMode(commentId) {
+            const textEl = document.getElementById(`comment-text-${commentId}`);
+            const editBox = document.getElementById(`comment-edit-box-${commentId}`);
+            if (textEl && editBox) {
+                textEl.classList.remove('hidden');
+                editBox.classList.add('hidden');
+            }
+        }
+
+        function saveUpdatedComment(commentId) {
+            const inputEl = document.getElementById(`comment-edit-input-${commentId}`);
+            const newContent = inputEl ? inputEl.value.trim() : '';
+
+            if (!newContent) {
+                showNotification('⚠️ 수정할 내용을 입력해 주세요.', 'error');
+                return;
+            }
+
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('action', 'updateComment');
+            urlObj.searchParams.set('commentId', commentId);
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+            urlObj.searchParams.set('content', newContent);
+            urlObj.searchParams.set('t', new Date().getTime());
+
+            fetch(urlObj.toString())
+                .then(res => res.json())
+                .then(res => {
+                    if (res.error) throw new Error(res.error);
+                    showNotification('✏️ 의견이 수정되었습니다.', 'success');
+                    fetchFarmComments(currentSelectedFarmCode);
+                })
+                .catch(err => {
+                    showNotification(`❌ 수정 실패: ${err.message}`, 'error');
+                });
+        }
+
+        function deleteFarmComment(commentId) {
+            if (!confirm("정말 이 의견을 삭제하시겠습니까?")) return;
+
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('action', 'deleteComment');
+            urlObj.searchParams.set('commentId', commentId);
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+            urlObj.searchParams.set('t', new Date().getTime());
+
+            fetch(urlObj.toString())
+                .then(res => res.json())
+                .then(res => {
+                    if (res.error) throw new Error(res.error);
+                    showNotification('🗑️ 의견이 삭제되었습니다.', 'info');
+                    fetchFarmComments(currentSelectedFarmCode);
+                })
+                .catch(err => {
+                    showNotification(`❌ 삭제 실패: ${err.message}`, 'error');
+                });
         }
 
         function switchMainTab(tab) {
@@ -1228,7 +1613,6 @@
             applyFilters();
         }
 
-        // 🎯 요구사항 3 반영: "홈 으로" 버튼 클릭 시 모든 필터 초기화 및 페이지 상단 스크롤
         function resetWholePageToInitialState() {
             activeDept = 'ALL';
             currentSortField = 'medicineCost';
@@ -1331,13 +1715,14 @@
             }
 
             loadingOverlay.classList.remove('hidden');
-
             const startTime = performance.now();
-            let fetchUrl = `${GOOGLE_SHEET_API_URL}?t=${new Date().getTime()}`;
-            fetchUrl += `&email=${encodeURIComponent(currentUserEmail)}`;
-            fetchUrl += `&password=${encodeURIComponent(currentUserPassword)}`;
 
-            fetch(fetchUrl)
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('t', new Date().getTime());
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+
+            fetch(urlObj.toString())
                 .then(res => {
                     lastFetchLatencyMs = Math.round(performance.now() - startTime);
                     if (!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
@@ -1503,7 +1888,6 @@
                 
                 if (!farmName && !deptName && !col0Val) continue;
 
-                // 116행~119행 농장규모 정밀 파싱
                 const isSizeRow = (
                     col0Val.includes('미만') || col0Val.includes('이상') || col0Val.includes('1,000') || col0Val.includes('3,000') || col0Val.includes('5,000') ||
                     farmName.includes('미만') || farmName.includes('이상') || farmName.includes('1,000') || farmName.includes('3,000') || farmName.includes('5,000')
@@ -1526,7 +1910,7 @@
                         purchaseVals: mappings.purchase.map(m => cleanNum(r[m.idx])),
                         supportInflowVals: mappings.supportInflow.map(m => cleanNum(r[m.idx])),
                         supportMedVals: mappings.supportMed.map(m => cleanNum(r[m.idx])),
-                        supportMedRatio: cleanNum(r[mappings.supportMedRatio])
+                        supportMedRatio: (mappings.supportMedRatio !== -1) ? cleanNum(r[mappings.supportMedRatio]) : 0
                     });
                     summaryRows.push(r);
                 } else if (farmName.includes('한마을') || deptName.includes('한마을') || col0Val.includes('한마을')) {
@@ -1573,7 +1957,8 @@
                         supportInflowVals: mappings.supportInflow.map(m => cleanNum(r[m.idx])),
                         supportMedVals: mappings.supportMed.map(m => cleanNum(r[m.idx])),
                         headcountTotal: cleanNum(r[mappings.headcountTotal]), purchaseTotal: cleanNum(r[mappings.purchaseTotal]),  
-                        supportInflowTotal: cleanNum(r[mappings.supportInflowTotal]), supportMedTotal: cleanNum(r[mappings.supportMedTotal]), supportMedRatio: cleanNum(r[mappings.supportMedRatio]) 
+                        supportInflowTotal: cleanNum(r[mappings.supportInflowTotal]), supportMedTotal: cleanNum(r[mappings.supportMedTotal]), 
+                        supportMedRatio: (mappings.supportMedRatio !== -1) ? cleanNum(r[mappings.supportMedRatio]) : 0 
                     });
                 }
             }
@@ -1653,243 +2038,250 @@
             lucide.createIcons();
         }
 
-        // 농장규모 필터 변경 함수
         function selectModalSizeFilter(category) {
             selectedModalSizeCategory = category;
             renderFarmSizeModalContent();
         }
 
-        // 농장규모별 전용 데이터 시각화 리포트 모달 렌더링
+        // 🎯 [정상 복구] 예외 처리 구문을 추가하여 계산 중 튕기지 않도록 보완한 농장 규모 분석 렌더링 함수
         function renderFarmSizeModalContent() {
-            const filterContainer = document.getElementById('modal-size-filter-buttons');
-            if (!filterContainer) return;
+            try {
+                const filterContainer = document.getElementById('modal-size-filter-buttons');
+                if (!filterContainer) return;
 
-            const categories = ['1,000 미만', '1,000-3,000', '3,000-5,000', '5,000 이상'];
-            
-            // 규모 선택 필터 버튼 생성
-            let filterBtnHtml = `
-                <button onclick="selectModalSizeFilter('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedModalSizeCategory === 'ALL' ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
-                    전체 규모 보기
-                </button>
-            `;
-            categories.forEach(cat => {
-                const isActive = selectedModalSizeCategory === cat;
-                filterBtnHtml += `
-                    <button onclick="selectModalSizeFilter('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${isActive ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
-                        ${cat}
+                const categories = ['1,000 미만', '1,000-3,000', '3,000-5,000', '5,000 이상'];
+                
+                let filterBtnHtml = `
+                    <button onclick="selectModalSizeFilter('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedModalSizeCategory === 'ALL' ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                        전체 규모 보기
                     </button>
                 `;
-            });
-            filterContainer.innerHTML = filterBtnHtml;
+                categories.forEach(cat => {
+                    const isActive = selectedModalSizeCategory === cat;
+                    filterBtnHtml += `
+                        <button onclick="selectModalSizeFilter('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${isActive ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                            ${cat}
+                        </button>
+                    `;
+                });
+                filterContainer.innerHTML = filterBtnHtml;
 
-            // 규모 선택에 따른 대상 농가 그룹 필터링
-            let targetFarms = [];
-            let isAllScope = (selectedModalSizeCategory === 'ALL');
+                let targetFarms = [];
+                let isAllScope = (selectedModalSizeCategory === 'ALL');
 
-            if (isAllScope) {
-                targetFarms = parsedData;
-            } else {
-                targetFarms = parsedData.filter(d => d.farmSize === selectedModalSizeCategory);
-            }
+                if (isAllScope) {
+                    targetFarms = parsedData;
+                } else {
+                    targetFarms = parsedData.filter(d => d.farmSize === selectedModalSizeCategory);
+                }
 
-            // 상단 KPI 카드 수치 집계 ('전체'일 때는 한마을BU 전체값과 완벽히 동기화)
-            let totalHead = 0;
-            let totalPur = 0;
-            let avgCost = 0;
+                let totalHead = 0;
+                let totalPur = 0;
+                let avgCost = 0;
 
-            if (isAllScope && buSummaryData.totalHead > 0) {
-                totalHead = buSummaryData.totalHead;
-                totalPur = buSummaryData.totalPurchase;
-                avgCost = buSummaryData.medicineCost;
-            } else {
-                totalHead = targetFarms.reduce((s, f) => s + f.headcountTotal, 0);
-                totalPur = targetFarms.reduce((s, f) => s + f.purchaseTotal, 0);
-                const validFarms = targetFarms.filter(f => f.medicineCost > 0);
-                avgCost = validFarms.length > 0 ? Math.round(validFarms.reduce((s, f) => s + f.medicineCost, 0) / validFarms.length) : 0;
-            }
+                if (isAllScope && buSummaryData.totalHead > 0) {
+                    totalHead = buSummaryData.totalHead;
+                    totalPur = buSummaryData.totalPurchase;
+                    avgCost = buSummaryData.medicineCost;
+                } else {
+                    totalHead = targetFarms.reduce((s, f) => s + (f.headcountTotal || 0), 0);
+                    totalPur = targetFarms.reduce((s, f) => s + (f.purchaseTotal || 0), 0);
+                    const validFarms = targetFarms.filter(f => f.medicineCost > 0);
+                    avgCost = validFarms.length > 0 ? Math.round(validFarms.reduce((s, f) => s + f.medicineCost, 0) / validFarms.length) : 0;
+                }
 
-            if (document.getElementById('size-kpi-total-head')) document.getElementById('size-kpi-total-head').textContent = Math.round(totalHead).toLocaleString() + ' 두';
-            if (document.getElementById('size-kpi-total-pur')) document.getElementById('size-kpi-total-pur').textContent = formatWon(totalPur);
-            if (document.getElementById('size-kpi-avg-cost')) document.getElementById('size-kpi-avg-cost').textContent = formatWon(avgCost);
+                if (document.getElementById('size-kpi-total-head')) document.getElementById('size-kpi-total-head').textContent = Math.round(totalHead).toLocaleString() + ' 두';
+                if (document.getElementById('size-kpi-total-pur')) document.getElementById('size-kpi-total-pur').textContent = formatWon(totalPur);
+                if (document.getElementById('size-kpi-avg-cost')) document.getElementById('size-kpi-avg-cost').textContent = formatWon(avgCost);
 
-            // 1. 입식두당 약품비 추이 차트 (꺾은선 라인 차트)
-            const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
-            let costTrendArr = new Array(months.length).fill(0);
+                const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
+                let costTrendArr = new Array(months.length).fill(0);
 
-            if (isAllScope && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0) {
-                costTrendArr = buSummaryData.costTrendVals.slice(0, lastValidTrendIdx + 1);
-            } else {
-                let costTrendCounts = new Array(months.length).fill(0);
-                targetFarms.forEach(f => {
-                    f.costTrendVals.slice(0, lastValidTrendIdx + 1).forEach((v, idx) => {
-                        if (v > 0) { costTrendArr[idx] += v; costTrendCounts[idx]++; }
+                if (isAllScope && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0) {
+                    costTrendArr = buSummaryData.costTrendVals.slice(0, lastValidTrendIdx + 1);
+                } else {
+                    let costTrendCounts = new Array(months.length).fill(0);
+                    targetFarms.forEach(f => {
+                        if (f.costTrendVals) {
+                            f.costTrendVals.slice(0, lastValidTrendIdx + 1).forEach((v, idx) => {
+                                if (v > 0) { costTrendArr[idx] += v; costTrendCounts[idx]++; }
+                            });
+                        }
                     });
-                });
-                costTrendArr = costTrendArr.map((sum, i) => costTrendCounts[i] ? Math.round(sum / costTrendCounts[i]) : 0);
-            }
+                    costTrendArr = costTrendArr.map((sum, i) => costTrendCounts[i] ? Math.round(sum / costTrendCounts[i]) : 0);
+                }
 
-            if (activeCharts['modalSizeCostLine']) {
-                activeCharts['modalSizeCostLine'].data.labels = months;
-                activeCharts['modalSizeCostLine'].data.datasets[0].data = costTrendArr;
-                activeCharts['modalSizeCostLine'].update();
-            } else {
-                activeCharts['modalSizeCostLine'] = new Chart(document.getElementById('chart-modal-size-cost-line').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: months,
-                        datasets: [{
-                            label: '평균 입식두당 약품비',
-                            data: costTrendArr,
-                            borderColor: '#F51932',
-                            backgroundColor: 'rgba(245, 25, 50, 0.08)',
-                            fill: true,
-                            tension: 0.25,
-                            borderWidth: 2.5,
-                            pointBackgroundColor: '#F51932'
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, datalabels: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, grace: '15%', ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 8 } } },
-                            x: { ticks: { font: { size: 7.5, weight: 'bold' } } }
-                        }
+                if (activeCharts['modalSizeCostLine']) {
+                    activeCharts['modalSizeCostLine'].data.labels = months;
+                    activeCharts['modalSizeCostLine'].data.datasets[0].data = costTrendArr;
+                    activeCharts['modalSizeCostLine'].update();
+                } else {
+                    const canvas = document.getElementById('chart-modal-size-cost-line');
+                    if (canvas) {
+                        activeCharts['modalSizeCostLine'] = new Chart(canvas.getContext('2d'), {
+                            type: 'line',
+                            data: {
+                                labels: months,
+                                datasets: [{
+                                    label: '평균 입식두당 약품비',
+                                    data: costTrendArr,
+                                    borderColor: '#F51932',
+                                    backgroundColor: 'rgba(245, 25, 50, 0.08)',
+                                    fill: true,
+                                    tension: 0.25,
+                                    borderWidth: 2.5,
+                                    pointBackgroundColor: '#F51932'
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                plugins: { legend: { display: false }, datalabels: { display: false } },
+                                scales: {
+                                    y: { beginAtZero: true, grace: '15%', ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 8 } } },
+                                    x: { ticks: { font: { size: 7.5, weight: 'bold' } } }
+                                }
+                            }
+                        });
                     }
-                });
-            }
+                }
 
-            // 2. 지원 약품 비율 (%) (도넛 차트)
-            let totalSupPur = targetFarms.reduce((s, f) => s + f.supportMedTotal, 0);
-            let supportRatioVal = totalPur > 0 ? (totalSupPur / totalPur) * 100 : 0;
-            let selfPaidRatioVal = Math.max(0, 100 - supportRatioVal);
+                let totalSupPur = targetFarms.reduce((s, f) => s + (f.supportMedTotal || 0), 0);
+                let supportRatioVal = totalPur > 0 ? (totalSupPur / totalPur) * 100 : 0;
+                let selfPaidRatioVal = Math.max(0, 100 - supportRatioVal);
 
-            if (activeCharts['modalSizeSupportPie']) {
-                activeCharts['modalSizeSupportPie'].data.datasets[0].data = [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))];
-                activeCharts['modalSizeSupportPie'].update();
-            } else {
-                activeCharts['modalSizeSupportPie'] = new Chart(document.getElementById('chart-modal-size-support-pie').getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['지원 약품 비율', '입식 지원 비율'],
-                        datasets: [{
-                            data: [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))],
-                            backgroundColor: ['#F51932', '#10b981'],
-                            borderWidth: 2, borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' },
-                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
-                        }
+                if (activeCharts['modalSizeSupportPie']) {
+                    activeCharts['modalSizeSupportPie'].data.datasets[0].data = [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))];
+                    activeCharts['modalSizeSupportPie'].update();
+                } else {
+                    const canvas = document.getElementById('chart-modal-size-support-pie');
+                    if (canvas) {
+                        activeCharts['modalSizeSupportPie'] = new Chart(canvas.getContext('2d'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['지원 약품 비율', '입식 지원 비율'],
+                                datasets: [{
+                                    data: [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))],
+                                    backgroundColor: ['#F51932', '#10b981'],
+                                    borderWidth: 2, borderColor: '#ffffff'
+                                }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                plugins: {
+                                    datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' },
+                                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
+                                }
+                            }
+                        });
                     }
-                });
-            }
+                }
 
-            // 3. 약품 종류별 구성 비율 (%) (도넛 차트)
-            let normTypeRatios = [0, 0, 0, 0, 0];
-            if (isAllScope && buSummaryData.ratios && buSummaryData.ratios.length === 5) {
-                let rRaw = buSummaryData.ratios.map(v => v <= 1.0 ? v * 100 : v);
-                const sumR = rRaw.reduce((a, b) => a + b, 0) || 1;
-                normTypeRatios = rRaw.map(v => parseFloat(((v / sumR) * 100).toFixed(1)));
-            } else if (targetFarms.length > 0) {
-                let typeSums = [0, 0, 0, 0, 0];
+                let normTypeRatios = [0, 0, 0, 0, 0];
+                if (isAllScope && buSummaryData.ratios && buSummaryData.ratios.length === 5) {
+                    let rRaw = buSummaryData.ratios.map(v => v <= 1.0 ? v * 100 : v);
+                    const sumR = rRaw.reduce((a, b) => a + b, 0) || 1;
+                    normTypeRatios = rRaw.map(v => parseFloat(((v / sumR) * 100).toFixed(1)));
+                } else if (targetFarms.length > 0) {
+                    let typeSums = [0, 0, 0, 0, 0];
+                    targetFarms.forEach(f => {
+                        if (f.ratios) {
+                            f.ratios.forEach((rv, idx) => { typeSums[idx] += (rv <= 1.0 ? rv * 100 : rv); });
+                        }
+                    });
+                    const typeDiv = targetFarms.length || 1;
+                    let rTemp = typeSums.map(v => v / typeDiv);
+                    const sumT = rTemp.reduce((a, b) => a + b, 0) || 1;
+                    normTypeRatios = rTemp.map(v => parseFloat(((v / sumT) * 100).toFixed(1)));
+                }
+
+                if (activeCharts['modalSizeTypePie']) {
+                    activeCharts['modalSizeTypePie'].data.datasets[0].data = normTypeRatios;
+                    activeCharts['modalSizeTypePie'].update();
+                } else {
+                    const canvas = document.getElementById('chart-modal-size-type-pie');
+                    if (canvas) {
+                        activeCharts['modalSizeTypePie'] = new Chart(canvas.getContext('2d'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: ratioLabels,
+                                datasets: [{ data: normTypeRatios, backgroundColor: ratioColors, borderWidth: 2, borderColor: '#ffffff' }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                plugins: {
+                                    datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 9 }, formatter: (v) => v > 2 ? `${v}%` : '' },
+                                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                let dtHeadArr = new Array(lastValidHeadcountIdx + 1).fill(0);
+                let dtPurArr = new Array(lastValidPurchaseIdx + 1).fill(0);
+                let dtSupArr = new Array(lastValidSupportMedIdx + 1).fill(0);
+                let dtInflowArr = new Array(lastValidSupportInflowIdx + 1).fill(0);
+
                 targetFarms.forEach(f => {
-                    f.ratios.forEach((rv, idx) => { typeSums[idx] += (rv <= 1.0 ? rv * 100 : rv); });
+                    if (f.headcountVals) f.headcountVals.slice(0, lastValidHeadcountIdx + 1).forEach((v, i) => dtHeadArr[i] += v);
+                    if (f.purchaseVals) f.purchaseVals.slice(0, lastValidPurchaseIdx + 1).forEach((v, i) => dtPurArr[i] += v);
+                    if (f.supportMedVals) f.supportMedVals.slice(0, lastValidSupportMedIdx + 1).forEach((v, i) => dtSupArr[i] += v);
+                    if (f.supportInflowVals) f.supportInflowVals.slice(0, lastValidSupportInflowIdx + 1).forEach((v, i) => dtInflowArr[i] += v);
                 });
-                const typeDiv = targetFarms.length || 1;
-                let rTemp = typeSums.map(v => v / typeDiv);
-                const sumT = rTemp.reduce((a, b) => a + b, 0) || 1;
-                normTypeRatios = rTemp.map(v => parseFloat(((v / sumT) * 100).toFixed(1)));
-            }
 
-            if (activeCharts['modalSizeTypePie']) {
-                activeCharts['modalSizeTypePie'].data.datasets[0].data = normTypeRatios;
-                activeCharts['modalSizeTypePie'].update();
-            } else {
-                activeCharts['modalSizeTypePie'] = new Chart(document.getElementById('chart-modal-size-type-pie').getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ratioLabels,
-                        datasets: [{ data: normTypeRatios, backgroundColor: ratioColors, borderWidth: 2, borderColor: '#ffffff' }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 9 }, formatter: (v) => v > 2 ? `${v}%` : '' },
-                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
-                        }
-                    }
-                });
-            }
+                if (document.getElementById('modal-dt-total-head')) document.getElementById('modal-dt-total-head').textContent = `누계: ${totalHead.toLocaleString()} 두`;
+                if (document.getElementById('modal-dt-total-pur')) document.getElementById('modal-dt-total-pur').textContent = `누계: ${formatWon(totalPur)}`;
+                if (document.getElementById('modal-dt-total-sup')) document.getElementById('modal-dt-total-sup').textContent = `누계: ${formatWon(totalSupPur)}`;
 
-            // 4. 하단 상세 연동 타임라인 3종 소형 트렌드 차트 및 2종 테이블 데이터 바인딩
-            let dtHeadArr = new Array(lastValidHeadcountIdx + 1).fill(0);
-            let dtPurArr = new Array(lastValidPurchaseIdx + 1).fill(0);
-            let dtSupArr = new Array(lastValidSupportMedIdx + 1).fill(0);
-            let dtInflowArr = new Array(lastValidSupportInflowIdx + 1).fill(0);
+                drawTimelineChart('chart-modal-dt-head', mappings.headcount.map(m=>m.month).slice(0, lastValidHeadcountIdx + 1), dtHeadArr, '#3b82f6', ' 두');
+                drawTimelineChart('chart-modal-dt-pur', mappings.purchase.map(m=>m.month).slice(0, lastValidPurchaseIdx + 1), dtPurArr, '#10b981', ' 원');
+                drawTimelineChart('chart-modal-dt-sup', mappings.supportMed.map(m=>m.month).slice(0, lastValidSupportMedIdx + 1), dtSupArr, '#8b5cf6', ' 원');
 
-            targetFarms.forEach(f => {
-                f.headcountVals.slice(0, lastValidHeadcountIdx + 1).forEach((v, i) => dtHeadArr[i] += v);
-                f.purchaseVals.slice(0, lastValidPurchaseIdx + 1).forEach((v, i) => dtPurArr[i] += v);
-                f.supportMedVals.slice(0, lastValidSupportMedIdx + 1).forEach((v, i) => dtSupArr[i] += v);
-                f.supportInflowVals.slice(0, lastValidSupportInflowIdx + 1).forEach((v, i) => dtInflowArr[i] += v);
-            });
+                const slicedTrendMonths = mappings.costTrend.slice(0, lastValidTrendIdx + 1);
+                const theadGroupA = document.getElementById('modal-thead-group-a');
+                const tbodyGroupA = document.getElementById('modal-tbody-group-a');
 
-            if (document.getElementById('modal-dt-total-head')) document.getElementById('modal-dt-total-head').textContent = `누계: ${totalHead.toLocaleString()} 두`;
-            if (document.getElementById('modal-dt-total-pur')) document.getElementById('modal-dt-total-pur').textContent = `누계: ${formatWon(totalPur)}`;
-            if (document.getElementById('modal-dt-total-sup')) document.getElementById('modal-dt-total-sup').textContent = `누계: ${formatWon(totalSupPur)}`;
+                if(theadGroupA && tbodyGroupA) {
+                    let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+                    slicedTrendMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                    theadGroupA.innerHTML = headerHtml;
 
-            drawTimelineChart('chart-modal-dt-head', mappings.headcount.map(m=>m.month).slice(0, lastValidHeadcountIdx + 1), dtHeadArr, '#3b82f6', ' 두');
-            drawTimelineChart('chart-modal-dt-pur', mappings.purchase.map(m=>m.month).slice(0, lastValidPurchaseIdx + 1), dtPurArr, '#10b981', ' 원');
-            drawTimelineChart('chart-modal-dt-sup', mappings.supportMed.map(m=>m.month).slice(0, lastValidSupportMedIdx + 1), dtSupArr, '#8b5cf6', ' 원');
+                    tbodyGroupA.innerHTML = `
+                        <tr class="hover:bg-slate-50 border-b border-slate-150">
+                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
+                            ${costTrendArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
+                            ${dtSupArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                        </tr>`;
+                }
 
-            // 타임라인 테이블 A (입식두당 약품비 추이 및 지원 약품 매입)
-            const slicedTrendMonths = mappings.costTrend.slice(0, lastValidTrendIdx + 1);
-            const theadGroupA = document.getElementById('modal-thead-group-a');
-            const tbodyGroupA = document.getElementById('modal-tbody-group-a');
+                const slicedHeadcountMonths = mappings.headcount.slice(0, lastValidHeadcountIdx + 1);
+                const theadGroupB = document.getElementById('modal-thead-group-b');
+                const tbodyGroupB = document.getElementById('modal-tbody-group-b');
 
-            if(theadGroupA && tbodyGroupA) {
-                let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                slicedTrendMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
-                theadGroupA.innerHTML = headerHtml;
+                if(theadGroupB && tbodyGroupB) {
+                    let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+                    slicedHeadcountMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                    theadGroupB.innerHTML = headerHtml;
 
-                tbodyGroupA.innerHTML = `
-                    <tr class="hover:bg-slate-50 border-b border-slate-150">
-                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
-                        ${costTrendArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
-                    </tr>
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
-                        ${dtSupArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                    </tr>`;
-            }
-
-            // 타임라인 테이블 B (입식두수 및 약품/입식지원액)
-            const slicedHeadcountMonths = mappings.headcount.slice(0, lastValidHeadcountIdx + 1);
-            const theadGroupB = document.getElementById('modal-thead-group-b');
-            const tbodyGroupB = document.getElementById('modal-tbody-group-b');
-
-            if(theadGroupB && tbodyGroupB) {
-                let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                slicedHeadcountMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
-                theadGroupB.innerHTML = headerHtml;
-
-                tbodyGroupB.innerHTML = `
-                    <tr class="hover:bg-slate-50 border-b border-slate-150">
-                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
-                        ${dtHeadArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
-                    </tr>
-                    <tr class="hover:bg-slate-50 border-b border-slate-150">
-                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
-                        ${dtPurArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                    </tr>
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
-                        ${dtInflowArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                    </tr>`;
+                    tbodyGroupB.innerHTML = `
+                        <tr class="hover:bg-slate-50 border-b border-slate-150">
+                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
+                            ${dtHeadArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
+                        </tr>
+                        <tr class="hover:bg-slate-50 border-b border-slate-150">
+                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
+                            ${dtPurArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
+                            ${dtInflowArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                        </tr>`;
+                }
+            } catch (err) {
+                console.error("농장 규모별 모달 렌더링 에러 방어:", err);
             }
         }
 
@@ -2112,7 +2504,6 @@
             if (document.getElementById('chart-data-count-tag')) document.getElementById('chart-data-count-tag').innerText = countText;
         }
 
-        // 🎯 요구사항 2 반영: 담당CM이 거래X가 아니며, 등급이 'D2'인 농가 행의 배경색을 연한 빨강(bg-red-100)으로 설정
         function renderTable() {
             const tbody = document.getElementById('table-body');
             if (!tbody) return;
@@ -2166,6 +2557,7 @@
             const item = parsedData.find(f => String(f.farmCode).trim().toLowerCase() === targetCodeStr || String(f.farmName).trim().toLowerCase() === targetCodeStr);
             
             if (item) {
+                currentSelectedFarmCode = item.farmCode;
                 if (currentMainTab !== 'dashboard') switchMainTab('dashboard');
                 showSelectedRatioAndDetails(item);
             }
@@ -2175,6 +2567,7 @@
             const card = document.getElementById('inline-detail-section');
             if (!card) return;
             
+            currentSelectedFarmCode = item.farmCode;
             card.classList.remove('hidden');
 
             if (document.getElementById('selected-farm-title')) {
@@ -2315,12 +2708,31 @@
                     </tr>`;
             }
 
+            fetchFarmCommentsBadgeOnly(item.farmCode);
+
             setTimeout(() => {
                 card.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
 
-        // 🎯 요구사항 1 반영: 대시보드 상단 입식두당 약품비 추이 차트 Y축 최소값을 2,000원으로 설정 (변동폭 강조)
+        function fetchFarmCommentsBadgeOnly(farmCode) {
+            if (!farmCode) return;
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('action', 'getComments');
+            urlObj.searchParams.set('farmCode', farmCode);
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+            urlObj.searchParams.set('t', new Date().getTime());
+
+            fetch(urlObj.toString())
+                .then(res => res.json())
+                .then(comments => {
+                    const badge = document.getElementById('detail-comment-badge');
+                    if (badge) badge.textContent = Array.isArray(comments) ? comments.length : 0;
+                })
+                .catch(() => {});
+        }
+
         function renderCharts() {
             if (filteredData.length === 0) return;
 
@@ -2741,18 +3153,21 @@
                 activeCharts[canvasId].data.datasets[0].data = roundedData;
                 activeCharts[canvasId].update();
             } else {
-                activeCharts[canvasId] = new Chart(document.getElementById(canvasId).getContext('2d'), {
-                    type: 'line',
-                    data: { labels: labels, datasets: [{ data: roundedData, borderColor: color, backgroundColor: color + '15', fill: true, tension: 0.2, borderWidth: 2, pointHoverRadius: 5 }] },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, datalabels: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, ticks: { callback: v => Math.round(v).toLocaleString() + unit, font: { size: 9, weight: 'bold' } } },
-                            x: { ticks: { font: { size: 7.5, weight: 'bold' } } } 
+                const canvas = document.getElementById(canvasId);
+                if (canvas) {
+                    activeCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+                        type: 'line',
+                        data: { labels: labels, datasets: [{ data: roundedData, borderColor: color, backgroundColor: color + '15', fill: true, tension: 0.2, borderWidth: 2, pointHoverRadius: 5 }] },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: false }, datalabels: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { callback: v => Math.round(v).toLocaleString() + unit, font: { size: 9, weight: 'bold' } } },
+                                x: { ticks: { font: { size: 7.5, weight: 'bold' } } } 
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         }
 
