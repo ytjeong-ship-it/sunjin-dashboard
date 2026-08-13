@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-   
+
     <script>
         tailwind.config = {
             theme: {
@@ -84,7 +84,7 @@
 </head>
 <body class="h-full flex flex-col font-sans text-slate-900 antialiased selection:bg-red-100 bg-slate-100">
 
-    <!-- ─── 0. 이메일 & 비밀번호 로그인 모달 ─── -->
+    <!-- 0. 이메일 & 비밀번호 로그인 모달 -->
     <div id="login-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 no-print">
         <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-slate-200 fade-in-section flex flex-col justify-between">
             <div>
@@ -131,7 +131,6 @@
                 </form>
             </div>
 
-            <!-- 로그인 모달 하단 문의처 -->
             <div class="mt-8 pt-4 border-t border-slate-100 text-center">
                 <p class="text-[11px] font-semibold text-slate-400 tracking-tight">
                     문의: 양돈사업본부 재무팀 정윤택 / <a href="mailto:ytjeong@sunjin.com" class="text-sunjin-red font-bold hover:underline">ytjeong@sunjin.com</a>
@@ -140,7 +139,7 @@
         </div>
     </div>
 
-    <!-- ─── 0. 전체 화면 로딩 오버레이 ─── -->
+    <!-- 0. 전체 화면 로딩 오버레이 -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/85 backdrop-blur-md z-40 flex flex-col items-center justify-center text-white no-print hidden">
         <div class="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
         <p class="text-sm font-bold tracking-wide" id="loading-text">구글 스프레드시트 데이터 검증 및 연동 중입니다...</p>
@@ -959,7 +958,7 @@
 
         <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
             <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out border-l border-slate-200">
-                <!-- 드로어 헤더 -->
+                <!-- 드로어 헤더 (새로고침 🔄 버튼 추가 반영) -->
                 <div class="p-5 bg-slate-800 text-white flex items-center justify-between">
                     <div class="flex items-center space-x-2.5">
                         <div class="p-2 bg-slate-700 rounded-xl text-sunjin-orange">
@@ -967,12 +966,18 @@
                         </div>
                         <div>
                             <h3 id="comment-drawer-farm-name" class="font-extrabold text-sm text-white">농장 의견 소통</h3>
-                            <p class="text-[10px] text-slate-300 mt-0.5">실시간 담당자 특이사항 및 소통 내역 (3초 간격 동기화)</p>
+                            <p class="text-[10px] text-slate-300 mt-0.5">담당자 특이사항 및 소통 내역</p>
                         </div>
                     </div>
-                    <button onclick="closeCommentDrawer()" class="text-slate-400 hover:text-white transition">
-                        <i data-lucide="x" class="w-6 h-6"></i>
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <!-- 🎯 수동 새로고침 버튼 -->
+                        <button onclick="fetchFarmComments(currentSelectedFarmCode)" title="의견 새로고침" class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 hover:text-white transition">
+                            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="closeCommentDrawer()" class="text-slate-400 hover:text-white transition">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 의견 작성 Input 영역 -->
@@ -980,11 +985,11 @@
                     <label class="block text-xs font-extrabold text-slate-700 mb-1.5 flex items-center gap-1">
                         <i data-lucide="edit-3" class="w-3.5 h-3.5 text-sunjin-red"></i> 새 의견 작성
                     </label>
-                    <textarea id="comment-input-content" rows="3" placeholder="농장에 관한 의견이나 특이사항을 입력하세요..." class="w-full p-3 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-sunjin-red bg-white font-medium resize-none transition"></textarea>
+                    <textarea id="comment-input-content" rows="3" placeholder="농장에 관한 의견이나 특이사항을 입력하세요..." class="w-full p-3 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-sunjin-red bg-white font-medium resize-none transition disabled:bg-slate-100 disabled:text-slate-400"></textarea>
                     <div class="mt-2 flex justify-between items-center">
                         <span id="comment-current-user-info" class="text-[10px] font-bold text-slate-400">작성자: -</span>
                         <button onclick="submitFarmComment()" id="btn-submit-comment" class="px-4 py-1.5 bg-sunjin-red hover:bg-red-700 text-white rounded-xl text-xs font-extrabold shadow transition flex items-center gap-1.5 disabled:opacity-50">
-                            <i data-lucide="send" class="w-3.5 h-3.5"></i> 등록
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i> <span id="btn-submit-comment-text">등록</span>
                         </button>
                     </div>
                 </div>
@@ -1006,8 +1011,8 @@
                         <i data-lucide="help-circle" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-black text-slate-800">1:1 비공개 건의사항 작성</h3>
-                        <p class="text-[11px] text-slate-400">작성하신 내용은 시스템 관리자에게만 전달됩니다.</p>
+                        <h3 class="text-base font-black text-slate-800"> 건의사항 작성</h3>
+                        <p class="text-[11px] text-slate-400">작성하신 내용은 시스템 관리자에게 전달됩니다.</p>
                     </div>
                 </div>
                 <button onclick="closeSuggestionModal()" class="text-slate-400 hover:text-slate-600 transition">
@@ -1025,7 +1030,7 @@
 
                 <div>
                     <label class="block text-xs font-extrabold text-slate-700 mb-1">건의 내용 및 개선 요청</label>
-                    <textarea id="suggestion-input-content" rows="5" placeholder="시스템 사용 중 개선이 필요한 사항이나 문의내용을 자유롭게 적어주세요..." class="w-full p-3 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-blue-600 bg-white font-medium resize-none transition"></textarea>
+                    <textarea id="suggestion-input-content" rows="5" placeholder="시스템 사용 중 개선이 필요한 사항이나 문의내용을 자유롭게 적어주세요..." class="w-full p-3 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-blue-600 bg-white font-medium resize-none transition disabled:bg-slate-100 disabled:text-slate-400"></textarea>
                 </div>
             </div>
 
@@ -1033,8 +1038,8 @@
                 <button onclick="closeSuggestionModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
                     취소
                 </button>
-                <button onclick="submitSuggestion()" id="btn-submit-suggestion" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow transition flex items-center gap-1.5">
-                    <i data-lucide="send" class="w-3.5 h-3.5"></i> 전달하기
+                <button onclick="submitSuggestion()" id="btn-submit-suggestion" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow transition flex items-center gap-1.5 disabled:opacity-50">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i> <span id="btn-submit-suggestion-text">전달하기</span>
                 </button>
             </div>
         </div>
@@ -1059,7 +1064,6 @@
 
         const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbz1MVbZebgm9_w_0E27HBD7ZcvdukkL5d2vAf6kpPxQW4nv5ejHMT-Le0EPbaU6yNbM/exec";
         const AUTO_REFRESH_INTERVAL = 3600000;
-        const COMMENT_REALTIME_INTERVAL = 3000;
 
         let currentUserEmail = sessionStorage.getItem('user_email') || "";
         let currentUserPassword = sessionStorage.getItem('user_password') || "";
@@ -1079,7 +1083,6 @@
         let farmSizeSummaryRows = [];
         let selectedModalSizeCategory = 'ALL';
         let currentSelectedFarmCode = "";
-        let commentPollingTimer = null;
 
         let buSummaryData = {
             farmCount: 97,
@@ -1256,7 +1259,6 @@
             document.getElementById('raw-data-modal').classList.add('hidden');
         }
 
-        // 🎯 팝업 차단 원인 해결: 모달 활성화 후 비동기로 렌더링 호출
         function openFarmSizeModal() {
             selectedModalSizeCategory = 'ALL';
             const modal = document.getElementById('farm-size-modal');
@@ -1289,6 +1291,7 @@
         function submitSuggestion() {
             const contentInput = document.getElementById('suggestion-input-content');
             const btnSubmit = document.getElementById('btn-submit-suggestion');
+            const btnText = document.getElementById('btn-submit-suggestion-text');
             const content = contentInput ? contentInput.value.trim() : '';
 
             if (!content) {
@@ -1296,7 +1299,9 @@
                 return;
             }
 
+            if (contentInput) contentInput.disabled = true;
             if (btnSubmit) btnSubmit.disabled = true;
+            if (btnText) btnText.textContent = "전달 중...";
 
             const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
             urlObj.searchParams.set('action', 'addSuggestion');
@@ -1309,7 +1314,7 @@
                 .then(res => res.json())
                 .then(res => {
                     if (res.error) throw new Error(res.error);
-                    showNotification('🔒 건의사항이 비공개로 안전하게 전달되었습니다.', 'success');
+                    showNotification('🔒 건의사항이 안전하게 전달되었습니다.', 'success');
                     if (contentInput) contentInput.value = '';
                     closeSuggestionModal();
                 })
@@ -1317,10 +1322,13 @@
                     showNotification(`❌ 전달 실패: ${err.message}`, 'error');
                 })
                 .finally(() => {
+                    if (contentInput) contentInput.disabled = false;
                     if (btnSubmit) btnSubmit.disabled = false;
+                    if (btnText) btnText.textContent = "전달하기";
                 });
         }
 
+        // 🎯 의견 창 오픈 시에만 1회 최신 데이터 조회 (자동 Polling 타이머 제로화)
         function openCommentDrawer() {
             const drawer = document.getElementById('comment-drawer');
             if (!drawer) return;
@@ -1342,24 +1350,12 @@
             }
 
             drawer.classList.remove('hidden');
-            fetchFarmComments(currentSelectedFarmCode);
-
-            if (commentPollingTimer) clearInterval(commentPollingTimer);
-            commentPollingTimer = setInterval(() => {
-                if (currentSelectedFarmCode) {
-                    fetchFarmComments(currentSelectedFarmCode, true);
-                }
-            }, COMMENT_REALTIME_INTERVAL);
+            fetchFarmComments(currentSelectedFarmCode); // 1회 최신 로드
         }
 
         function closeCommentDrawer() {
             const drawer = document.getElementById('comment-drawer');
             if (drawer) drawer.classList.add('hidden');
-
-            if (commentPollingTimer) {
-                clearInterval(commentPollingTimer);
-                commentPollingTimer = null;
-            }
         }
 
         function fetchFarmComments(farmCode, isSilent = false) {
@@ -1420,10 +1416,10 @@
                                 <p id="comment-text-${c.commentId}" class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap pl-1">${c.content}</p>
                                 
                                 <div id="comment-edit-box-${c.commentId}" class="hidden pt-1 space-y-2">
-                                    <textarea id="comment-edit-input-${c.commentId}" rows="2" class="w-full p-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-sunjin-red resize-none font-medium">${c.content}</textarea>
+                                    <textarea id="comment-edit-input-${c.commentId}" rows="2" class="w-full p-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-sunjin-red resize-none font-medium disabled:bg-slate-100 disabled:text-slate-400">${c.content}</textarea>
                                     <div class="flex justify-end gap-1.5">
                                         <button onclick="cancelCommentEditMode('${c.commentId}')" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold transition">취소</button>
-                                        <button onclick="saveUpdatedComment('${c.commentId}')" class="px-2.5 py-1 bg-sunjin-red hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition">저장</button>
+                                        <button onclick="saveUpdatedComment('${c.commentId}')" id="btn-save-comment-${c.commentId}" class="px-2.5 py-1 bg-sunjin-red hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition">저장</button>
                                     </div>
                                 </div>
                             </div>
@@ -1443,6 +1439,7 @@
         function submitFarmComment() {
             const contentInput = document.getElementById('comment-input-content');
             const btnSubmit = document.getElementById('btn-submit-comment');
+            const btnText = document.getElementById('btn-submit-comment-text');
             const content = contentInput ? contentInput.value.trim() : '';
 
             if (!content) {
@@ -1455,7 +1452,9 @@
                 return;
             }
 
+            if (contentInput) contentInput.disabled = true;
             if (btnSubmit) btnSubmit.disabled = true;
+            if (btnText) btnText.textContent = "등록 중...";
 
             const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
             urlObj.searchParams.set('action', 'addComment');
@@ -1477,7 +1476,9 @@
                     showNotification(`❌ 등록 실패: ${err.message}`, 'error');
                 })
                 .finally(() => {
+                    if (contentInput) contentInput.disabled = false;
                     if (btnSubmit) btnSubmit.disabled = false;
+                    if (btnText) btnText.textContent = "등록";
                 });
         }
 
@@ -1501,11 +1502,18 @@
 
         function saveUpdatedComment(commentId) {
             const inputEl = document.getElementById(`comment-edit-input-${commentId}`);
+            const btnSave = document.getElementById(`btn-save-comment-${commentId}`);
             const newContent = inputEl ? inputEl.value.trim() : '';
 
             if (!newContent) {
                 showNotification('⚠️ 수정할 내용을 입력해 주세요.', 'error');
                 return;
+            }
+
+            if (inputEl) inputEl.disabled = true;
+            if (btnSave) {
+                btnSave.disabled = true;
+                btnSave.textContent = "저장 중...";
             }
 
             const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
@@ -1525,6 +1533,11 @@
                 })
                 .catch(err => {
                     showNotification(`❌ 수정 실패: ${err.message}`, 'error');
+                    if (inputEl) inputEl.disabled = false;
+                    if (btnSave) {
+                        btnSave.disabled = false;
+                        btnSave.textContent = "저장";
+                    }
                 });
         }
 
@@ -2043,7 +2056,6 @@
             renderFarmSizeModalContent();
         }
 
-        // 🎯 [정상 복구] 예외 처리 구문을 추가하여 계산 중 튕기지 않도록 보완한 농장 규모 분석 렌더링 함수
         function renderFarmSizeModalContent() {
             try {
                 const filterContainer = document.getElementById('modal-size-filter-buttons');
