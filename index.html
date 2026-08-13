@@ -1,0 +1,2838 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선진한마을 - 농가 약품비 분석 및 관리 시스템</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- Chart.js Datalabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- Lucide Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sunjin: {
+                            red: '#F51932',     // Pantone 185C
+                            orange: '#F58200',  // Pantone 151C
+                            green: '#64B41E',   // Pantone 361C
+                            dark: '#333333',
+                            gray: '#666666',
+                            lightBg: '#F8FAF9'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .tab-active { 
+            background-color: #F51932 !important; 
+            color: white !important; 
+            border-color: #F51932 !important;
+            box-shadow: 0 4px 6px -1px rgba(245, 25, 50, 0.25);
+        }
+        
+        .sticky-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .sticky-table th {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background-color: #1e293b;
+        }
+
+        .fade-in-section {
+            animation: fadeIn 0.35s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media print {
+            @page { size: A4 portrait; margin: 15mm; }
+            .no-print { display: none !important; }
+            body { background-color: #ffffff !important; color: #000000 !important; font-size: 11px; padding-top: 0 !important; }
+            header { position: relative !important; display: flex !important; margin-bottom: 10px !important; }
+            main { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin-top: 0 !important; }
+            .overflow-auto, .overflow-x-auto, .overflow-hidden, [class*="overflow-"], .max-h-\[550px\], #inline-detail-section, #dashboard-view { overflow: visible !important; max-height: none !important; height: auto !important; }
+            .print-break-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
+            .print-col-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+            .sticky-table { width: 100% !important; table-layout: fixed !important; }
+            .sticky-table th { position: static !important; background-color: #1e293b !important; color: #ffffff !important; white-space: normal !important; }
+            .sticky-table td { white-space: normal !important; word-break: break-all !important; }
+            thead { display: table-header-group !important; }
+            tr { break-inside: auto !important; page-break-inside: auto !important; }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col font-sans text-slate-900 antialiased selection:bg-red-100 bg-slate-100">
+
+    <!-- ─── 0. 이메일 & 비밀번호 로그인 모달 ─── -->
+    <div id="login-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-slate-200 fade-in-section flex flex-col justify-between">
+            <div>
+                <div class="flex flex-col items-center text-center mb-6">
+                    <div class="p-3 bg-red-50 text-sunjin-red rounded-2xl mb-3">
+                        <i data-lucide="lock" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800">시스템 로그인</h2>
+                </div>
+
+                <form onsubmit="handleCustomLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">이메일 주소</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i data-lucide="mail" class="w-4 h-4"></i>
+                            </span>
+                            <input type="email" id="login-input-email" required placeholder="example@sunjin.com" class="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-sunjin-red font-semibold transition disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">비밀번호</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i data-lucide="key-round" class="w-4 h-4"></i>
+                            </span>
+                            <input type="password" id="login-input-password" required placeholder="비밀번호 입력 (대소문자 구분)" class="w-full pl-9 pr-10 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-sunjin-red font-semibold transition disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">
+                            <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition focus:outline-none">
+                                <i id="password-toggle-icon" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="login-error-msg" class="hidden text-xs text-red-600 font-bold text-center bg-red-50 p-2.5 rounded-lg border border-red-100">
+                        인증에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.
+                    </div>
+
+                    <button type="submit" id="btn-login-submit" class="w-full py-3 bg-sunjin-red hover:bg-red-700 text-white rounded-xl text-xs font-extrabold shadow-lg transition flex items-center justify-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed">
+                        <span id="btn-login-text" class="flex items-center gap-2">
+                            <i data-lucide="log-in" class="w-4 h-4"></i>로그인 및 데이터 조회
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- 로그인 모달 하단 문의처 -->
+            <div class="mt-8 pt-4 border-t border-slate-100 text-center">
+                <p class="text-[11px] font-semibold text-slate-400 tracking-tight">
+                    문의: 양돈사업본부 재무팀 정윤택 / <a href="mailto:ytjeong@sunjin.com" class="text-sunjin-red font-bold hover:underline">ytjeong@sunjin.com</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── 0. 전체 화면 로딩 오버레이 ─── -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/85 backdrop-blur-md z-40 flex flex-col items-center justify-center text-white no-print hidden">
+        <div class="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
+        <p class="text-sm font-bold tracking-wide" id="loading-text">구글 스프레드시트 데이터 검증 및 연동 중입니다...</p>
+    </div>
+
+    <header class="bg-white border-b border-slate-300 shadow-md fixed top-0 left-0 w-full z-30 transition-all duration-300">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="h-14 flex items-center justify-between border-b border-slate-100">
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <div class="flex items-center cursor-pointer py-1" onclick="resetWholePageToInitialState()" title="선진한마을 - 클릭 시 홈 이동">
+                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="1360.63" height="425.197" viewBox="0 0 1360.63 425.197" class="h-10 w-auto">
+                            <defs>
+                            <clipPath id="clip_1">
+                            <path transform="matrix(1,0,0,-1,0,425.197)" d="M0 425.197H1360.63V0H0Z"/>
+                            </clipPath>
+                            </defs>
+                            <g inkscape:groupmode="layer" inkscape:label="Layer 1">
+                            </g>
+                            <g inkscape:groupmode="layer" inkscape:label="Layer 2">
+                            <g clip-path="url(#clip_1)">
+                            <path transform="matrix(1,0,0,-1,296.0934,142.8121)" d="M0 0C-7.222-6.486-11.592-14.974-12.685-24.565L-12.915-28.406C-12.915-44.449-.425-49.831 10.586-54.604 18.705-58.191 27.164-61.998 26.98-69.508L26.681-72.314C25.485-78.524 19.217-82.561 12.225-82.952 4.692-83.527-2.277-81.032-6.262-76.926-10.442-72.314-12.202-66.449-12.513-62.804-12.513-62.78-12.616-60.147-12.616-60.147H-18.826L-23.875-88.783-22.645-89.76C-14.996-95.683-5.083-98.822 6.038-98.822 32.212-98.822 51.763-84.493 55.857-62.309 59.911-40.263 42.879-32.822 30.453-27.405 20.597-23.104 14.813-19.942 15.75-13.938 16.561-8.522 22.23-4.071 29.619-3.484 44.886-2.116 50.693-12.72 52.051-21.288 52.057-21.311 52.448-23.587 52.448-23.587H59.106L63.367 .598 62.274 1.564C54.897 8.188 44.138 11.983 32.765 11.983 20.442 11.983 7.89 7.349 0 0" fill="#e5211b"/>
+                            <path transform="matrix(1,0,0,-1,501.2247,155.04889)" d="M0 0C.38 2.324 1.202 6.832 1.202 6.832H-25.824L-42.01-85.067H-14.128L-4.244-28.98C-3.565-25.231-.402-13.006 12.633-13.006 19.487-13.006 25.341-15.663 21.977-34.857L13.11-85.067H41.021L50.693-30.246C53.839-12.317 53.563 6.303 27.543 8.418 17.837 9.2 7.636 5.969 0 0" fill="#e5211b"/>
+                            <path transform="matrix(1,0,0,-1,698.3463,138.61438)" d="M0 0C.408 2.311 1.19 6.831 1.19 6.831H-25.818L-42.017-85.057H-14.129L-4.232-28.981C-3.577-25.244-.415-12.996 12.644-12.996 19.476-12.996 25.329-15.652 21.971-34.869L13.104-85.057H41.016L50.676-30.234C53.838-12.317 53.563 6.291 27.537 8.384 17.842 9.2 7.636 5.945 0 0" fill="#e5211b"/>
+                            <path transform="matrix(1,0,0,-1,429.5431,148.21738)" d="M0 0-9.315-52.763C-10.845-61.596-13.467-71.083-25.059-72.107-30.418-72.567-34.771-69.543-36.191-64.391-37.1-61.09-35.95-54.592-35.341-51.096L-26.318 0H-54.224L-63.246-51.153C-64.879-60.17-67.139-72.533-62.527-81.227-56.777-92.061-44.155-93.543-37.123-93.463-28.596-93.383-20.562-90.588-14.243-85.701-14.583-87.667-15.324-91.899-15.324-91.899H11.708L27.894 0Z" fill="#e5211b"/>
+                            <path transform="matrix(1,0,0,-1,664.8854,87.75989)" d="M0 0C-1.645-9.304-10.522-16.872-19.837-16.872-29.176-16.872-35.386-9.304-33.764 0-32.097 9.327-23.219 16.894-13.903 16.894-4.577 16.894 1.645 9.327 0 0" fill="#95c11f"/>
+                            <path transform="matrix(1,0,0,-1,615.2848,104.18268)" d="M0 0C-1.645-9.315-10.534-16.883-19.85-16.883-29.165-16.883-35.398-9.315-33.753 0-32.115 9.304-23.219 16.871-13.904 16.871-4.577 16.871 1.645 9.304 0 0" fill="#f39200"/>
+                            <path transform="matrix(1,0,0,-1,537.4332,262.4849)" d="M0 0C4.215 .38 13.853 2.255 18.441 9.775 21.046 13.938 22.104 19.861 23.329 25.451L41.775 129.828C45.639 128.54 50.337 127.792 55.587 127.792 60.653 127.792 65.655 128.505 70.267 129.747L52.528 29.315C50.286 15.422 43.73 6.682 32.897 .069 20.954-7.602 5.877-8.82-1.282-8.82Z" fill="#e5211b"/>
+                            <path transform="matrix(1,0,0,-1,638.5729,223.6715)" d="M0 0 18.838 108.322C14.238 106.068 9.224 106.367 4.152 106.367-1.093 106.367-5.761 107.103-9.637 108.402L-28.75 0Z" fill="#e5211b"/>
+                            <path transform="matrix(1,0,0,-1,933.3097,268.94779)" d="M0 0H18.509V-36.72H3.34V-36.709H0ZM-16.98 6.337-16.566 6.049C-16.533 6.026-13.68 3.944-13.68-1.897V-35.456C-13.68-38.388-12.714-40.723-10.817-42.425-8.977-44.069-6.63-44.909-3.836-44.909H32.206V8.2H-16.98ZM-174.57-20.689C-172.879-23.943-170.027-27.199-165.956-30.384-161.051-34.225-156.525-36.422-152.501-36.928-152.489-36.928-152.075-36.974-152.075-36.974L-144.939-30.924-146.934-30.534C-151.983-29.579-156.745-26.462-161.086-21.287-165.433-16.112-167.635-9.35-167.635-1.173V.011H-151.672V8.2H-197.49V.011H-181.527V-1.173C-181.527-9.281-183.735-16.055-188.083-21.287-192.43-26.52-197.191-29.636-202.21-30.534L-204.252-30.89-197.087-36.974-196.673-36.928C-192.579-36.422-188.02-34.237-183.126-30.441-179.043-27.256-176.214-23.989-174.57-20.689M-95.838-16.273C-95.838-7.613-89.973-4.52-84.482-4.52-78.991-4.52-73.125-7.613-73.125-16.273-73.125-24.944-78.991-28.038-84.482-28.038-89.973-28.038-95.838-24.944-95.838-16.273M-59.946-16.273C-59.946-10.028-62.522-5.014-67.146-1.656H-58.06V6.543H-77.645V13.754H-91.319V6.543H-110.898V-1.656H-101.818C-106.448-5.014-109.018-10.028-109.018-16.273-109.018-28.222-99.622-35.651-84.482-35.651-69.342-35.651-59.946-28.222-59.946-16.273M-170.775-42.229H-187.668V-44.035L-187.45-44.173C-187.421-44.207-184.356-46.346-184.356-52.522V-61.929C-184.356-64.862-183.39-67.208-181.504-68.898-179.653-70.543-177.301-71.383-174.524-71.383H-127.211V-63.183H-170.775ZM-79.151-42.229H-96.034V-44.035L-95.815-44.173C-95.792-44.207-92.722-46.346-92.722-52.522V-61.929C-92.722-64.862-91.767-67.208-89.87-68.898-88.024-70.543-85.672-71.383-82.889-71.383H-36.14V-63.183H-79.151ZM75.149-34.363H154.81201V-26.163998H75.149ZM-258.694-42.229H-275.583V-44.035L-275.37-44.173C-275.335-44.207-272.271-46.346-272.271-52.522V-61.929C-272.271-64.862-271.311-67.208-269.418-68.898-267.573-70.543-265.233-71.383-262.432-71.383H-215.131V-63.183H-258.694ZM54.902 12.593H37.525V10.73L37.83 10.604C37.864 10.581 41.774 8.797 41.774-.126V-73.338H54.902V-20.873H68.858V-12.662H54.902ZM-38.003 12.604H-55.369V10.73L-55.076 10.604C-55.035 10.592-51.131 8.81-51.131-.126V-49.98H-38.003V-13.433H-24.042V-5.21H-38.003ZM101.646-58.79H143.345V-38.112H84.751V-46.312H130.224V-50.693H84.768V-52.488L84.97-52.637C85.004-52.648 88.063-54.799 88.063-60.975V-61.929C88.063-64.862 89.029-67.196 90.916-68.898 92.767-70.543 95.113-71.371 97.908-71.371H145.22V-63.183H101.646ZM-230.674-49.98H-216.995V12.593H-234.912V10.73L-234.625 10.604C-234.578 10.581-230.674 8.81-230.674-.126V-5.21H-247.458V-13.433H-230.674ZM-265.117-19.792C-263.438-23.047-260.592-26.301-256.521-29.487-251.616-33.328-247.097-35.536-243.065-36.031L-242.859-36.054-242.64-36.065-235.487-30.027-237.5-29.648C-242.542-28.682-247.298-25.577-251.645-20.39-255.98-15.226-258.188-8.453-258.188-.287V9.568H-274.853V7.843L-274.726 7.706C-274.708 7.67-272.167 4.635-272.104 1.058-272.081 .84-272.081 .621-272.081 .402V-.287C-272.081-8.395-274.289-15.157-278.648-20.39-282.989-25.623-287.745-28.739-292.77-29.648L-294.806-30.004-287.652-36.065-287.216-36.031C-283.145-35.536-278.59-33.351-273.685-29.544-269.608-26.382-266.768-23.093-265.117-19.792M-141.736-.126V-49.98H-128.051V12.593H-145.969V10.73L-145.681 10.604C-145.635 10.581-141.736 8.81-141.736-.126M114.985 6.44C123.369 6.44 132.334 3.6 132.334-4.393 132.334-12.409 123.369-15.25 114.985-15.25 106.59-15.25 97.631-12.409 97.631-4.393 97.631 3.6 106.59 6.44 114.985 6.44M114.985-23.162C134.444-23.162 146.525-15.974 146.525-4.393 146.525 7.176 134.444 14.375 114.985 14.375 95.527 14.375 83.452 7.176 83.452-4.393 83.452-15.974 95.527-23.162 114.985-23.162" fill="#706f6f"/>
+                            </g>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="h-5 w-px bg-slate-200"></div>
+                    <h1 class="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight">농가 약품비 분석 및 관리 시스템</h1>
+                    <span id="sync-status-text" class="hidden lg:inline-block text-[11px] text-slate-400 font-medium ml-2"></span>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <span id="user-display-badge" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 border border-slate-200 text-slate-700">
+                        <i data-lucide="user" class="w-3.5 h-3.5 mr-1 text-sunjin-red"></i><span id="current-user-email">-</span>
+                    </span>
+
+                    <button onclick="handleLogout()" title="로그아웃 후 로그인 화면으로 이동합니다." class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center no-print">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5 mr-1 text-slate-600"></i>로그아웃
+                    </button>
+                    <!-- 🎯 요구사항 3 반영: 버튼명을 "홈 으로" 로 변경 및 클릭 시 전체 필터 초기화 & 페이지 상단 스크롤 -->
+                    <button onclick="resetWholePageToInitialState()" title="페이지를 데이터 초기 로드 및 대시보드 홈 상태로 복원합니다." class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center no-print">
+                        <i data-lucide="home" class="w-3.5 h-3.5 mr-1 text-amber-600"></i>홈 으로
+                    </button>
+                    <button onclick="fetchGoogleSheetData(true)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center no-print">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-1 text-slate-600"></i>동기화
+                    </button>
+                </div>
+            </div>
+
+            <div class="h-12 flex items-center justify-between">
+                <div class="flex items-center space-x-1 no-print">
+                    <button id="main-tab-dashboard" onclick="switchMainTab('dashboard')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all tab-active flex items-center gap-1.5">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4"></i>종합 대시보드
+                    </button>
+                    <button id="main-tab-chart" onclick="switchMainTab('chart')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
+                        <i data-lucide="line-chart" class="w-4 h-4"></i>차트 분석
+                    </button>
+                </div>
+
+                <div class="relative no-print">
+                    <button id="verif-dropdown-btn" onclick="toggleVerifDropdown()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition shadow-sm flex items-center gap-1.5">
+                        <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-500"></i>데이터 검증
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </button>
+
+                    <div id="verif-dropdown-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 z-50 py-1.5 fade-in-section">
+                        <button onclick="openRawDataModal()" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-sunjin-red transition flex items-center gap-2">
+                            <i data-lucide="table" class="w-4 h-4 text-slate-400"></i>전체 원본 데이터 테이블
+                        </button>
+                        <button onclick="openTelemetryModal()" class="w-full text-left px-4 py-2 text-xs font-bold text-sunjin-orange hover:bg-orange-50 transition flex items-center gap-2 border-t border-slate-100">
+                            <i data-lucide="activity" class="w-4 h-4 text-sunjin-orange"></i>데이터 검증 / Pipeline Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6 mt-28">
+
+        <div id="error-alert" class="hidden bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center justify-between text-red-800 shadow-sm no-print">
+            <div class="flex items-start space-x-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 shrink-0 mt-0.5"></i>
+                <div class="flex-1 text-xs sm:text-sm">
+                    <p class="font-extrabold" id="error-title">인증 실패 또는 데이터 수신 오류</p>
+                    <p id="error-desc" class="text-red-600 mt-0.5">이메일과 비밀번호를 확인해 주세요.</p>
+                </div>
+            </div>
+            <button onclick="showLoginModal()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shrink-0 ml-3">
+                다시 로그인
+            </button>
+        </div>
+
+        <!-- ================= 탭 1: MAIN DASHBOARD VIEW ================= -->
+        <div id="dashboard-view" class="flex flex-col gap-6">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-4 print-col-2 print-break-avoid">
+                <div class="lg:col-span-4 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-center gap-1.5 hover:shadow-md transition duration-300">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="w-3 h-3 rounded-full bg-sunjin-red shrink-0"></span>
+                        <h2 class="text-base sm:text-lg font-black text-slate-800 whitespace-nowrap leading-snug">
+                            비육농장 농장별 약품비 현황
+                        </h2>
+                    </div>
+                    <p class="text-xs text-slate-400 font-bold pl-5 whitespace-nowrap">*구제역 백신 제외</p>
+                </div>
+
+                <div class="lg:col-span-5 bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-center hover:shadow-md transition duration-300">
+                    <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                        <i data-lucide="layers" class="w-3 h-3 text-slate-400"></i> 입식두당 약품비 등급 범위 기준표
+                    </p>
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-center text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 font-extrabold text-[10px]">
+                                    <th class="py-1 px-1.5 border border-slate-200/80 rounded-tl-lg">A등급</th>
+                                    <th class="py-1 px-1.5 border border-slate-200/80">B등급</th>
+                                    <th class="py-1 px-1.5 border border-slate-200/80">C등급</th>
+                                    <th class="py-1 px-1.5 border border-slate-200/80">D등급</th>
+                                    <th class="py-1 px-1.5 border border-slate-200/80 rounded-tr-lg">D2등급</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="font-extrabold text-[10px] sm:text-[11px]">
+                                    <td class="py-1.5 px-1.5 bg-emerald-50 text-emerald-700 border border-slate-200/80">2,000원 미만</td>
+                                    <td class="py-1.5 px-1.5 bg-blue-50 text-blue-700 border border-slate-200/80">4,000원 미만</td>
+                                    <td class="py-1.5 px-1.5 bg-purple-50 text-purple-700 border border-slate-200/80">6,000원 미만</td>
+                                    <td class="py-1.5 px-1.5 bg-orange-50 text-orange-700 border border-slate-200/80">8,000원 미만</td>
+                                    <td class="py-1.5 px-1.5 bg-rose-50 text-rose-700 border border-slate-200/80">8,000원 이상</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between hover:shadow-md transition duration-300">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">목표 약품비</p>
+                        <h3 class="text-xl sm:text-2xl font-black text-sunjin-red mt-1">4,700 원</h3>
+                        <p class="text-[10px] text-slate-400 font-semibold mt-0.5">입식 두당 목표 기준</p>
+                    </div>
+                    <div class="bg-red-50 text-sunjin-red p-3 rounded-2xl border border-red-100">
+                        <i data-lucide="target" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 print-col-2 print-break-avoid">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between hover:shadow-md transition duration-300">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">분석 대상 농가</p>
+                        <h3 id="kpi-total-farms" class="text-xl sm:text-2xl font-black text-slate-800 mt-1">-</h3>
+                    </div>
+                    <div class="bg-red-50 text-sunjin-red p-2.5 rounded-xl"><i data-lucide="home" class="w-5 h-5"></i></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between hover:shadow-md transition duration-300">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">평균 입식 두당 약품비</p>
+                        <h3 id="kpi-avg-cost" class="text-xl sm:text-2xl font-black text-slate-800 mt-1">-</h3>
+                        <p id="kpi-avg-cost-grade" class="text-[10px] mt-1 font-bold text-slate-500"></p>
+                    </div>
+                    <div class="bg-orange-50 text-sunjin-orange p-2.5 rounded-xl"><i data-lucide="pill" class="w-5 h-5"></i></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between hover:shadow-md transition duration-300">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">총 입식 두수 누계</p>
+                        <h3 id="kpi-total-inflow" class="text-xl sm:text-2xl font-black text-slate-800 mt-1">-</h3>
+                    </div>
+                    <div class="bg-green-50 text-sunjin-green p-2.5 rounded-xl"><i data-lucide="database" class="w-5 h-5"></i></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between hover:shadow-md transition duration-300">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">총 매입 누계액</p>
+                        <h3 id="kpi-total-purchase" class="text-xl sm:text-2xl font-black text-slate-800 mt-1">-</h3>
+                    </div>
+                    <div class="bg-slate-100 text-slate-700 p-2.5 rounded-xl"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-col-2 print-break-avoid">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
+                    <div class="mb-3">
+                        <h4 class="font-extrabold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 bg-sunjin-green rounded-full"></span>
+                            농가 등급별 점유율
+                        </h4>
+                    </div>
+                    <div class="relative w-full h-[160px] flex items-center justify-center mx-auto">
+                        <canvas id="chart-grades"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
+                    <div class="mb-3">
+                        <h4 class="font-extrabold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 bg-sunjin-red rounded-full"></span>
+                            입식두당 약품비 추이
+                        </h4>
+                        <p class="text-[10px] text-slate-400 mt-0.5 ml-4">*6개월 추이</p>
+                    </div>
+                    <div class="w-full h-[160px]">
+                        <canvas id="chart-monthly-trend"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
+                    <div class="mb-3">
+                        <h4 id="chart-regions-title" class="font-extrabold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 bg-sunjin-orange rounded-full"></span>
+                            지역별 평균 두당 약품비
+                        </h4>
+                    </div>
+                    <div class="w-full h-[160px]">
+                        <canvas id="chart-regions"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
+                    <div class="mb-3">
+                        <h4 class="font-extrabold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 bg-slate-700 rounded-full"></span>
+                            약품 종류별 평균 점유 비중
+                        </h4>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 items-center">
+                        <div class="relative h-[120px] w-full">
+                            <canvas id="chart-overall-ratios"></canvas>
+                        </div>
+                        <div class="space-y-1.5" id="legend-overall-ratios"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300">
+                <div class="p-4 border-b border-slate-100 bg-slate-50/70 flex flex-col gap-3 no-print">
+                    <div id="dept-tab-wrapper" class="flex flex-wrap gap-1.5"></div>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2 flex-1">
+                            <div class="relative w-full sm:w-52">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                    <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                                </span>
+                                <input id="search-input" type="text" placeholder="농장코드/농장명..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-sunjin-red transition" oninput="syncAndApplyFilters('search', this.value)">
+                            </div>
+
+                            <select id="filter-dept" onchange="syncAndApplyFilters('dept', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                                <option value="">사업부 전체</option>
+                                <option value="F사업팀">F사업팀</option>
+                                <option value="중부사업부">중부사업부</option>
+                                <option value="호남사업부">호남사업부</option>
+                                <option value="영남사업팀">영남사업팀</option>
+                            </select>
+                            
+                            <select id="filter-region" onchange="syncAndApplyFilters('region', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                                <option value="">지역 전체</option>
+                            </select>
+
+                            <select id="filter-size" onchange="syncAndApplyFilters('size', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                                <option value="">규모 전체</option>
+                                <option value="1,000 미만">1,000 미만</option>
+                                <option value="1,000-3,000">1,000-3,000</option>
+                                <option value="3,000-5,000">3,000-5,000</option>
+                                <option value="5,000 이상">5,000 이상</option>
+                            </select>
+
+                            <select id="filter-rearing-grade" onchange="syncAndApplyFilters('rearingGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                                <option value="">육성율 등급 전체</option>
+                            </select>
+
+                            <select id="filter-cost-grade" onchange="syncAndApplyFilters('costGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                                <option value="">약품비 등급 전체</option>
+                                <option value="A">A등급 (2,000원 미만)</option>
+                                <option value="B">B등급 (4,000원 미만)</option>
+                                <option value="C">C등급 (6,000원 미만)</option>
+                                <option value="D">D등급 (8,000원 미만)</option>
+                                <option value="D2">D2등급 (8,000원 이상)</option>
+                            </select>
+
+                            <button onclick="resetFilters()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer no-print">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>초기화
+                            </button>
+
+                            <button onclick="openFarmSizeModal()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 cursor-pointer no-print shadow-sm ml-1">
+                                <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-emerald-600"></i>농장규모별 분석
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span id="data-count-tag" class="text-xs bg-red-50 text-sunjin-red px-3 py-1.5 rounded-full font-bold"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-auto w-full max-h-[550px] relative transition-all duration-300">
+                    <table class="w-full text-left sticky-table text-[10px] sm:text-[11px] whitespace-nowrap">
+                        <colgroup>
+                            <col style="width: 8%;">
+                            <col style="width: 10%;">
+                            <col style="width: 13%;">
+                            <col style="width: 8%;">
+                            <col style="width: 7%;">
+                            <col style="width: 9%;">
+                            <col style="width: 7%;">
+                            <col style="width: 9%;">
+                            <col style="width: 12%;">
+                            <col style="width: 11%;">
+                            <col style="width: 5%;">
+                            <col style="width: 8%;">
+                        </colgroup>
+                        <thead>
+                            <tr class="bg-slate-800 text-white font-bold text-center select-none shadow">
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('region')">지역 <span id="sort-region"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('farmCode')">농장코드 <span id="sort-farmCode"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('farmName')">농장명 <span id="sort-farmName"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('manager')">담당CM <span id="sort-manager"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('farmSize')">농장규모 <span id="sort-farmSize"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('breedingSize')">사육규모 <span id="sort-breedingSize"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('rearingGrade')">육성율 <span id="sort-rearingGrade"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('avgRearingRate')">평균육성률 <span id="sort-avgRearingRate"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 bg-slate-900 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('medicineCost')">입식두당약품비 <span id="sort-medicineCost"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('shipmentCost')">출하두당약품비 <span id="sort-shipmentCost"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('gradeCategory')">등급 <span id="sort-gradeCategory"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('vsMedian')">목표값 대비 <span id="sort-vsMedian"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-slate-100 bg-white font-medium text-slate-700 text-center transition-all duration-300"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 상세 데이터 인라인 카드 -->
+            <div id="inline-detail-section" class="hidden bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden fade-in-section">
+                <div class="bg-sunjin-red text-white p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <span id="selected-farm-badge" class="bg-white/20 text-white font-bold px-3 py-1 rounded-full text-[10px] tracking-wide"></span>
+                        <h3 id="selected-farm-title" class="text-lg font-black mt-1.5 italic"></h3>
+                    </div>
+                    <button onclick="document.getElementById('inline-detail-section').classList.add('hidden');" class="text-red-200 hover:text-white transition no-print">
+                        <i data-lucide="x-circle" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-8">
+                    <div class="border-b border-slate-100 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-8 print-col-2">
+                        <div class="bg-slate-50/60 p-5 rounded-2xl border border-slate-200/60 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 bg-sunjin-orange rounded-full"></span>
+                                    약품매입 상세 성분비
+                                </h4>
+                                <span class="text-[10px] bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold">비율 총합 100.00% 정규화</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                <div class="relative max-h-[160px] aspect-square flex items-center justify-center mx-auto w-full">
+                                    <canvas id="chart-selected-ratios"></canvas>
+                                </div>
+                                <div id="sel-ratio-bars" class="space-y-2.5"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/60 p-5 rounded-2xl border border-slate-200/60 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 bg-sunjin-red rounded-full"></span>
+                                    지원약품비율
+                                </h4>
+                                <span class="text-[10px] bg-red-50 text-sunjin-red px-2.5 py-0.5 rounded-full font-bold">지원비율 통계</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                <div class="relative max-h-[160px] aspect-square flex items-center justify-center mx-auto w-full">
+                                    <canvas id="chart-support-ratio"></canvas>
+                                </div>
+                                <div id="support-ratio-stats" class="space-y-4"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="mb-4">
+                            <h4 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 bg-sunjin-red rounded-full"></span>
+                                상세 연동 타임라인 분석 및 트렌드 차트
+                            </h4>
+                            <p class="text-[11px] text-slate-400 mt-1">입식두당 약품비 추세, 입식두수, 약품매입액, 입식지원액, 지원약품매입액</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6 print-col-2">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <h5 class="text-[11px] font-extrabold text-amber-700 flex items-center justify-between">
+                                    <span>입식두당 약품비 추이</span>
+                                    <span id="dt-total-cost" class="text-[9px] bg-amber-100 px-1.5 py-0.5 rounded font-bold"></span>
+                                </h5>
+                                <p class="text-[9px] text-amber-600/80 mt-0.5">*6개월 추이</p>
+                                <div class="h-[110px] mt-2"><canvas id="chart-dt-cost"></canvas></div>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <h5 class="text-[11px] font-extrabold text-blue-700 flex items-center justify-between">
+                                    <span>입식두수 변동</span>
+                                    <span id="dt-total-head" class="text-[9px] bg-blue-100 px-1.5 py-0.5 rounded font-bold"></span>
+                                </h5>
+                                <div class="h-[110px] mt-2"><canvas id="chart-dt-head"></canvas></div>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <h5 class="text-[11px] font-extrabold text-emerald-700 flex items-center justify-between">
+                                    <span>약품 매입액 변동</span>
+                                    <span id="dt-total-pur" class="text-[9px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold"></span>
+                                </h5>
+                                <div class="h-[110px] mt-2"><canvas id="chart-dt-pur"></canvas></div>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <h5 class="text-[11px] font-extrabold text-purple-700 flex items-center justify-between">
+                                    <span>지원 약품 매입액 변동</span>
+                                    <span id="dt-total-sup" class="text-[9px] bg-purple-100 px-1.5 py-0.5 rounded font-bold"></span>
+                                </h5>
+                                <div class="h-[110px] mt-2"><canvas id="chart-dt-sup"></canvas></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="border border-slate-300 rounded-2xl overflow-hidden bg-slate-50 shadow-sm">
+                                <div class="p-3 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
+                                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 bg-sunjin-red rounded-full"></span>입식두당 약품비 추이 및 지원 약품 매입
+                                    </span>
+                                </div>
+                                <div class="overflow-x-auto w-full">
+                                    <table class="w-full text-xs text-left border-collapse bg-white whitespace-nowrap">
+                                        <thead><tr id="thead-group-a" class="bg-slate-50 text-slate-800 font-bold border-b border-slate-200 text-center"></tr></thead>
+                                        <tbody id="tbody-group-a" class="divide-y divide-slate-100 text-center"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="border border-slate-300 rounded-2xl overflow-hidden bg-slate-50 shadow-sm">
+                                <div class="p-3 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
+                                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>입식두수 및 약품/입식지원액
+                                    </span>
+                                </div>
+                                <div class="overflow-x-auto w-full">
+                                    <table class="w-full text-xs text-left border-collapse bg-white whitespace-nowrap">
+                                        <thead><tr id="thead-group-b" class="bg-slate-50 text-slate-800 font-bold border-b border-slate-200 text-center"></tr></thead>
+                                        <tbody id="tbody-group-b" class="divide-y divide-slate-200 text-center"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 탭 2: ADVANCED CHART ANALYSIS VIEW ================= -->
+        <div id="chart-analysis-view" class="hidden flex flex-col gap-6 fade-in-section">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3 no-print">
+                <div class="flex flex-wrap items-center gap-2 flex-1 w-full">
+                    <div class="relative w-full sm:w-52">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                            <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                        </span>
+                        <input id="chart-search-input" type="text" placeholder="농장코드/농장명..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-sunjin-red transition" oninput="syncAndApplyFilters('search', this.value)">
+                    </div>
+
+                    <select id="chart-filter-dept" onchange="syncAndApplyFilters('dept', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                        <option value="">사업부 전체</option>
+                        <option value="F사업팀">F사업팀</option>
+                        <option value="중부사업부">중부사업부</option>
+                        <option value="호남사업부">호남사업부</option>
+                        <option value="영남사업팀">영남사업팀</option>
+                    </select>
+                    
+                    <select id="chart-filter-region" onchange="syncAndApplyFilters('region', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                        <option value="">지역 전체</option>
+                    </select>
+
+                    <select id="chart-filter-size" onchange="syncAndApplyFilters('size', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                        <option value="">규모 전체</option>
+                        <option value="1,000 미만">1,000 미만</option>
+                        <option value="1,000-3,000">1,000-3,000</option>
+                        <option value="3,000-5,000">3,000-5,000</option>
+                        <option value="5,000 이상">5,000 이상</option>
+                    </select>
+
+                    <select id="chart-filter-rearing-grade" onchange="syncAndApplyFilters('rearingGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                        <option value="">육성율 등급 전체</option>
+                    </select>
+
+                    <select id="chart-filter-cost-grade" onchange="syncAndApplyFilters('costGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                        <option value="">약품비 등급 전체</option>
+                        <option value="A">A등급 (2,000원 미만)</option>
+                        <option value="B">B등급 (4,000원 미만)</option>
+                        <option value="C">C등급 (6,000원 미만)</option>
+                        <option value="D">D등급 (8,000원 미만)</option>
+                        <option value="D2">D2등급 (8,000원 이상)</option>
+                    </select>
+
+                    <button onclick="resetFilters()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer no-print">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>초기화
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span id="chart-data-count-tag" class="text-xs bg-red-50 text-sunjin-red px-3 py-1.5 rounded-full font-bold"></span>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                            <span class="w-3 h-3 bg-sunjin-red rounded-full"></span>
+                            담당부서별 농장 입식두당 약품비 비교 차트
+                        </h3>
+                    </div>
+                    <span class="text-xs bg-red-50 text-sunjin-red px-3 py-1 rounded-full font-bold self-start md:self-auto">
+                        💡 막대 클릭 시 상세조회 이동
+                    </span>
+                </div>
+                <div class="w-full overflow-x-auto pb-4">
+                    <div class="min-w-[1000px] h-[400px] relative">
+                        <canvas id="chart-farm-bar-comparison"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4사분면 산점도 차트 -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                            <span class="w-3 h-3 bg-sunjin-orange rounded-full"></span>
+                            육성률 vs 입식두당 약품비 4사분면 성적 분석
+                        </h3>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-[10px] font-bold">
+                        <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-md border border-emerald-300">1사분면 (좌상단): 약품비 저 / 육성률 고 (우수)</span>
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md border border-yellow-300">2·3사분면: 중간 영역</span>
+                        <span class="px-2 py-1 bg-rose-100 text-rose-800 rounded-md border border-rose-300">4사분면 (우하단): 약품비 고 / 육성률 저 (중점관리)</span>
+                    </div>
+                </div>
+                <div class="w-full h-[450px]">
+                    <canvas id="chart-farm-quadrant-scatter"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 팝업 모달 1: DATA VALIDATION & PIPELINE STATUS 모달 -->
+        <div id="telemetry-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+            <div class="bg-[#0B132A] rounded-2xl shadow-2xl max-w-2xl w-full p-6 border border-slate-800 text-white fade-in-section">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="w-3 h-3 bg-sunjin-orange rounded-full animate-pulse"></span>
+                        <h3 class="text-base font-black tracking-wider text-sunjin-orange font-mono">DATA VALIDATION & PIPELINE STATUS</h3>
+                    </div>
+                    <button onclick="closeTelemetryModal()" class="text-slate-400 hover:text-white transition">
+                        <i data-lucide="x-circle" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                
+                <div class="font-mono text-xs text-slate-300 space-y-4 bg-[#050B1A] p-5 rounded-xl border border-slate-800/80">
+                    <p class="text-emerald-400 font-bold text-sm" id="telemetry-log-status">[SUCCESS] Google Apps Script 백엔드 데이터 수신 성공!</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-t border-b border-slate-800 py-3">
+                        <div>• 수신된 데이터 총 수: <span id="telemetry-total-rows" class="text-white font-bold">0</span> 건</div>
+                        <div>• 식별 농장 개소 수: <span id="telemetry-farms-count" class="text-white font-bold">0</span> 개</div>
+                        <div>• 백엔드 통신 지연시간: <span id="telemetry-latency" class="text-emerald-400 font-bold">0 ms</span></div>
+                        <div>• 약품비 0원 농가 개수: <span id="telemetry-zero-farms" class="text-rose-400 font-bold">0</span> 개</div>
+                    </div>
+                    <div class="text-xs text-slate-400 space-y-1.5">
+                        <div>Target 108행 약품비: <span id="telemetry-bu-cost" class="text-amber-300 font-bold">-- 원</span></div>
+                        <div>Target 108행 평균육성률: <span id="telemetry-bu-rate" class="text-amber-300 font-bold">-- %</span></div>
+                        <div id="telemetry-sync-time" class="text-slate-500 pt-1">동기화 시각: --</div>
+                    </div>
+                </div>
+
+                <div class="mt-5 flex justify-end">
+                    <button onclick="closeTelemetryModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 팝업 모달 2: 전체 원본 데이터 테이블 모달 -->
+        <div id="raw-data-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[90vh] flex flex-col border border-slate-100 fade-in-section">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-2 bg-red-50 text-sunjin-red rounded-xl"><i data-lucide="database" class="w-5 h-5"></i></div>
+                        <div>
+                            <h3 class="text-base font-black text-slate-800">Google Apps Script 실시간 수신 데이터 뷰어 (전체 열 & 페이지네이션)</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">스프레드시트에서 수신된 전체 컬럼 스펙트럼 데이터를 확인할 수 있습니다.</p>
+                        </div>
+                    </div>
+                    <button onclick="closeRawDataModal()" class="text-slate-400 hover:text-slate-600 transition">
+                        <i data-lucide="x-circle" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-auto p-4">
+                    <table class="w-full text-[11px] text-left border-collapse whitespace-nowrap">
+                        <thead id="raw-modal-thead" class="sticky top-0 bg-slate-800 text-white font-bold z-10">
+                        </thead>
+                        <tbody id="raw-modal-tbody" class="divide-y divide-slate-100 bg-white font-mono text-slate-700">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+                    <div id="raw-modal-count" class="font-bold">총 0 건 수신됨</div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <button onclick="changeRawPage(-1)" id="btn-prev-page" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-bold hover:bg-slate-100 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1">
+                            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> 이전
+                        </button>
+                        <span id="raw-page-info" class="font-bold text-slate-800 px-2">Page 1 / 1</span>
+                        <button onclick="changeRawPage(1)" id="btn-next-page" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-bold hover:bg-slate-100 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1">
+                            다음 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <button onclick="closeRawDataModal()" class="px-4 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 팝업 모달 3: 농장규모별 데이터 시각화 분석 모달 -->
+        <div id="farm-size-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col border border-slate-200 fade-in-section overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-2xl">
+                            <i data-lucide="pie-chart" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-slate-800">농장규모별 통계 종합 분석 리포트</h3>
+                        </div>
+                    </div>
+                    <button onclick="closeFarmSizeModal()" class="text-slate-400 hover:text-slate-600 transition">
+                        <i data-lucide="x-circle" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 overflow-y-auto space-y-6">
+                    <!-- 규모 선택 버튼 필터바 -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i data-lucide="filter" class="w-4 h-4 text-emerald-600"></i> 농장규모 선택 필터:
+                        </span>
+                        <div id="modal-size-filter-buttons" class="flex flex-wrap gap-1.5">
+                            <!-- 자바스크립트로 동적 생성 -->
+                        </div>
+                    </div>
+
+                    <!-- 상단 요약 KPI 카드 3종 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">선택 규모 입식 두수 누계</p>
+                                <h4 id="size-kpi-total-head" class="text-xl font-black text-emerald-900 mt-1">-</h4>
+                            </div>
+                            <div class="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl"><i data-lucide="database" class="w-5 h-5"></i></div>
+                        </div>
+                        <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-bold text-blue-700 uppercase tracking-wider">선택 규모 약품 매입액</p>
+                                <h4 id="size-kpi-total-pur" class="text-xl font-black text-blue-900 mt-1">-</h4>
+                            </div>
+                            <div class="p-2.5 bg-blue-100 text-blue-700 rounded-xl"><i data-lucide="wallet" class="w-5 h-5"></i></div>
+                        </div>
+                        <div class="bg-rose-50/60 p-4 rounded-2xl border border-rose-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-bold text-rose-700 uppercase tracking-wider">평균 입식두당 약품비</p>
+                                <h4 id="size-kpi-avg-cost" class="text-xl font-black text-slate-900 mt-1">-</h4>
+                            </div>
+                            <div class="p-2.5 bg-rose-100 text-rose-700 rounded-xl"><i data-lucide="pill" class="w-5 h-5"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- 메인 차트 3종 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                            <div class="mb-2">
+                                <h4 class="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 bg-rose-500 rounded-full"></span>
+                                    입식두당 약품비 추이
+                                </h4>
+                                <p class="text-[10px] text-slate-400 font-bold mt-0.5 ml-4">*6개월 추이</p>
+                            </div>
+                            <div class="relative h-[180px] w-full">
+                                <canvas id="chart-modal-size-cost-line"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                            <h4 class="font-extrabold text-slate-800 text-xs flex items-center gap-1.5 mb-2">
+                                <span class="w-2.5 h-2.5 bg-sunjin-red rounded-full"></span>
+                                지원 약품 비율 (%)
+                            </h4>
+                            <div class="relative h-[180px] w-full flex items-center justify-center">
+                                <canvas id="chart-modal-size-support-pie"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                            <h4 class="font-extrabold text-slate-800 text-xs flex items-center gap-1.5 mb-2">
+                                <span class="w-2.5 h-2.5 bg-purple-500 rounded-full"></span>
+                                약품 종류별 구성 비율 (%)
+                            </h4>
+                            <div class="relative h-[180px] w-full flex items-center justify-center">
+                                <canvas id="chart-modal-size-type-pie"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 하단 상세 연동 타임라인 분석 및 트렌드 차트 -->
+                    <div class="space-y-6 pt-2 border-t border-slate-200">
+                        <div class="mb-2">
+                            <h4 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 bg-sunjin-red rounded-full"></span>
+                                상세 연동 타임라인 분석 및 트렌드 차트
+                            </h4>
+                            <p class="text-[11px] text-slate-400 mt-0.5">선택 규모의 입식두수, 약품매입액, 지원약품매입액 변동 내역입니다.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <h5 class="text-[11px] font-extrabold text-blue-700 flex items-center justify-between">
+                                    <span>입식두수 변동</span>
+                                    <span id="modal-dt-total-head" class="text-[9px] bg-blue-100 px-1.5 py-0.5 rounded font-bold"></span>
+                                </h5>
+                                <div class="h-[105px] mt-2"><canvas id="chart-modal-dt-head"></canvas></div>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <h5 class="text-[11px] font-extrabold text-emerald-700 flex items-center justify-between">
+                                    <span>약품 매입액 변동</span>
+                                    <span id="modal-dt-total-pur" class="text-[9px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold"></span>
+                                </h5>
+                                <div class="h-[105px] mt-2"><canvas id="chart-modal-dt-pur"></canvas></div>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                <h5 class="text-[11px] font-extrabold text-purple-700 flex items-center justify-between">
+                                    <span>지원 약품 매입액 변동</span>
+                                    <span id="modal-dt-total-sup" class="text-[9px] bg-purple-100 px-1.5 py-0.5 rounded font-bold"></span>
+                                </h5>
+                                <div class="h-[105px] mt-2"><canvas id="chart-modal-dt-sup"></canvas></div>
+                            </div>
+                        </div>
+
+                        <!-- 2종 상세 타임라인 데이터 표 -->
+                        <div class="space-y-4">
+                            <div class="border border-slate-300 rounded-2xl overflow-hidden bg-slate-50 shadow-sm">
+                                <div class="p-3 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
+                                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 bg-sunjin-red rounded-full"></span>입식두당 약품비 추이 및 지원 약품 매입
+                                    </span>
+                                </div>
+                                <div class="overflow-x-auto w-full">
+                                    <table class="w-full text-xs text-left border-collapse bg-white whitespace-nowrap">
+                                        <thead><tr id="modal-thead-group-a" class="bg-slate-50 text-slate-800 font-bold border-b border-slate-200 text-center"></tr></thead>
+                                        <tbody id="modal-tbody-group-a" class="divide-y divide-slate-100 text-center"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="border border-slate-300 rounded-2xl overflow-hidden bg-slate-50 shadow-sm">
+                                <div class="p-3 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
+                                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>입식두수 및 약품/입식지원액
+                                    </span>
+                                </div>
+                                <div class="overflow-x-auto w-full">
+                                    <table class="w-full text-xs text-left border-collapse bg-white whitespace-nowrap">
+                                        <thead><tr id="modal-thead-group-b" class="bg-slate-50 text-slate-800 font-bold border-b border-slate-200 text-center"></tr></thead>
+                                        <tbody id="modal-tbody-group-b" class="divide-y divide-slate-200 text-center"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                    <button onclick="closeFarmSizeModal()" class="px-5 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ─── 최하단 문의처 푸터 바 (Footer) ─── -->
+    <footer class="bg-white border-t border-slate-200 py-3.5 mt-auto no-print">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-[11px] font-semibold text-slate-500 tracking-tight">
+                문의: 양돈사업본부 재무팀 정윤택 / <a href="mailto:ytjeong@sunjin.com" class="text-sunjin-red font-bold hover:underline">ytjeong@sunjin.com</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        Chart.register(ChartDataLabels);
+
+        Chart.defaults.animation = {
+            duration: 750,
+            easing: 'easeOutQuart'
+        };
+
+        const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbz1MVbZebgm9_w_0E27HBD7ZcvdukkL5d2vAf6kpPxQW4nv5ejHMT-Le0EPbaU6yNbM/exec";
+        const AUTO_REFRESH_INTERVAL = 3600000;
+
+        let currentUserEmail = sessionStorage.getItem('user_email') || "";
+        let currentUserPassword = sessionStorage.getItem('user_password') || "";
+        let currentMainTab = 'dashboard';
+
+        let parsedData = [];
+        let filteredData = [];
+        let activeCharts = {};
+        let activeDept = 'ALL';
+        let summaryRows = [];
+        let rawReceivedRows = [];
+        let lastFetchLatencyMs = 0;
+
+        let rawModalCurrentPage = 1;
+        const rawModalPageSize = 25;
+
+        let farmSizeSummaryRows = [];
+        let selectedModalSizeCategory = 'ALL';
+
+        let buSummaryData = {
+            farmCount: 97,
+            medicineCost: 4838,
+            avgRearingRate: 93.5,
+            totalHead: 312674,
+            totalPurchase: 1514963475,
+            costTrendVals: [],
+            ratios: []
+        };
+
+        const thresholds = { a: 2000, b: 4000, c: 6000, d: 8000 };
+
+        let currentKPIs = {
+            avgCost: 0,
+            totalHead: 0,
+            totalPur: 0,
+            trendData: [],
+            ratios: [0, 0, 0, 0, 0]
+        };
+
+        const deptOrderMap = {
+            'F사업팀': 1,
+            '중부사업부': 2,
+            '호남사업부': 3,
+            '영남사업팀': 4
+        };
+
+        let currentSortField = 'medicineCost'; 
+        let currentSortAsc = false;
+
+        let lastValidTrendIdx = -1;
+        let lastValidHeadcountIdx = -1;
+        let lastValidPurchaseIdx = -1;
+        let lastValidSupportInflowIdx = -1;
+        let lastValidSupportMedIdx = -1;
+
+        const mappings = {
+            dept: 1, region: 2, farmCode: 3, farmName: 4, manager: 5, farmSize: 6, breedingSize: 7, rearingGrade: 8, avgRearingRate: 9,
+            medicineCost: 10, shipmentCost: 11, gradeCategory: 12, vsMedian: 13, ratios: [14, 15, 16, 17, 18],
+            costTrend: [], headcount: [], headcountTotal: -1, purchase: [], purchaseTotal: -1, supportInflow: [], supportInflowTotal: -1, supportMed: [], supportMedTotal: -1, supportMedRatio: 93
+        };
+
+        const ratioLabels = ['백신', '항생제', '치료제', '영양제', '기타외품'];
+        const ratioColors = ['#818cf8', '#fb7185', '#34d399', '#60a5fa', '#94a3b8'];
+
+        const gradeColors = {
+            'A': '#64B41E', 
+            'B': '#3b82f6', 
+            'C': '#8b5cf6', 
+            'D': '#f97316', 
+            'D2': '#F51932'
+        };
+
+        function showLoginModal() {
+            const modal = document.getElementById('login-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function hideLoginModal() {
+            const modal = document.getElementById('login-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('login-input-password');
+            const toggleIcon = document.getElementById('password-toggle-icon');
+            if (!pwdInput) return;
+
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                if (toggleIcon) toggleIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                pwdInput.type = 'password';
+                if (toggleIcon) toggleIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        function handleCustomLogin(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('login-input-email');
+            const passwordInput = document.getElementById('login-input-password');
+            const errorMsg = document.getElementById('login-error-msg');
+            const loginBtn = document.getElementById('btn-login-submit');
+            const loginBtnText = document.getElementById('btn-login-text');
+
+            const emailVal = emailInput ? emailInput.value.trim() : '';
+            const passwordVal = passwordInput ? passwordInput.value.trim() : '';
+
+            if (!emailVal || !passwordVal) {
+                if (errorMsg) {
+                    errorMsg.textContent = "이메일과 비밀번호를 모두 입력해 주세요.";
+                    errorMsg.classList.remove('hidden');
+                }
+                return;
+            }
+
+            currentUserEmail = emailVal;
+            currentUserPassword = passwordVal;
+
+            sessionStorage.setItem('user_email', currentUserEmail);
+            sessionStorage.setItem('user_password', currentUserPassword);
+
+            if (errorMsg) errorMsg.classList.add('hidden');
+
+            if (emailInput) emailInput.disabled = true;
+            if (passwordInput) passwordInput.disabled = true;
+            if (loginBtn) loginBtn.disabled = true;
+
+            if (loginBtnText) {
+                loginBtnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm"></i> 로그인 처리 중...`;
+            }
+
+            fetchGoogleSheetData(true, true);
+        }
+
+        function restoreLoginButtonState() {
+            const emailInput = document.getElementById('login-input-email');
+            const passwordInput = document.getElementById('login-input-password');
+            const loginBtn = document.getElementById('btn-login-submit');
+            const loginBtnText = document.getElementById('btn-login-text');
+
+            if (emailInput) emailInput.disabled = false;
+            if (passwordInput) passwordInput.disabled = false;
+            if (loginBtn) loginBtn.disabled = false;
+
+            if (loginBtnText) {
+                loginBtnText.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i>로그인 및 데이터 조회`;
+            }
+            lucide.createIcons();
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('user_email');
+            sessionStorage.removeItem('user_password');
+            currentUserEmail = "";
+            currentUserPassword = "";
+            
+            const userEmailEl = document.getElementById('current-user-email');
+            if (userEmailEl) userEmailEl.textContent = "-";
+
+            restoreLoginButtonState();
+            showLoginModal();
+            showNotification('🔒 로그아웃되었습니다.', 'info');
+        }
+
+        function toggleVerifDropdown() {
+            const menu = document.getElementById('verif-dropdown-menu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        function openTelemetryModal() {
+            const menu = document.getElementById('verif-dropdown-menu');
+            if (menu) menu.classList.add('hidden');
+            const modal = document.getElementById('telemetry-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeTelemetryModal() {
+            const modal = document.getElementById('telemetry-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openRawDataModal() {
+            const menu = document.getElementById('verif-dropdown-menu');
+            if (menu) menu.classList.add('hidden');
+            rawModalCurrentPage = 1;
+            renderRawModalTable();
+            document.getElementById('raw-data-modal').classList.remove('hidden');
+        }
+
+        function closeRawDataModal() {
+            document.getElementById('raw-data-modal').classList.add('hidden');
+        }
+
+        function openFarmSizeModal() {
+            selectedModalSizeCategory = 'ALL';
+            renderFarmSizeModalContent();
+            document.getElementById('farm-size-modal').classList.remove('hidden');
+        }
+
+        function closeFarmSizeModal() {
+            document.getElementById('farm-size-modal').classList.add('hidden');
+        }
+
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+            const dView = document.getElementById('dashboard-view');
+            const cView = document.getElementById('chart-analysis-view');
+
+            const btnDash = document.getElementById('main-tab-dashboard');
+            const btnChart = document.getElementById('main-tab-chart');
+
+            if (dView) dView.classList.toggle('hidden', tab !== 'dashboard');
+            if (cView) cView.classList.toggle('hidden', tab !== 'chart');
+
+            const inactiveStyle = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:bg-slate-100 flex items-center gap-1.5";
+            const activeStyle = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all tab-active flex items-center gap-1.5";
+
+            if (btnDash) btnDash.className = tab === 'dashboard' ? activeStyle : inactiveStyle;
+            if (btnChart) btnChart.className = tab === 'chart' ? activeStyle : inactiveStyle;
+
+            if (tab === 'chart') {
+                renderAdvancedAnalysisCharts();
+            }
+        }
+
+        function syncAndApplyFilters(type, value) {
+            const searchMain = document.getElementById('search-input');
+            const searchChart = document.getElementById('chart-search-input');
+            const deptMain = document.getElementById('filter-dept');
+            const deptChart = document.getElementById('chart-filter-dept');
+            const regionMain = document.getElementById('filter-region');
+            const regionChart = document.getElementById('chart-filter-region');
+            const sizeMain = document.getElementById('filter-size');
+            const sizeChart = document.getElementById('chart-filter-size');
+            const rearingGradeMain = document.getElementById('filter-rearing-grade');
+            const rearingGradeChart = document.getElementById('chart-filter-rearing-grade');
+            const costGradeMain = document.getElementById('filter-cost-grade');
+            const costGradeChart = document.getElementById('chart-filter-cost-grade');
+
+            if (type === 'search') {
+                if (searchMain) searchMain.value = value;
+                if (searchChart) searchChart.value = value;
+            } else if (type === 'dept') {
+                if (deptMain) deptMain.value = value;
+                if (deptChart) deptChart.value = value;
+                activeDept = value || 'ALL';
+                renderTabs();
+                populateRegions();
+                populateRearingGrades();
+            } else if (type === 'region') {
+                if (regionMain) regionMain.value = value;
+                if (regionChart) regionChart.value = value;
+            } else if (type === 'size') {
+                if (sizeMain) sizeMain.value = value;
+                if (sizeChart) sizeChart.value = value;
+            } else if (type === 'rearingGrade') {
+                if (rearingGradeMain) rearingGradeMain.value = value;
+                if (rearingGradeChart) rearingGradeChart.value = value;
+            } else if (type === 'costGrade') {
+                if (costGradeMain) costGradeMain.value = value;
+                if (costGradeChart) costGradeChart.value = value;
+            }
+
+            applyFilters();
+        }
+
+        // 🎯 요구사항 3 반영: "홈 으로" 버튼 클릭 시 모든 필터 초기화 및 페이지 상단 스크롤
+        function resetWholePageToInitialState() {
+            activeDept = 'ALL';
+            currentSortField = 'medicineCost';
+            currentSortAsc = false;
+
+            syncAndApplyFilters('search', '');
+            syncAndApplyFilters('dept', '');
+            syncAndApplyFilters('region', '');
+            syncAndApplyFilters('size', '');
+            syncAndApplyFilters('rearingGrade', '');
+            syncAndApplyFilters('costGrade', '');
+
+            const inlineCard = document.getElementById('inline-detail-section');
+            if (inlineCard) inlineCard.classList.add('hidden');
+
+            renderTabs();
+            populateRegions();
+            populateRearingGrades();
+            applyFilters();
+
+            switchMainTab('dashboard');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showNotification('🏠 대시보드 홈 상태로 이동하였습니다.', 'info');
+        }
+
+        function cleanStr(s) { return !s ? '' : String(s).replace(/\s+/g, '').replace(/[\r\n]+/g, ''); }
+        function cleanNum(val) {
+            if (val === undefined || val === null || val === '') return 0;
+            if (typeof val === 'number') return val;
+            return parseFloat(String(val).replace(/[^0-9.-]/g, '')) || 0;
+        }
+
+        function getFarmSizeCategory(val) {
+            if (val === undefined || val === null || val === '') return '-';
+            let s = String(val).trim();
+            if (s === '1,000 미만' || s === '1,000-3,000' || s === '3,000-5,000' || s === '5,000 이상') return s;
+            let clean = s.replace(/\s+/g, '');
+            if (clean === '1,000미만' || clean === '1000미만') return '1,000 미만';
+            if (clean === '1,000-3,000' || clean === '1000-3000') return '1,000-3,000';
+            if (clean === '3,000-5,000' || clean === '3000-5000') return '3,000-5,000';
+            if (clean === '5,000이상' || clean === '5000이상') return '5,000 이상';
+            let num = cleanNum(s);
+            if (num <= 0) return '-';
+            if (num < 1000) return '1,000 미만';
+            if (num < 3000) return '1,000-3,000';
+            if (num < 5000) return '3,000-5,000';
+            return '5,000 이상';
+        }
+
+        function formatWon(val) { return Math.round(cleanNum(val)).toLocaleString() + ' 원'; }
+        function formatP(val) {
+            let n = cleanNum(val);
+            if (n > 0 && n <= 1.0) n = n * 100;
+            return n.toFixed(1) + '%';
+        }
+
+        function formatVsMedian(val) {
+            if (val === undefined || val === null || val === '') return '0 원';
+            let numVal = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
+            if (isNaN(numVal)) return String(val);
+            const sign = numVal > 0 ? '+' : '';
+            return sign + Math.round(numVal).toLocaleString() + ' 원';
+        }
+
+        function calculateGrade(cost, purchaseTotal, headcountTotal) {
+            let c = parseFloat(cost);
+            let p = parseFloat(purchaseTotal);
+            let h = parseFloat(headcountTotal);
+            if ((isNaN(p) || p <= 0) && (isNaN(h) || h <= 0)) return ''; 
+
+            let val = isNaN(c) ? 0 : c;
+            if (val < thresholds.a) return 'A';
+            if (val < thresholds.b) return 'B';
+            if (val < thresholds.c) return 'C';
+            if (val < thresholds.d) return 'D';
+            return 'D2';
+        }
+
+        function getYearMonthString(year, monthVal) {
+            let mStr = String(monthVal).trim().replace(/\s+/g, '');
+            let cleanMonth = mStr.replace(/^(?:20)?\d{2}[_.-]/, ''); 
+            let monthDigits = cleanMonth.replace(/[^0-9]/g, '');
+            if (monthDigits) {
+                let mm = monthDigits.padStart(2, '0');
+                if (year) return `${year}_${mm}월`;
+                return `${mm}월`;
+            }
+            return mStr;
+        }
+
+        function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const errorAlert = document.getElementById('error-alert');
+            const loginErrorMsg = document.getElementById('login-error-msg');
+
+            if (!currentUserEmail || !currentUserPassword) {
+                showLoginModal();
+                restoreLoginButtonState();
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden');
+
+            const startTime = performance.now();
+            let fetchUrl = `${GOOGLE_SHEET_API_URL}?t=${new Date().getTime()}`;
+            fetchUrl += `&email=${encodeURIComponent(currentUserEmail)}`;
+            fetchUrl += `&password=${encodeURIComponent(currentUserPassword)}`;
+
+            fetch(fetchUrl)
+                .then(res => {
+                    lastFetchLatencyMs = Math.round(performance.now() - startTime);
+                    if (!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.error) throw new Error(data.error);
+                    if (!Array.isArray(data) || data.length < 5) throw new Error('수신된 데이터 포맷이 올바르지 않거나 이메일/비밀번호 권한이 없습니다.');
+
+                    rawReceivedRows = data;
+                    errorAlert.classList.add('hidden');
+                    if (loginErrorMsg) loginErrorMsg.classList.add('hidden');
+
+                    hideLoginModal();
+                    parseLEADExcel(data);
+
+                    const now = new Date();
+                    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                    const syncStatusEl = document.getElementById('sync-status-text');
+                    if (syncStatusEl) {
+                        syncStatusEl.textContent = `최종 동기화 시각: ${timeStr} (1시간마다 자동 갱신)`;
+                    }
+
+                    const userEmailEl = document.getElementById('current-user-email');
+                    if (userEmailEl) {
+                        userEmailEl.textContent = currentUserEmail;
+                    }
+
+                    updateTelemetryPanel(timeStr);
+
+                    if (isLoginAttempt) {
+                        showNotification(`🔑 안녕하세요, ${currentUserEmail}님. 데이터 수신이 완료되었습니다.`, 'success');
+                    } else if (isManual) {
+                        showNotification('🔄 선진한마을 데이터를 맞춤 연동하였습니다.', 'success');
+                    }
+                })
+                .catch(err => {
+                    console.error('Data Sync Error:', err);
+                    if (isLoginAttempt && loginErrorMsg) {
+                        loginErrorMsg.textContent = err.message || '인증에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.';
+                        loginErrorMsg.classList.remove('hidden');
+                        showLoginModal();
+                    } else {
+                        document.getElementById('error-title').textContent = '인증 실패 또는 데이터 수신 오류';
+                        document.getElementById('error-desc').textContent = err.message || '등록된 이메일 및 E열 비밀번호를 다시 확인해 주세요.';
+                        errorAlert.classList.remove('hidden');
+                    }
+                })
+                .finally(() => {
+                    loadingOverlay.classList.add('hidden');
+                    restoreLoginButtonState();
+                });
+        }
+
+        function parseLEADExcel(rows) {
+            let leafHeaderIdx = -1;
+            for (let i = 0; i < Math.min(rows.length, 12); i++) {
+                if (rows[i] && Array.isArray(rows[i])) {
+                    const rowJoined = rows[i].map(c => cleanStr(c)).join(',');
+                    if (rowJoined.includes('농장코드') || rowJoined.includes('농장명')) { leafHeaderIdx = i; break; }
+                }
+            }
+            if (leafHeaderIdx === -1) leafHeaderIdx = 4;
+
+            const headerRow = rows[leafHeaderIdx] || [];
+            const numCols = headerRow.length;
+
+            let groupRowIdx = -1;
+            for (let i = 0; i < leafHeaderIdx; i++) {
+                if (rows[i] && Array.isArray(rows[i])) {
+                    const rowJoined = rows[i].map(c => cleanStr(c)).join(',');
+                    if (rowJoined.includes('입식두당') && rowJoined.includes('입식두수') && rowJoined.includes('약품매입액')) { groupRowIdx = i; break; }
+                }
+            }
+            if (groupRowIdx === -1) groupRowIdx = Math.max(0, leafHeaderIdx - 2);
+
+            let groupNames = [];
+            let currentGroupName = "";
+            for (let col = 0; col < numCols; col++) {
+                let cellVal = cleanStr(rows[groupRowIdx] ? rows[groupRowIdx][col] : "");
+                if (cellVal) currentGroupName = cellVal;
+                groupNames[col] = currentGroupName;
+            }
+
+            let yearRowIdx = Math.max(0, leafHeaderIdx - 1);
+            let yearNames = [];
+            let currentYear = "";
+            for (let col = 0; col < numCols; col++) {
+                let cellVal = cleanStr(rows[yearRowIdx] ? rows[yearRowIdx][col] : "");
+                if (cellVal && (cellVal.includes('년') || cellVal.includes('202'))) {
+                    const yearDigits = cellVal.replace(/[^0-9]/g, '');
+                    if (yearDigits.length >= 2) currentYear = yearDigits.slice(-2);
+                }
+                yearNames[col] = currentYear;
+            }
+
+            for (let col = 0; col < numCols; col++) {
+                const cellVal = cleanStr(headerRow[col]);
+                if (!cellVal) continue;
+
+                if (cellVal.includes('담당부서') || cellVal.includes('부서')) mappings.dept = col;
+                else if (cellVal.includes('지역')) mappings.region = col;
+                else if (cellVal.includes('농장코드') || cellVal.includes('코드')) mappings.farmCode = col;
+                else if (cellVal.includes('농장명') || cellVal.includes('이름')) mappings.farmName = col;
+                else if (cellVal.includes('담당CM') || cellVal.includes('CM')) mappings.manager = col;
+                else if (cellVal.includes('사육규모')) mappings.breedingSize = col;
+                else if (cellVal.includes('농장규모') || cellVal.includes('규모')) mappings.farmSize = col;
+                else if (cellVal.includes('육성율등급') || cellVal.includes('육성률등급')) mappings.rearingGrade = col;
+                else if (cellVal.includes('평균육성률') || cellVal.includes('평균육성율') || cellVal.includes('육성률') || cellVal.includes('육성율')) mappings.avgRearingRate = col;
+                else if (cellVal.includes('입식두당약품비') || (cellVal.includes('입식두당') && cellVal.includes('약품비'))) mappings.medicineCost = col;
+                else if (cellVal.includes('출하두당약품비') || (cellVal.includes('출하두당') && cellVal.includes('약품비'))) mappings.shipmentCost = col;
+                else if (cellVal.includes('등급분류') || cellVal.includes('등급')) mappings.gradeCategory = col;
+                else if (cellVal.includes('중앙값대비') || cellVal.includes('중앙값')) mappings.vsMedian = col;
+                else if (cellVal.includes('백신')) mappings.ratios[0] = col;
+                else if (cellVal.includes('항균') || cellVal.includes('항생제')) mappings.ratios[1] = col;
+                else if (cellVal.includes('치료제')) mappings.ratios[2] = col;
+                else if (cellVal.includes('영양제')) mappings.ratios[3] = col;
+                else if (cellVal.includes('기타비율') || cellVal.includes('기타외품') || cellVal === '기타') mappings.ratios[4] = col;
+            }
+
+            mappings.costTrend = []; mappings.headcount = []; mappings.purchase = []; mappings.supportInflow = []; mappings.supportMed = [];
+
+            for (let col = 0; col < numCols; col++) {
+                const groupName = groupNames[col] || "";
+                const headerVal = cleanStr(headerRow[col]);
+                if (!headerVal) continue;
+
+                if (headerVal.includes('누계') || headerVal.includes('합계') || headerVal.includes('평균') || headerVal.includes('비율')) {
+                    if (groupName.includes('입식두수')) mappings.headcountTotal = col;
+                    else if (groupName.includes('약품매입액') && !groupName.includes('지원')) mappings.purchaseTotal = col;
+                    else if (groupName.includes('입식지원')) mappings.supportInflowTotal = col;
+                    else if (groupName.includes('지원약품') && !groupName.includes('입식지원')) {
+                        if (headerVal.includes('비율')) mappings.supportMedRatio = col;
+                        else mappings.supportMedTotal = col;
+                    }
+                    continue;
+                }
+
+                const formattedYM = getYearMonthString(yearNames[col] || "", headerVal);
+
+                if (groupName.includes('입식두당') && groupName.includes('약품비')) mappings.costTrend.push({ month: formattedYM, idx: col });
+                else if (groupName.includes('입식두수')) mappings.headcount.push({ month: formattedYM, idx: col });
+                else if (groupName.includes('약품매입액') && !groupName.includes('지원')) mappings.purchase.push({ month: formattedYM, idx: col });
+                else if (groupName.includes('입식지원')) mappings.supportInflow.push({ month: formattedYM, idx: col });
+                else if (groupName.includes('지원약품') && !groupName.includes('입식지원')) mappings.supportMed.push({ month: formattedYM, idx: col });
+            }
+
+            mappings.costTrend.sort((a, b) => a.month.localeCompare(b.month));
+            mappings.headcount.sort((a, b) => a.month.localeCompare(b.month));
+            mappings.purchase.sort((a, b) => a.month.localeCompare(b.month));
+            mappings.supportInflow.sort((a, b) => a.month.localeCompare(b.month));
+            mappings.supportMed.sort((a, b) => a.month.localeCompare(b.month));
+
+            summaryRows = []; parsedData = []; farmSizeSummaryRows = [];
+            for (let i = leafHeaderIdx + 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || r.length < 5) continue;
+                
+                const farmName = String(r[mappings.farmName] || '').trim();
+                const farmCode = String(r[mappings.farmCode] || '').trim();
+                const deptName = String(r[mappings.dept] || '').trim();
+                const col0Val = String(r[0] || '').trim();
+                
+                if (!farmName && !deptName && !col0Val) continue;
+
+                // 116행~119행 농장규모 정밀 파싱
+                const isSizeRow = (
+                    col0Val.includes('미만') || col0Val.includes('이상') || col0Val.includes('1,000') || col0Val.includes('3,000') || col0Val.includes('5,000') ||
+                    farmName.includes('미만') || farmName.includes('이상') || farmName.includes('1,000') || farmName.includes('3,000') || farmName.includes('5,000')
+                ) && !farmName.includes('농장') && !farmName.includes('축산') && !farmName.includes('법인');
+
+                if (isSizeRow) {
+                    const sizeLabel = getFarmSizeCategory(col0Val || farmName);
+                    let countCandidate = cleanNum(r[mappings.breedingSize]) || cleanNum(r[mappings.farmSize]);
+                    if (countCandidate > 1000) countCandidate = cleanNum(r[mappings.farmSize]);
+
+                    farmSizeSummaryRows.push({
+                        label: sizeLabel,
+                        count: countCandidate || 0,
+                        medicineCost: cleanNum(r[mappings.medicineCost]),
+                        totalHead: cleanNum(r[mappings.headcountTotal]),
+                        totalPurchase: cleanNum(r[mappings.purchaseTotal]),
+                        ratios: mappings.ratios.map(idx => cleanNum(r[idx])),
+                        costTrendVals: mappings.costTrend.map(m => cleanNum(r[m.idx])),
+                        headcountVals: mappings.headcount.map(m => cleanNum(r[m.idx])),
+                        purchaseVals: mappings.purchase.map(m => cleanNum(r[m.idx])),
+                        supportInflowVals: mappings.supportInflow.map(m => cleanNum(r[m.idx])),
+                        supportMedVals: mappings.supportMed.map(m => cleanNum(r[m.idx])),
+                        supportMedRatio: cleanNum(r[mappings.supportMedRatio])
+                    });
+                    summaryRows.push(r);
+                } else if (farmName.includes('한마을') || deptName.includes('한마을') || col0Val.includes('한마을')) {
+                    const parsedMed = cleanNum(r[mappings.medicineCost]);
+                    if (parsedMed > 0) buSummaryData.medicineCost = parsedMed;
+                    
+                    let rateVal = cleanNum(r[mappings.avgRearingRate]);
+                    if (rateVal > 0) {
+                        buSummaryData.avgRearingRate = (rateVal <= 1.0) ? (rateVal * 100) : rateVal;
+                    }
+
+                    const parsedHead = cleanNum(r[mappings.headcountTotal]);
+                    if (parsedHead > 0) buSummaryData.totalHead = parsedHead;
+
+                    const parsedPur = cleanNum(r[mappings.purchaseTotal]);
+                    if (parsedPur > 0) buSummaryData.totalPurchase = parsedPur;
+
+                    const countCandidate = cleanNum(r[mappings.farmCode]) || cleanNum(r[mappings.breedingSize]) || cleanNum(r[0]) || cleanNum(r[mappings.farmSize]);
+                    if (countCandidate > 0 && countCandidate < 1000) buSummaryData.farmCount = countCandidate;
+                    else buSummaryData.farmCount = 97;
+
+                    if (mappings.costTrend.length > 0) {
+                        buSummaryData.costTrendVals = mappings.costTrend.map(m => cleanNum(r[m.idx]));
+                    }
+                    if (mappings.ratios.length > 0) {
+                        buSummaryData.ratios = mappings.ratios.map(idx => cleanNum(r[idx]));
+                    }
+
+                    summaryRows.push(r);
+                } else if (farmName.includes('합계') || farmName.includes('평균') || farmName.includes('소계') || 
+                    farmName.includes('전체') || deptName.includes('합계') || deptName.includes('평균') ||
+                    farmName.includes('사업부') || farmName.includes('사업팀') || farmName.includes('BU') || farmName.includes('팀')) {
+                    summaryRows.push(r);
+                } else if (farmName) {
+                    parsedData.push({
+                        dept: deptName, region: String(r[mappings.region] || '').trim(), farmCode, farmName, manager: String(r[mappings.manager] || '').trim(),
+                        farmSize: getFarmSizeCategory(r[mappings.farmSize]), breedingSize: cleanNum(r[mappings.breedingSize]), rearingGrade: String(r[mappings.rearingGrade] || '').trim(),
+                        avgRearingRate: cleanNum(r[mappings.avgRearingRate]), medicineCost: cleanNum(r[mappings.medicineCost]), shipmentCost: cleanNum(r[mappings.shipmentCost]),
+                        gradeCategory: '', vsMedian: r[mappings.vsMedian],
+                        ratios: mappings.ratios.map(idx => cleanNum(r[idx])),
+                        costTrendVals: mappings.costTrend.map(m => cleanNum(r[m.idx])),
+                        headcountVals: mappings.headcount.map(m => cleanNum(r[m.idx])),
+                        purchaseVals: mappings.purchase.map(m => cleanNum(r[m.idx])),
+                        supportInflowVals: mappings.supportInflow.map(m => cleanNum(r[m.idx])),
+                        supportMedVals: mappings.supportMed.map(m => cleanNum(r[m.idx])),
+                        headcountTotal: cleanNum(r[mappings.headcountTotal]), purchaseTotal: cleanNum(r[mappings.purchaseTotal]),  
+                        supportInflowTotal: cleanNum(r[mappings.supportInflowTotal]), supportMedTotal: cleanNum(r[mappings.supportMedTotal]), supportMedRatio: cleanNum(r[mappings.supportMedRatio]) 
+                    });
+                }
+            }
+
+            parsedData.forEach(item => { item.gradeCategory = calculateGrade(item.medicineCost, item.purchaseTotal, item.headcountTotal); });
+
+            detectLastValidMonths();
+            renderTabs();
+            populateRegions();
+            populateRearingGrades();
+            applyFilters();
+        }
+
+        function updateTelemetryPanel(timeStr) {
+            if (document.getElementById('telemetry-total-rows')) document.getElementById('telemetry-total-rows').textContent = rawReceivedRows.length;
+            if (document.getElementById('telemetry-farms-count')) document.getElementById('telemetry-farms-count').textContent = parsedData.length;
+            if (document.getElementById('telemetry-latency')) document.getElementById('telemetry-latency').textContent = `${lastFetchLatencyMs} ms`;
+            
+            const zeroFarms = parsedData.filter(d => d.medicineCost === 0);
+            if (document.getElementById('telemetry-zero-farms')) document.getElementById('telemetry-zero-farms').textContent = zeroFarms.length;
+            
+            if (document.getElementById('telemetry-bu-cost')) document.getElementById('telemetry-bu-cost').textContent = formatWon(buSummaryData.medicineCost);
+            if (document.getElementById('telemetry-bu-rate')) document.getElementById('telemetry-bu-rate').textContent = `${buSummaryData.avgRearingRate.toFixed(1)}%`;
+            if (document.getElementById('telemetry-sync-time')) document.getElementById('telemetry-sync-time').textContent = `동기화 시각: ${timeStr}`;
+        }
+
+        function renderRawModalTable() {
+            const thead = document.getElementById('raw-modal-thead');
+            const tbody = document.getElementById('raw-modal-tbody');
+            if (!tbody || !thead) return;
+
+            if (!rawReceivedRows || rawReceivedRows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="py-4 text-center text-slate-400">수신된 데이터가 없습니다.</td></tr>';
+                return;
+            }
+
+            let headerRowIdx = 4;
+            if (rawReceivedRows.length <= headerRowIdx) headerRowIdx = 0;
+            const headerCells = rawReceivedRows[headerRowIdx] || rawReceivedRows[0] || [];
+            
+            let headHtml = '<tr><th class="py-2.5 px-3 text-center border-r border-slate-700 bg-slate-900 sticky left-0 z-20">Row #</th>';
+            headerCells.forEach((colName, cIdx) => {
+                const label = cleanStr(colName) || `Col ${cIdx + 1}`;
+                headHtml += `<th class="py-2.5 px-3 text-center border-r border-slate-700 whitespace-nowrap min-w-[90px]">${label}</th>`;
+            });
+            headHtml += '</tr>';
+            thead.innerHTML = headHtml;
+
+            const totalRows = rawReceivedRows.length;
+            const totalPages = Math.ceil(totalRows / rawModalPageSize) || 1;
+            if (rawModalCurrentPage > totalPages) rawModalCurrentPage = totalPages;
+            if (rawModalCurrentPage < 1) rawModalCurrentPage = 1;
+
+            const startIdx = (rawModalCurrentPage - 1) * rawModalPageSize;
+            const endIdx = Math.min(startIdx + rawModalPageSize, totalRows);
+            const pageData = rawReceivedRows.slice(startIdx, endIdx);
+
+            document.getElementById('raw-modal-count').textContent = `총 ${totalRows} 건 레코드 중 ${startIdx + 1} - ${endIdx} 표시 중`;
+            document.getElementById('raw-page-info').textContent = `Page ${rawModalCurrentPage} / ${totalPages}`;
+            document.getElementById('btn-prev-page').disabled = (rawModalCurrentPage <= 1);
+            document.getElementById('btn-next-page').disabled = (rawModalCurrentPage >= totalPages);
+
+            let bodyHtml = '';
+            pageData.forEach((r, idx) => {
+                const actualRowNumber = startIdx + idx + 1;
+                bodyHtml += `<tr class="hover:bg-slate-50 border-b border-slate-100">`;
+                bodyHtml += `<td class="py-2 px-3 text-center text-slate-400 font-bold bg-slate-50 sticky left-0 z-10 border-r border-slate-200">${actualRowNumber}</td>`;
+                
+                headerCells.forEach((_, cIdx) => {
+                    const cellVal = r[cIdx] !== undefined && r[cIdx] !== null ? String(r[cIdx]).trim() : '';
+                    bodyHtml += `<td class="py-2 px-3 border-r border-slate-100 text-slate-700 whitespace-nowrap text-left">${cellVal || '-'}</td>`;
+                });
+                
+                bodyHtml += `</tr>`;
+            });
+            tbody.innerHTML = bodyHtml;
+            lucide.createIcons();
+        }
+
+        // 농장규모 필터 변경 함수
+        function selectModalSizeFilter(category) {
+            selectedModalSizeCategory = category;
+            renderFarmSizeModalContent();
+        }
+
+        // 농장규모별 전용 데이터 시각화 리포트 모달 렌더링
+        function renderFarmSizeModalContent() {
+            const filterContainer = document.getElementById('modal-size-filter-buttons');
+            if (!filterContainer) return;
+
+            const categories = ['1,000 미만', '1,000-3,000', '3,000-5,000', '5,000 이상'];
+            
+            // 규모 선택 필터 버튼 생성
+            let filterBtnHtml = `
+                <button onclick="selectModalSizeFilter('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedModalSizeCategory === 'ALL' ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                    전체 규모 보기
+                </button>
+            `;
+            categories.forEach(cat => {
+                const isActive = selectedModalSizeCategory === cat;
+                filterBtnHtml += `
+                    <button onclick="selectModalSizeFilter('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${isActive ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                        ${cat}
+                    </button>
+                `;
+            });
+            filterContainer.innerHTML = filterBtnHtml;
+
+            // 규모 선택에 따른 대상 농가 그룹 필터링
+            let targetFarms = [];
+            let isAllScope = (selectedModalSizeCategory === 'ALL');
+
+            if (isAllScope) {
+                targetFarms = parsedData;
+            } else {
+                targetFarms = parsedData.filter(d => d.farmSize === selectedModalSizeCategory);
+            }
+
+            // 상단 KPI 카드 수치 집계 ('전체'일 때는 한마을BU 전체값과 완벽히 동기화)
+            let totalHead = 0;
+            let totalPur = 0;
+            let avgCost = 0;
+
+            if (isAllScope && buSummaryData.totalHead > 0) {
+                totalHead = buSummaryData.totalHead;
+                totalPur = buSummaryData.totalPurchase;
+                avgCost = buSummaryData.medicineCost;
+            } else {
+                totalHead = targetFarms.reduce((s, f) => s + f.headcountTotal, 0);
+                totalPur = targetFarms.reduce((s, f) => s + f.purchaseTotal, 0);
+                const validFarms = targetFarms.filter(f => f.medicineCost > 0);
+                avgCost = validFarms.length > 0 ? Math.round(validFarms.reduce((s, f) => s + f.medicineCost, 0) / validFarms.length) : 0;
+            }
+
+            if (document.getElementById('size-kpi-total-head')) document.getElementById('size-kpi-total-head').textContent = Math.round(totalHead).toLocaleString() + ' 두';
+            if (document.getElementById('size-kpi-total-pur')) document.getElementById('size-kpi-total-pur').textContent = formatWon(totalPur);
+            if (document.getElementById('size-kpi-avg-cost')) document.getElementById('size-kpi-avg-cost').textContent = formatWon(avgCost);
+
+            // 1. 입식두당 약품비 추이 차트 (꺾은선 라인 차트)
+            const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
+            let costTrendArr = new Array(months.length).fill(0);
+
+            if (isAllScope && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0) {
+                costTrendArr = buSummaryData.costTrendVals.slice(0, lastValidTrendIdx + 1);
+            } else {
+                let costTrendCounts = new Array(months.length).fill(0);
+                targetFarms.forEach(f => {
+                    f.costTrendVals.slice(0, lastValidTrendIdx + 1).forEach((v, idx) => {
+                        if (v > 0) { costTrendArr[idx] += v; costTrendCounts[idx]++; }
+                    });
+                });
+                costTrendArr = costTrendArr.map((sum, i) => costTrendCounts[i] ? Math.round(sum / costTrendCounts[i]) : 0);
+            }
+
+            if (activeCharts['modalSizeCostLine']) {
+                activeCharts['modalSizeCostLine'].data.labels = months;
+                activeCharts['modalSizeCostLine'].data.datasets[0].data = costTrendArr;
+                activeCharts['modalSizeCostLine'].update();
+            } else {
+                activeCharts['modalSizeCostLine'] = new Chart(document.getElementById('chart-modal-size-cost-line').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: '평균 입식두당 약품비',
+                            data: costTrendArr,
+                            borderColor: '#F51932',
+                            backgroundColor: 'rgba(245, 25, 50, 0.08)',
+                            fill: true,
+                            tension: 0.25,
+                            borderWidth: 2.5,
+                            pointBackgroundColor: '#F51932'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, datalabels: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grace: '15%', ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 8 } } },
+                            x: { ticks: { font: { size: 7.5, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+
+            // 2. 지원 약품 비율 (%) (도넛 차트)
+            let totalSupPur = targetFarms.reduce((s, f) => s + f.supportMedTotal, 0);
+            let supportRatioVal = totalPur > 0 ? (totalSupPur / totalPur) * 100 : 0;
+            let selfPaidRatioVal = Math.max(0, 100 - supportRatioVal);
+
+            if (activeCharts['modalSizeSupportPie']) {
+                activeCharts['modalSizeSupportPie'].data.datasets[0].data = [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))];
+                activeCharts['modalSizeSupportPie'].update();
+            } else {
+                activeCharts['modalSizeSupportPie'] = new Chart(document.getElementById('chart-modal-size-support-pie').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['지원 약품 비율', '입식 지원 비율'],
+                        datasets: [{
+                            data: [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))],
+                            backgroundColor: ['#F51932', '#10b981'],
+                            borderWidth: 2, borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' },
+                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+
+            // 3. 약품 종류별 구성 비율 (%) (도넛 차트)
+            let normTypeRatios = [0, 0, 0, 0, 0];
+            if (isAllScope && buSummaryData.ratios && buSummaryData.ratios.length === 5) {
+                let rRaw = buSummaryData.ratios.map(v => v <= 1.0 ? v * 100 : v);
+                const sumR = rRaw.reduce((a, b) => a + b, 0) || 1;
+                normTypeRatios = rRaw.map(v => parseFloat(((v / sumR) * 100).toFixed(1)));
+            } else if (targetFarms.length > 0) {
+                let typeSums = [0, 0, 0, 0, 0];
+                targetFarms.forEach(f => {
+                    f.ratios.forEach((rv, idx) => { typeSums[idx] += (rv <= 1.0 ? rv * 100 : rv); });
+                });
+                const typeDiv = targetFarms.length || 1;
+                let rTemp = typeSums.map(v => v / typeDiv);
+                const sumT = rTemp.reduce((a, b) => a + b, 0) || 1;
+                normTypeRatios = rTemp.map(v => parseFloat(((v / sumT) * 100).toFixed(1)));
+            }
+
+            if (activeCharts['modalSizeTypePie']) {
+                activeCharts['modalSizeTypePie'].data.datasets[0].data = normTypeRatios;
+                activeCharts['modalSizeTypePie'].update();
+            } else {
+                activeCharts['modalSizeTypePie'] = new Chart(document.getElementById('chart-modal-size-type-pie').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ratioLabels,
+                        datasets: [{ data: normTypeRatios, backgroundColor: ratioColors, borderWidth: 2, borderColor: '#ffffff' }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 9 }, formatter: (v) => v > 2 ? `${v}%` : '' },
+                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+
+            // 4. 하단 상세 연동 타임라인 3종 소형 트렌드 차트 및 2종 테이블 데이터 바인딩
+            let dtHeadArr = new Array(lastValidHeadcountIdx + 1).fill(0);
+            let dtPurArr = new Array(lastValidPurchaseIdx + 1).fill(0);
+            let dtSupArr = new Array(lastValidSupportMedIdx + 1).fill(0);
+            let dtInflowArr = new Array(lastValidSupportInflowIdx + 1).fill(0);
+
+            targetFarms.forEach(f => {
+                f.headcountVals.slice(0, lastValidHeadcountIdx + 1).forEach((v, i) => dtHeadArr[i] += v);
+                f.purchaseVals.slice(0, lastValidPurchaseIdx + 1).forEach((v, i) => dtPurArr[i] += v);
+                f.supportMedVals.slice(0, lastValidSupportMedIdx + 1).forEach((v, i) => dtSupArr[i] += v);
+                f.supportInflowVals.slice(0, lastValidSupportInflowIdx + 1).forEach((v, i) => dtInflowArr[i] += v);
+            });
+
+            if (document.getElementById('modal-dt-total-head')) document.getElementById('modal-dt-total-head').textContent = `누계: ${totalHead.toLocaleString()} 두`;
+            if (document.getElementById('modal-dt-total-pur')) document.getElementById('modal-dt-total-pur').textContent = `누계: ${formatWon(totalPur)}`;
+            if (document.getElementById('modal-dt-total-sup')) document.getElementById('modal-dt-total-sup').textContent = `누계: ${formatWon(totalSupPur)}`;
+
+            drawTimelineChart('chart-modal-dt-head', mappings.headcount.map(m=>m.month).slice(0, lastValidHeadcountIdx + 1), dtHeadArr, '#3b82f6', ' 두');
+            drawTimelineChart('chart-modal-dt-pur', mappings.purchase.map(m=>m.month).slice(0, lastValidPurchaseIdx + 1), dtPurArr, '#10b981', ' 원');
+            drawTimelineChart('chart-modal-dt-sup', mappings.supportMed.map(m=>m.month).slice(0, lastValidSupportMedIdx + 1), dtSupArr, '#8b5cf6', ' 원');
+
+            // 타임라인 테이블 A (입식두당 약품비 추이 및 지원 약품 매입)
+            const slicedTrendMonths = mappings.costTrend.slice(0, lastValidTrendIdx + 1);
+            const theadGroupA = document.getElementById('modal-thead-group-a');
+            const tbodyGroupA = document.getElementById('modal-tbody-group-a');
+
+            if(theadGroupA && tbodyGroupA) {
+                let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+                slicedTrendMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                theadGroupA.innerHTML = headerHtml;
+
+                tbodyGroupA.innerHTML = `
+                    <tr class="hover:bg-slate-50 border-b border-slate-150">
+                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
+                        ${costTrendArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
+                        ${dtSupArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                    </tr>`;
+            }
+
+            // 타임라인 테이블 B (입식두수 및 약품/입식지원액)
+            const slicedHeadcountMonths = mappings.headcount.slice(0, lastValidHeadcountIdx + 1);
+            const theadGroupB = document.getElementById('modal-thead-group-b');
+            const tbodyGroupB = document.getElementById('modal-tbody-group-b');
+
+            if(theadGroupB && tbodyGroupB) {
+                let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+                slicedHeadcountMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                theadGroupB.innerHTML = headerHtml;
+
+                tbodyGroupB.innerHTML = `
+                    <tr class="hover:bg-slate-50 border-b border-slate-150">
+                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
+                        ${dtHeadArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
+                    </tr>
+                    <tr class="hover:bg-slate-50 border-b border-slate-150">
+                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
+                        ${dtPurArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
+                        ${dtInflowArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                    </tr>`;
+            }
+        }
+
+        function changeRawPage(delta) {
+            rawModalCurrentPage += delta;
+            renderRawModalTable();
+        }
+
+        function detectLastValidMonths() {
+            lastValidTrendIdx = -1; lastValidHeadcountIdx = -1; lastValidPurchaseIdx = -1; lastValidSupportInflowIdx = -1; lastValidSupportMedIdx = -1;
+            parsedData.forEach(item => {
+                if (item.costTrendVals) item.costTrendVals.forEach((v, idx) => { if (v > 0) lastValidTrendIdx = Math.max(lastValidTrendIdx, idx); });
+                if (item.headcountVals) item.headcountVals.forEach((v, idx) => { if (v > 0) lastValidHeadcountIdx = Math.max(lastValidHeadcountIdx, idx); });
+                if (item.purchaseVals) item.purchaseVals.forEach((v, idx) => { if (v > 0) lastValidPurchaseIdx = Math.max(lastValidPurchaseIdx, idx); });
+                if (item.supportInflowVals) item.supportInflowVals.forEach((v, idx) => { if (v > 0) lastValidSupportInflowIdx = Math.max(lastValidSupportInflowIdx, idx); });
+                if (item.supportMedVals) item.supportMedVals.forEach((v, idx) => { if (v > 0) lastValidSupportMedIdx = Math.max(lastValidSupportMedIdx, idx); });
+            });
+
+            if (lastValidTrendIdx === -1 && mappings.costTrend) lastValidTrendIdx = mappings.costTrend.length - 1;
+            if (lastValidHeadcountIdx === -1 && mappings.headcount) lastValidHeadcountIdx = mappings.headcount.length - 1;
+            if (lastValidPurchaseIdx === -1 && mappings.purchase) lastValidPurchaseIdx = mappings.purchase.length - 1;
+            if (lastValidSupportInflowIdx === -1 && mappings.supportInflow) lastValidSupportInflowIdx = mappings.supportInflow.length - 1;
+            if (lastValidSupportMedIdx === -1 && mappings.supportMed) lastValidSupportMedIdx = mappings.supportMed.length - 1;
+        }
+
+        function renderTabs() {
+            const depts = [...new Set(parsedData.map(d => d.dept))].filter(Boolean);
+            const wrapper = document.getElementById('dept-tab-wrapper');
+            if (!wrapper) return;
+
+            const totalBuCount = buSummaryData.farmCount || 97;
+            let html = `
+                <button onclick="syncAndApplyFilters('dept', '')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === 'ALL' ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
+                    한마을BU (${totalBuCount})
+                </button>
+            `;
+
+            depts.forEach(d => {
+                const count = parsedData.filter(item => item.dept === d).length;
+                html += `
+                    <button onclick="syncAndApplyFilters('dept', '${d}')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === d ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
+                        ${d} (${count})
+                    </button>
+                `;
+            });
+            wrapper.innerHTML = html;
+        }
+
+        function populateRegions() {
+            const sel = document.getElementById('filter-region');
+            const selChart = document.getElementById('chart-filter-region');
+            if (!sel) return;
+
+            const prevValue = sel.value; 
+            const targetFarms = activeDept === 'ALL' ? parsedData : parsedData.filter(d => d.dept === activeDept);
+            const regions = [...new Set(targetFarms.map(d => d.region))].filter(Boolean).sort();
+            
+            let optionsHtml = '<option value="">지역 전체</option>';
+            regions.forEach(r => { optionsHtml += `<option value="${r}">${r}</option>`; });
+            
+            sel.innerHTML = optionsHtml;
+            if (selChart) selChart.innerHTML = optionsHtml;
+
+            const activeVal = regions.includes(prevValue) ? prevValue : "";
+            sel.value = activeVal;
+            if (selChart) selChart.value = activeVal;
+        }
+
+        function populateRearingGrades() {
+            const sel = document.getElementById('filter-rearing-grade');
+            const selChart = document.getElementById('chart-filter-rearing-grade');
+            if (!sel) return;
+
+            const prevValue = sel.value; 
+            const targetFarms = activeDept === 'ALL' ? parsedData : parsedData.filter(d => d.dept === activeDept);
+            const grades = [...new Set(targetFarms.map(d => d.rearingGrade))].filter(Boolean).sort();
+            
+            let optionsHtml = '<option value="">육성율 등급 전체</option>';
+            grades.forEach(g => {
+                let label = g.includes('등급') ? g : `${g}등급`;
+                optionsHtml += `<option value="${g}">${label}</option>`;
+            });
+            
+            sel.innerHTML = optionsHtml;
+            if (selChart) selChart.innerHTML = optionsHtml;
+
+            const activeVal = grades.includes(prevValue) ? prevValue : "";
+            sel.value = activeVal;
+            if (selChart) selChart.value = activeVal;
+        }
+
+        function applyFilters() {
+            const searchInput = document.getElementById('search-input');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
+            const dept = document.getElementById('filter-dept') ? document.getElementById('filter-dept').value : '';
+            const region = document.getElementById('filter-region') ? document.getElementById('filter-region').value : '';
+            const size = document.getElementById('filter-size') ? document.getElementById('filter-size').value : '';
+            const rearingGrade = document.getElementById('filter-rearing-grade') ? document.getElementById('filter-rearing-grade').value : '';
+            const costGrade = document.getElementById('filter-cost-grade') ? document.getElementById('filter-cost-grade').value : '';
+
+            filteredData = parsedData.filter(d => {
+                return (d.farmName.toLowerCase().includes(search) || d.farmCode.toLowerCase().includes(search)) &&
+                       (dept === '' || d.dept === dept) &&
+                       (region === '' || d.region === region) &&
+                       (size === '' || d.farmSize === size) &&
+                       (rearingGrade === '' || d.rearingGrade === rearingGrade) &&
+                       (costGrade === '' || d.gradeCategory === costGrade) &&
+                       (activeDept === 'ALL' || d.dept === activeDept);
+            });
+
+            if (currentSortField) {
+                if (currentSortField === 'gradeCategory') {
+                    const gradeRank = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'D2': 5 };
+                    filteredData.sort((a, b) => {
+                        let rankA = gradeRank[a.gradeCategory];
+                        let rankB = gradeRank[b.gradeCategory];
+                        if (rankA === undefined && rankB === undefined) return 0;
+                        if (rankA === undefined) return 1; 
+                        if (rankB === undefined) return -1;
+                        return currentSortAsc ? (rankA - rankB) : (rankB - rankA);
+                    });
+                } else {
+                    filteredData.sort((a, b) => {
+                        let valA = a[currentSortField];
+                        let valB = b[currentSortField];
+                        if (typeof valA === 'string' && !isNaN(parseFloat(valA.replace(/[^0-9.-]/g, '')))) valA = cleanNum(valA);
+                        if (typeof valB === 'string' && !isNaN(parseFloat(valB.replace(/[^0-9.-]/g, '')))) valB = cleanNum(valB);
+                        if (valA < valB) return currentSortAsc ? -1 : 1;
+                        if (valA > valB) return currentSortAsc ? 1 : -1;
+                        return 0;
+                    });
+                }
+            }
+
+            currentKPIs.totalHead = filteredData.reduce((sum, d) => sum + d.headcountTotal, 0);
+            currentKPIs.totalPur = filteredData.reduce((sum, d) => sum + d.purchaseTotal, 0);
+            
+            const validFarms = filteredData.filter(d => d.medicineCost > 0);
+            currentKPIs.avgCost = validFarms.length > 0 ? (validFarms.reduce((sum, d) => sum + d.medicineCost, 0) / validFarms.length) : 0;
+
+            const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
+            const sums = new Array(months.length).fill(0);
+            const counts = new Array(months.length).fill(0);
+
+            filteredData.forEach(d => {
+                d.costTrendVals.slice(0, lastValidTrendIdx + 1).forEach((v, idx) => {
+                    if (v > 0) {
+                        sums[idx] += v;
+                        counts[idx]++;
+                    }
+                });
+            });
+
+            if (activeDept === 'ALL' && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0 && !search && !region && !size && !rearingGrade && !costGrade) {
+                currentKPIs.trendData = buSummaryData.costTrendVals.slice(0, lastValidTrendIdx + 1);
+            } else {
+                currentKPIs.trendData = sums.map((s, i) => counts[i] ? Math.round(s / counts[i]) : 0);
+            }
+
+            let vSum = 0, aSum = 0, tSum = 0, nSum = 0, oSum = 0;
+            filteredData.forEach(d => { 
+                vSum += d.ratios[0]; aSum += d.ratios[1]; tSum += d.ratios[2]; nSum += d.ratios[3]; oSum += d.ratios[4]; 
+            });
+            const div = filteredData.length || 1;
+            currentKPIs.ratios = [vSum/div, aSum/div, tSum/div, nSum/div, oSum/div];
+
+            updateKPIs();
+            renderTable();
+            renderCharts();
+
+            if (currentMainTab === 'chart') {
+                renderAdvancedAnalysisCharts();
+            }
+        }
+
+        function updateKPIs() {
+            const searchVal = document.getElementById('search-input')?.value.trim();
+            const regionVal = document.getElementById('filter-region')?.value;
+            const sizeVal = document.getElementById('filter-size')?.value;
+            const rearingGradeVal = document.getElementById('filter-rearing-grade')?.value;
+            const costGradeVal = document.getElementById('filter-cost-grade')?.value;
+
+            const isAllDeptAndNoSubFilter = (activeDept === 'ALL') && !searchVal && !regionVal && !sizeVal && !rearingGradeVal && !costGradeVal;
+
+            let displayFarmsCount = filteredData.length;
+            let displayAvgCost = currentKPIs.avgCost;
+            let displayTotalHead = currentKPIs.totalHead;
+            let displayTotalPur = currentKPIs.totalPur;
+
+            if (isAllDeptAndNoSubFilter && buSummaryData.medicineCost > 0) {
+                displayFarmsCount = buSummaryData.farmCount || 97;
+                displayAvgCost = buSummaryData.medicineCost;
+                if (buSummaryData.totalHead > 0) displayTotalHead = buSummaryData.totalHead;
+                if (buSummaryData.totalPurchase > 0) displayTotalPur = buSummaryData.totalPurchase;
+            }
+
+            if (document.getElementById('kpi-total-farms')) document.getElementById('kpi-total-farms').innerText = displayFarmsCount + ' 개소';
+            if (document.getElementById('kpi-avg-cost')) document.getElementById('kpi-avg-cost').innerText = formatWon(displayAvgCost);
+            if (document.getElementById('kpi-total-inflow')) document.getElementById('kpi-total-inflow').innerText = Math.round(displayTotalHead).toLocaleString() + ' 두';
+            if (document.getElementById('kpi-total-purchase')) document.getElementById('kpi-total-purchase').innerText = formatWon(displayTotalPur);
+
+            const grade = calculateGrade(displayAvgCost, displayTotalPur, displayTotalHead);
+            
+            const gradeBadgeClasses = {
+                'A': 'text-emerald-700 bg-emerald-50 border-emerald-200',
+                'B': 'text-blue-700 bg-blue-50 border-blue-200',
+                'C': 'text-purple-700 bg-purple-50 border-purple-200',
+                'D': 'text-orange-700 bg-orange-50 border-orange-200',
+                'D2': 'text-rose-700 bg-rose-50 border-rose-200'
+            };
+
+            if (document.getElementById('kpi-avg-cost-grade')) {
+                const activeBadgeClass = gradeBadgeClasses[grade] || 'text-slate-600 bg-slate-100 border-slate-200';
+                document.getElementById('kpi-avg-cost-grade').innerHTML = grade 
+                    ? `평균 등급: <span class="${activeBadgeClass} px-2 py-0.5 rounded font-black ml-1 border">${grade}</span>`
+                    : `평균 등급: <span class="text-slate-400 font-bold ml-1">-</span>`;
+            }
+            const countText = `검색 농가: ${filteredData.length} 개`;
+            if (document.getElementById('data-count-tag')) document.getElementById('data-count-tag').innerText = countText;
+            if (document.getElementById('chart-data-count-tag')) document.getElementById('chart-data-count-tag').innerText = countText;
+        }
+
+        // 🎯 요구사항 2 반영: 담당CM이 거래X가 아니며, 등급이 'D2'인 농가 행의 배경색을 연한 빨강(bg-red-100)으로 설정
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            if (!tbody) return;
+
+            let html = '';
+            filteredData.forEach(d => {
+                let gradeBadgeHtml = '-';
+                if (d.gradeCategory) {
+                    let gradeClass = 'bg-slate-100 text-slate-800';
+                    if (d.gradeCategory === 'A') gradeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                    else if (d.gradeCategory === 'B') gradeClass = 'bg-blue-100 text-blue-800 border border-blue-200';
+                    else if (d.gradeCategory === 'C') gradeClass = 'bg-purple-100 text-purple-800 border border-purple-200'; 
+                    else if (d.gradeCategory === 'D') gradeClass = 'bg-orange-100 text-orange-800 border border-orange-200';
+                    else if (d.gradeCategory === 'D2') gradeClass = 'bg-red-100 text-red-800 border border-red-200';
+                    gradeBadgeHtml = `<span class="px-2 py-0.5 rounded-md text-[9px] font-black ${gradeClass}">${d.gradeCategory}</span>`;
+                }
+
+                const isInactive = d.manager && d.manager.trim().includes('거래X');
+                const isD2Grade = d.gradeCategory === 'D2';
+
+                let rowBgClass = 'hover:bg-red-50/40 border-b border-slate-100';
+                if (isInactive) {
+                    rowBgClass = 'bg-slate-200/90 text-slate-500 hover:bg-slate-300 border-b border-slate-300';
+                } else if (isD2Grade) {
+                    rowBgClass = 'bg-red-100/90 hover:bg-red-200/90 text-slate-900 border-b border-red-200';
+                }
+
+                html += `
+                    <tr onclick="showSelectedRatioAndDetailsByCode('${d.farmCode}')" class="${rowBgClass} cursor-pointer transition-colors duration-150 select-none">
+                        <td class="py-3 border-r border-slate-100">${d.region}</td>
+                        <td class="py-3 border-r border-slate-100 font-mono text-slate-400 font-semibold">${d.farmCode}</td>
+                        <td class="py-3 border-r border-slate-100 font-extrabold text-slate-900 text-left px-2.5 truncate hover:text-sunjin-red">${d.farmName}</td>
+                        <td class="py-3 border-r border-slate-100 font-bold ${isInactive ? 'text-slate-600' : ''}">${d.manager}</td>
+                        <td class="py-3 border-r border-slate-100 font-semibold text-slate-600">${d.farmSize || '-'}</td>
+                        <td class="py-3 border-r border-slate-100 text-right pr-2.5 font-bold">${Math.round(d.breedingSize).toLocaleString()}두</td>
+                        <td class="py-3 border-r border-slate-100 text-slate-500">${d.rearingGrade}</td>
+                        <td class="py-3 border-r border-slate-100 text-right pr-2.5 font-black text-sunjin-red">${formatP(d.avgRearingRate)}</td>
+                        <td class="py-3 border-r border-slate-100 ${isInactive ? '' : (isD2Grade ? 'bg-red-200/50' : 'bg-yellow-50/30')} text-right pr-2.5 font-black text-slate-900">${d.medicineCost > 0 ? formatWon(d.medicineCost) : '-'}</td>
+                        <td class="py-3 border-r border-slate-100 text-right pr-2.5 text-slate-600">${d.shipmentCost > 0 ? formatWon(d.shipmentCost) : '-'}</td>
+                        <td class="py-3 border-r border-slate-100">${gradeBadgeHtml}</td>
+                        <td class="py-3 text-right pr-2.5 font-semibold text-slate-600">${formatVsMedian(d.vsMedian)}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function showSelectedRatioAndDetailsByCode(farmCode) {
+            if (!farmCode) return;
+            const targetCodeStr = String(farmCode).trim().toLowerCase();
+            const item = parsedData.find(f => String(f.farmCode).trim().toLowerCase() === targetCodeStr || String(f.farmName).trim().toLowerCase() === targetCodeStr);
+            
+            if (item) {
+                if (currentMainTab !== 'dashboard') switchMainTab('dashboard');
+                showSelectedRatioAndDetails(item);
+            }
+        }
+
+        function showSelectedRatioAndDetails(item) {
+            const card = document.getElementById('inline-detail-section');
+            if (!card) return;
+            
+            card.classList.remove('hidden');
+
+            if (document.getElementById('selected-farm-title')) {
+                document.getElementById('selected-farm-title').innerHTML = `🔍 ${item.farmName} <span class="text-red-100 font-bold">&lt;상세 입식/매입 타임라인 종합 보고서&gt;</span>`;
+            }
+            document.getElementById('selected-farm-badge').textContent = `코드: ${item.farmCode} | 담당: ${item.manager} (${item.dept})`;
+
+            let rawVals = item.ratios.map(v => v <= 1.0 ? v * 100 : v);
+            const sum = rawVals.reduce((a, b) => a + b, 0) || 1;
+            const normVals = rawVals.map(v => (v / sum) * 100);
+
+            if (activeCharts['selectedPie']) {
+                activeCharts['selectedPie'].data.datasets[0].data = normVals.map(v => parseFloat(v.toFixed(1)));
+                activeCharts['selectedPie'].update();
+            } else {
+                activeCharts['selectedPie'] = new Chart(document.getElementById('chart-selected-ratios').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ratioLabels,
+                        datasets: [{ data: normVals.map(v => parseFloat(v.toFixed(1))), backgroundColor: ratioColors, borderWidth: 2, borderColor: '#ffffff' }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            datalabels: {
+                                display: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
+                                formatter: (value, context) => {
+                                    let indexed = context.dataset.data.map((val, idx) => ({ val, idx })).sort((a, b) => b.val - a.val);
+                                    return (indexed.slice(0, 2).map(i => i.idx).includes(context.dataIndex) && value > 0) ? `${value.toFixed(1)}%` : '';
+                                }
+                            },
+                            legend: { position: 'right', labels: { font: { size: 10, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+
+            let barsHtml = '';
+            normVals.forEach((v, i) => {
+                barsHtml += `
+                    <div>
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span class="text-slate-600 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background-color: ${ratioColors[i]}"></span>${ratioLabels[i]}</span>
+                            <span class="text-sunjin-red font-black">${v.toFixed(1)}%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-700" style="width: ${v}%; background-color: ${ratioColors[i]}"></div>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('sel-ratio-bars').innerHTML = barsHtml;
+
+            let ratioVal = cleanNum(item.supportMedRatio);
+            if (ratioVal > 0 && ratioVal <= 1.0) ratioVal = ratioVal * 100;
+            let selfPaidVal = Math.max(0, 100 - ratioVal);
+
+            if (activeCharts['supportRatioPie']) {
+                activeCharts['supportRatioPie'].data.datasets[0].data = [parseFloat(ratioVal.toFixed(1)), parseFloat(selfPaidVal.toFixed(1))];
+                activeCharts['supportRatioPie'].update();
+            } else {
+                activeCharts['supportRatioPie'] = new Chart(document.getElementById('chart-support-ratio').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['지원 약품 비율', '입식 지원 비율'],
+                        datasets: [{ data: [parseFloat(ratioVal.toFixed(1)), parseFloat(selfPaidVal.toFixed(1))], backgroundColor: ['#F51932', '#10b981'], borderWidth: 2, borderColor: '#ffffff' }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' },
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            document.getElementById('support-ratio-stats').innerHTML = `
+                <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm text-center">
+                    <p class="text-xs font-semibold text-slate-500 uppercase">지원 약품 비율</p>
+                    <h3 class="text-3xl font-black text-sunjin-red mt-1">${ratioVal.toFixed(1)}%</h3>
+                    <div class="mt-4 space-y-2 text-left">
+                        <div class="flex justify-between text-xs font-bold"><span class="text-slate-600">총 지원매입액</span><span class="text-slate-900">${formatWon(item.supportMedTotal)}</span></div>
+                        <div class="flex justify-between text-xs font-bold border-t border-slate-100 pt-2"><span class="text-slate-600">총 약품매입액</span><span class="text-slate-900">${formatWon(item.purchaseTotal)}</span></div>
+                    </div>
+                </div>`;
+
+            if (document.getElementById('dt-total-cost')) document.getElementById('dt-total-cost').textContent = `평균: ${formatWon(item.medicineCost)}`;
+            if (document.getElementById('dt-total-head')) document.getElementById('dt-total-head').textContent = `누계: ${item.headcountTotal.toLocaleString()} 두`;
+            if (document.getElementById('dt-total-pur')) document.getElementById('dt-total-pur').textContent = `누계: ${formatWon(item.purchaseTotal)}`;
+            if (document.getElementById('dt-total-sup')) document.getElementById('dt-total-sup').textContent = `누계: ${formatWon(item.supportMedTotal)}`;
+
+            drawTimelineChart('chart-dt-cost', mappings.costTrend.map(m=>m.month).slice(0, lastValidTrendIdx + 1), item.costTrendVals.slice(0, lastValidTrendIdx + 1), '#f59e0b', ' 원');
+            drawTimelineChart('chart-dt-head', mappings.headcount.map(m=>m.month).slice(0, lastValidHeadcountIdx + 1), item.headcountVals.slice(0, lastValidHeadcountIdx + 1), '#3b82f6', ' 두');
+            drawTimelineChart('chart-dt-pur', mappings.purchase.map(m=>m.month).slice(0, lastValidPurchaseIdx + 1), item.purchaseVals.slice(0, lastValidPurchaseIdx + 1), '#10b981', ' 원');
+            drawTimelineChart('chart-dt-sup', mappings.supportMed.map(m=>m.month).slice(0, lastValidSupportMedIdx + 1), item.supportMedVals.slice(0, lastValidSupportMedIdx + 1), '#8b5cf6', ' 원');
+
+            const slicedTrendMonths = mappings.costTrend.slice(0, lastValidTrendIdx + 1);
+            const theadGroupA = document.getElementById('thead-group-a');
+            const tbodyGroupA = document.getElementById('tbody-group-a');
+
+            if(theadGroupA && tbodyGroupA) {
+                let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+                slicedTrendMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                theadGroupA.innerHTML = headerHtml;
+
+                tbodyGroupA.innerHTML = `
+                    <tr class="hover:bg-slate-50 border-b border-slate-150">
+                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
+                        ${item.costTrendVals.slice(0, lastValidTrendIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
+                        ${item.supportMedVals.slice(0, lastValidSupportMedIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                    </tr>`;
+            }
+
+            const slicedHeadcountMonths = mappings.headcount.slice(0, lastValidHeadcountIdx + 1);
+            const theadGroupB = document.getElementById('thead-group-b');
+            const tbodyGroupB = document.getElementById('tbody-group-b');
+
+            if(theadGroupB && tbodyGroupB) {
+                let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+                slicedHeadcountMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                theadGroupB.innerHTML = headerHtml;
+
+                tbodyGroupB.innerHTML = `
+                    <tr class="hover:bg-slate-50 border-b border-slate-150">
+                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
+                        ${item.headcountVals.slice(0, lastValidHeadcountIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
+                    </tr>
+                    <tr class="hover:bg-slate-50 border-b border-slate-150">
+                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
+                        ${item.purchaseVals.slice(0, lastValidPurchaseIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
+                        ${item.supportInflowVals.slice(0, lastValidSupportInflowIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                    </tr>`;
+            }
+
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        // 🎯 요구사항 1 반영: 대시보드 상단 입식두당 약품비 추이 차트 Y축 최소값을 2,000원으로 설정 (변동폭 강조)
+        function renderCharts() {
+            if (filteredData.length === 0) return;
+
+            const gCounts = { A: 0, B: 0, C: 0, D: 0, D2: 0 };
+            filteredData.forEach(d => { if (gCounts[d.gradeCategory] !== undefined) gCounts[d.gradeCategory]++; });
+
+            if (activeCharts['grade']) {
+                activeCharts['grade'].data.datasets[0].data = Object.values(gCounts);
+                activeCharts['grade'].update();
+            } else {
+                activeCharts['grade'] = new Chart(document.getElementById('chart-grades'), {
+                    type: 'doughnut',
+                    data: { 
+                        labels: ['A', 'B', 'C', 'D', 'D2'], 
+                        datasets: [{ 
+                            data: Object.values(gCounts), 
+                            backgroundColor: ['#64B41E', '#3b82f6', '#8b5cf6', '#f97316', '#F51932'] 
+                        }] 
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { 
+                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v}개` : '' },
+                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } 
+                        }
+                    }
+                });
+            }
+
+            const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
+
+            if (activeCharts['compare']) {
+                activeCharts['compare'].data.labels = months;
+                activeCharts['compare'].data.datasets[0].data = currentKPIs.trendData.map(v => Math.round(cleanNum(v)));
+                activeCharts['compare'].update();
+            } else {
+                activeCharts['compare'] = new Chart(document.getElementById('chart-monthly-trend'), {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: '평균 입식두당 약품비', 
+                            data: currentKPIs.trendData.map(v => Math.round(cleanNum(v))),
+                            borderColor: '#F51932', backgroundColor: 'rgba(245, 25, 50, 0.05)',
+                            fill: true, tension: 0.25, borderWidth: 3, pointBackgroundColor: '#F51932'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, datalabels: { display: false } },
+                        scales: { 
+                            y: { min: 2000, grace: '15%', ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 9, weight: 'bold' } } },
+                            x: { ticks: { font: { size: 7.5, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+
+            let chartLabels = [];
+            let chartAvgs = [];
+
+            if (activeDept && activeDept !== 'ALL') {
+                const deptFarms = filteredData.filter(d => d.dept === activeDept);
+                const regions = [...new Set(deptFarms.map(d => d.region))].filter(Boolean).sort();
+                
+                regions.forEach(reg => {
+                    chartLabels.push(reg);
+                    const rFarms = deptFarms.filter(d => d.region === reg && d.medicineCost > 0);
+                    const val = rFarms.length > 0 ? (rFarms.reduce((s, f) => s + f.medicineCost, 0) / rFarms.length) : 0;
+                    chartAvgs.push(Math.round(val));
+                });
+            } else {
+                const depts = [...new Set(filteredData.map(d => d.dept))].filter(Boolean).sort();
+                depts.forEach(dept => {
+                    chartLabels.push(dept);
+                    const farms = filteredData.filter(d => d.dept === dept);
+                    const validFarms = farms.filter(f => f.medicineCost > 0);
+                    const val = validFarms.length > 0 ? (validFarms.reduce((s, f) => s + f.medicineCost, 0) / validFarms.length) : 0;
+                    chartAvgs.push(Math.round(val));
+                });
+            }
+
+            if (activeCharts['regions']) {
+                activeCharts['regions'].data.labels = chartLabels;
+                activeCharts['regions'].data.datasets[0].data = chartAvgs;
+                activeCharts['regions'].update();
+            } else {
+                activeCharts['regions'] = new Chart(document.getElementById('chart-regions'), {
+                    type: 'bar',
+                    data: { labels: chartLabels, datasets: [{ label: '평균 약품비 (원/두)', data: chartAvgs, backgroundColor: '#F58200', borderRadius: 4 }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: { display: true, anchor: 'end', align: 'top', color: '#000000', offset: 3, font: { weight: 'bold', size: 9 }, formatter: (v) => v > 0 ? `${Math.round(v).toLocaleString()} 원` : '' }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grace: '15%', ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 9, weight: 'bold' } } },
+                            x: { ticks: { font: { size: 8, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+
+            let rawAvgs = currentKPIs.ratios.map(v => v <= 1.0 ? v * 100 : v);
+            const totalSum = rawAvgs.reduce((a, b) => a + b, 0) || 1;
+            const normAvgs = rawAvgs.map(v => (v / totalSum) * 100);
+
+            if (activeCharts['overallRatios']) {
+                activeCharts['overallRatios'].data.datasets[0].data = normAvgs.map(v => parseFloat(v.toFixed(1)));
+                activeCharts['overallRatios'].update();
+            } else {
+                activeCharts['overallRatios'] = new Chart(document.getElementById('chart-overall-ratios'), {
+                    type: 'pie',
+                    data: { labels: ratioLabels, datasets: [{ data: normAvgs.map(v => parseFloat(v.toFixed(1))), backgroundColor: ratioColors }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 9 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' }
+                        }
+                    }
+                });
+            }
+
+            let oBarsHtml = '';
+            normAvgs.forEach((v, idx) => {
+                oBarsHtml += `
+                    <div>
+                        <div class="flex justify-between text-[10px] mb-0.5">
+                            <span class="text-slate-500 font-medium">${ratioLabels[idx]}</span>
+                            <span class="text-slate-800 font-black">${v.toFixed(1)}%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-700" style="width: ${v}%; background-color: ${ratioColors[idx]}"></div>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('legend-overall-ratios').innerHTML = oBarsHtml;
+        }
+
+        function renderAdvancedAnalysisCharts() {
+            const validFarms = filteredData.filter(f => f.medicineCost > 0);
+            if (validFarms.length === 0) return;
+
+            const sortedFarms = [...validFarms].sort((a, b) => {
+                const orderA = deptOrderMap[a.dept] || 99;
+                const orderB = deptOrderMap[b.dept] || 99;
+                if (orderA !== orderB) return orderA - orderB;
+                return a.farmCode.localeCompare(b.farmCode);
+            });
+
+            const farmNames = sortedFarms.map(f => f.farmName);
+            const farmCosts = sortedFarms.map(f => f.medicineCost);
+            const farmCodes = sortedFarms.map(f => f.farmCode);
+            
+            const barColors = sortedFarms.map(f => gradeColors[f.gradeCategory] || '#F51932');
+
+            const deptGroups = [];
+            let currentDept = null;
+            let currentGroup = null;
+
+            sortedFarms.forEach((f, idx) => {
+                const deptName = f.dept || '기타';
+                if (deptName !== currentDept) {
+                    currentDept = deptName;
+                    currentGroup = { dept: deptName, startIdx: idx, endIdx: idx };
+                    deptGroups.push(currentGroup);
+                } else {
+                    currentGroup.endIdx = idx;
+                }
+            });
+
+            if (activeCharts['farmBarComp']) {
+                activeCharts['farmBarComp'].destroy();
+            }
+
+            const deptGroupBracketPlugin = {
+                id: 'deptGroupBracketPlugin',
+                afterDraw: (chart) => {
+                    const { ctx, scales: { x } } = chart;
+                    ctx.save();
+                    ctx.font = 'bold 11px sans-serif';
+                    ctx.textAlign = 'center';
+
+                    const groupColors = {
+                        'F사업팀': '#e11d48',
+                        '중부사업부': '#d97706',
+                        '호남사업부': '#2563eb',
+                        '영남사업팀': '#7c3aed'
+                    };
+
+                    deptGroups.forEach(group => {
+                        const startX = x.getPixelForValue(group.startIdx);
+                        const endX = x.getPixelForValue(group.endIdx);
+                        const midX = (startX + endX) / 2;
+                        
+                        const bracketY = chart.height - 24; 
+                        const lineColor = groupColors[group.dept] || '#475569';
+
+                        ctx.strokeStyle = lineColor;
+                        ctx.fillStyle = lineColor;
+                        ctx.lineWidth = 2;
+
+                        ctx.beginPath();
+                        ctx.moveTo(startX - 6, bracketY - 6);
+                        ctx.lineTo(startX - 6, bracketY);
+                        ctx.lineTo(endX + 6, bracketY);
+                        ctx.lineTo(endX + 6, bracketY - 6);
+                        ctx.stroke();
+
+                        ctx.fillText(group.dept, midX, bracketY + 15);
+                    });
+
+                    ctx.restore();
+                }
+            };
+
+            activeCharts['farmBarComp'] = new Chart(document.getElementById('chart-farm-bar-comparison').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: farmNames,
+                    datasets: [{
+                        label: '입식두당 약품비',
+                        data: farmCosts,
+                        backgroundColor: barColors,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { bottom: 45, top: 25 }
+                    },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const targetCode = farmCodes[index];
+                            showSelectedRatioAndDetailsByCode(targetCode);
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: true, 
+                            anchor: 'end', 
+                            align: 'top', 
+                            color: '#1e293b', 
+                            offset: 4,
+                            font: { size: 11, weight: 'extrabold' },
+                            formatter: (v) => v > 0 ? Math.round(v).toLocaleString() : ''
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (c) => {
+                                    const farm = sortedFarms[c.dataIndex];
+                                    return ` [${farm.dept}] ${farm.farmName}: ${formatWon(c.raw)} (클릭 시 상세 이동)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grace: '18%', 
+                            ticks: { 
+                                callback: v => Math.round(v).toLocaleString() + ' 원',
+                                font: { weight: 'bold', size: 10 }
+                            } 
+                        },
+                        x: { 
+                            ticks: { 
+                                font: { size: 9, weight: 'bold' },
+                                autoSkip: false,
+                                minRotation: 90, 
+                                maxRotation: 90 
+                            } 
+                        }
+                    }
+                },
+                plugins: [deptGroupBracketPlugin]
+            });
+
+            const validScatterData = validFarms
+                .filter(f => f.avgRearingRate > 0)
+                .map(f => ({
+                    x: f.medicineCost,
+                    y: f.avgRearingRate > 1.0 ? f.avgRearingRate : f.avgRearingRate * 100,
+                    farmName: f.farmName,
+                    farmCode: f.farmCode,
+                    dept: f.dept,
+                    grade: f.gradeCategory
+                }));
+
+            const buX = buSummaryData.medicineCost || 4838;
+            const buY = buSummaryData.avgRearingRate || 93.5;
+
+            if (activeCharts['quadrantScatter']) {
+                activeCharts['quadrantScatter'].destroy();
+            }
+
+            activeCharts['quadrantScatter'] = new Chart(document.getElementById('chart-farm-quadrant-scatter').getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: '농가 성적 분포',
+                            data: validScatterData,
+                            backgroundColor: validScatterData.map(p => gradeColors[p.grade] || '#F51932'),
+                            pointRadius: 6.5,
+                            pointHoverRadius: 10
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const targetCode = validScatterData[index].farmCode;
+                            showSelectedRatioAndDetailsByCode(targetCode);
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: true,
+                            align: 'top',
+                            color: '#1e293b',
+                            font: { size: 9, weight: 'bold' },
+                            formatter: (p) => p.farmName
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (c) => {
+                                    const p = c.raw;
+                                    return ` ${p.farmName} (${p.dept}): 약품비 ${formatWon(p.x)} / 육성률 ${p.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: 0,
+                            max: 18000, 
+                            title: { display: true, text: '입식두당 약품비 (원)', font: { weight: 'bold' } },
+                            ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { weight: 'bold' } }
+                        },
+                        y: {
+                            min: 80,
+                            max: 100, 
+                            title: { display: true, text: '평균 육성률 (%)', font: { weight: 'bold' } },
+                            ticks: { callback: v => v.toFixed(0) + '%', font: { weight: 'bold' } }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'quadrantStylingPlugin',
+                    beforeDraw: (chart) => {
+                        const { ctx, chartArea: { left, right, top, bottom }, scales: { x, y } } = chart;
+                        const xVal = x.getPixelForValue(buX);
+                        const yVal = y.getPixelForValue(buY);
+
+                        ctx.save();
+
+                        ctx.fillStyle = 'rgba(100, 180, 30, 0.15)';
+                        ctx.fillRect(left, top, Math.max(0, xVal - left), Math.max(0, yVal - top));
+
+                        ctx.fillStyle = 'rgba(245, 25, 50, 0.15)';
+                        ctx.fillRect(xVal, yVal, Math.max(0, right - xVal), Math.max(0, bottom - yVal));
+
+                        ctx.fillStyle = 'rgba(245, 130, 0, 0.12)';
+                        ctx.fillRect(xVal, top, Math.max(0, right - xVal), Math.max(0, yVal - top));
+                        ctx.fillRect(left, yVal, Math.max(0, xVal - left), Math.max(0, bottom - yVal));
+
+                        ctx.strokeStyle = '#1e1b4b';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([6, 4]);
+
+                        ctx.beginPath();
+                        ctx.moveTo(xVal, top);
+                        ctx.lineTo(xVal, bottom);
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.moveTo(left, yVal);
+                        ctx.lineTo(right, yVal);
+                        ctx.stroke();
+
+                        ctx.setLineDash([]);
+                        ctx.font = 'bold 10px sans-serif';
+
+                        const xText = ` 한마을BU 평균 약품비: ${formatWon(buX)} `;
+                        ctx.fillStyle = '#1e1b4b';
+                        ctx.fillRect(xVal + 4, top + 6, ctx.measureText(xText).width + 6, 18);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(xText, xVal + 7, top + 19);
+
+                        const yText = ` 한마을BU 평균 육성률: ${buY.toFixed(1)}% `;
+                        ctx.fillStyle = '#1e1b4b';
+                        ctx.fillRect(left + 6, yVal - 22, ctx.measureText(yText).width + 6, 18);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(yText, left + 9, yVal - 9);
+
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        function drawTimelineChart(canvasId, labels, data, color, unit) {
+            const roundedData = data.map(v => Math.round(cleanNum(v)));
+            
+            if (activeCharts[canvasId] && typeof activeCharts[canvasId].destroy === 'function') {
+                activeCharts[canvasId].data.labels = labels;
+                activeCharts[canvasId].data.datasets[0].data = roundedData;
+                activeCharts[canvasId].update();
+            } else {
+                activeCharts[canvasId] = new Chart(document.getElementById(canvasId).getContext('2d'), {
+                    type: 'line',
+                    data: { labels: labels, datasets: [{ data: roundedData, borderColor: color, backgroundColor: color + '15', fill: true, tension: 0.2, borderWidth: 2, pointHoverRadius: 5 }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, datalabels: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { callback: v => Math.round(v).toLocaleString() + unit, font: { size: 9, weight: 'bold' } } },
+                            x: { ticks: { font: { size: 7.5, weight: 'bold' } } } 
+                        }
+                    }
+                });
+            }
+        }
+
+        function toggleSort(field) {
+            if (currentSortField === field) { currentSortAsc = !currentSortAsc; } 
+            else { currentSortField = field; currentSortAsc = true; }
+            
+            ['region', 'farmCode', 'farmName', 'manager', 'farmSize', 'breedingSize', 'rearingGrade', 'avgRearingRate', 'medicineCost', 'shipmentCost', 'gradeCategory', 'vsMedian'].forEach(f => {
+                const el = document.getElementById('sort-' + f);
+                if (el) el.innerText = '';
+            });
+
+            const activeEl = document.getElementById('sort-' + field);
+            if (activeEl) activeEl.innerText = currentSortAsc ? ' ▲' : ' ▼';
+
+            applyFilters();
+        }
+
+        function resetFilters() {
+            syncAndApplyFilters('search', '');
+            syncAndApplyFilters('dept', '');
+            syncAndApplyFilters('region', '');
+            syncAndApplyFilters('size', '');
+            syncAndApplyFilters('rearingGrade', '');
+            syncAndApplyFilters('costGrade', '');
+            
+            activeDept = 'ALL';
+            currentSortField = 'medicineCost';
+            currentSortAsc = false;
+
+            ['region', 'farmCode', 'farmName', 'manager', 'farmSize', 'breedingSize', 'rearingGrade', 'avgRearingRate', 'medicineCost', 'shipmentCost', 'gradeCategory', 'vsMedian'].forEach(f => {
+                const el = document.getElementById('sort-' + f);
+                if (el) el.innerText = '';
+            });
+
+            renderTabs();
+            populateRegions();
+            populateRearingGrades();
+            applyFilters();
+            showNotification('🔄 필터와 정렬 순서가 초기화되었습니다.', 'info');
+        }
+
+        function showNotification(msg, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl text-white font-bold shadow-2xl transition-all duration-300 translate-y-10 opacity-0 ${type === 'success' ? 'bg-emerald-500' : 'bg-sunjin-red'} no-print`;
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 50);
+            setTimeout(() => { toast.classList.add('translate-y-10', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+
+            document.addEventListener('click', (e) => {
+                const verifBtn = document.getElementById('verif-dropdown-btn');
+                const verifMenu = document.getElementById('verif-dropdown-menu');
+                if (verifBtn && verifMenu && !verifBtn.contains(e.target) && !verifMenu.contains(e.target)) {
+                    verifMenu.classList.add('hidden');
+                }
+            });
+
+            const savedEmail = sessionStorage.getItem('user_email');
+            const savedPassword = sessionStorage.getItem('user_password');
+
+            if (savedEmail && savedPassword) {
+                currentUserEmail = savedEmail;
+                currentUserPassword = savedPassword;
+                hideLoginModal();
+                fetchGoogleSheetData();
+            } else {
+                showLoginModal();
+            }
+
+            setInterval(() => { 
+                if (currentUserEmail && currentUserPassword) {
+                    fetchGoogleSheetData(false); 
+                }
+            }, AUTO_REFRESH_INTERVAL);
+        };
+    </script>
+</body>
+</html>
