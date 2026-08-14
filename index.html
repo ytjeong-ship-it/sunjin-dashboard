@@ -34,6 +34,113 @@
         }
     </script>
     <style>
+/* 📱 [모바일 최종 정밀 수정] 로고 시인성 확보 & 전역 레이아웃 최적화 */
+@media (max-width: 768px) {
+
+    /* 1. 상단 헤더 레이아웃 */
+    header {
+        position: relative !important;
+        height: auto !important;
+        padding: 0.6rem 0.75rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    header .flex, 
+    header div, 
+    header nav {
+        flex-wrap: wrap !important;
+        height: auto !important;
+        gap: 0.4rem !important;
+        max-width: 100% !important;
+    }
+
+    /* 🎯 [핵심] 선진 로고 이미지 및 부모 컨테이너 시원하게 확대 (36px) */
+    header img, 
+    header a:has(img), 
+    header div:has(> img) {
+        height: 36px !important;
+        min-height: 36px !important;
+        max-height: 40px !important;
+        width: auto !important;
+        display: inline-block !important;
+        object-fit: contain !important;
+        flex-shrink: 0 !important;
+        overflow: visible !important;
+    }
+
+    /* 헤더 타이틀 및 버튼 미니 폰트 */
+    header h1 {
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+    }
+
+    header button, header a, #user-display-badge {
+        font-size: 10px !important;
+        padding: 0.25rem 0.5rem !important;
+        height: auto !important;
+        white-space: nowrap !important;
+    }
+
+    main {
+        margin-top: 0.5rem !important;
+        padding-top: 0 !important;
+    }
+
+    /* 2. 차트 100% 유동 레이아웃 */
+    div:has(> canvas), .chart-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+    canvas {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-height: 220px !important;
+        height: auto !important;
+    }
+
+    /* 3. 약품비 등급 범위 기준표 (A~D2) 밀착 */
+    .grid table, 
+    table.w-full th, 
+    table.w-full td {
+        font-size: 0.6rem !important;
+        padding: 0.2rem 0.05rem !important;
+        white-space: nowrap !important;
+    }
+
+    /* 4. 카드 및 대시보드 타일 1열 세로 정렬 */
+    .grid, [class*="grid-cols-"] {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+    }
+
+    /* 5. SVG 아이콘 크기 맞춤 */
+    svg { max-width: 100% !important; height: auto !important; }
+    header svg, button svg, .badge svg, span svg {
+        width: 12px !important;
+        height: 12px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* 6. 농가 리스트 & 상세 표 밀착 */
+    .sticky-table th, .sticky-table td {
+        font-size: 0.68rem !important;
+        padding: 0.25rem 0.15rem !important;
+        white-space: nowrap !important;
+    }
+    #inline-detail-section table, #detail-view table {
+        width: 100% !important;
+        table-layout: auto !important;
+    }
+    #inline-detail-section th, #inline-detail-section td,
+    #detail-view th, #detail-view td {
+        padding: 0.25rem 0.25rem !important;
+        font-size: 0.68rem !important;
+        word-break: keep-all !important;
+    }
+}
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -80,106 +187,6 @@
             thead { display: table-header-group !important; }
             tr { break-inside: auto !important; page-break-inside: auto !important; }
         }
-/* 📱 [모바일 전체] 전역 유동적 반응형 통합 최적화 */
-@media (max-width: 768px) {
-
-    /* 1. 상단 고정 헤더 높이 자동 확장 및 줄바꿈 허용 */
-    header {
-        position: relative !important;
-        height: auto !important;
-    }
-    header .h-14, header .h-12 {
-        height: auto !important;
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    main {
-        margin-top: 1rem !important;
-    }
-
-    /* 2. 상단 제목 및 배지/버튼 크기 모바일 축소 */
-    header h1 {
-        font-size: 0.75rem !important;
-        white-space: nowrap;
-    }
-    #user-display-badge, header button {
-        padding: 0.25rem 0.5rem !important;
-        font-size: 0.65rem !important;
-        white-space: nowrap;
-    }
-
-    /* 3. 모바일 화면 가로 찢어짐(스크롤) 방지 & 전역 유동성 */
-    html, body {
-        overflow-x: hidden !important;
-        width: 100% !important;
-    }
-
-    div, section, main, header, footer, article, nav {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    /* 4. PC용 다열(Grid) 카드 1열 세로 정렬 & 글자 줄바꿈 */
-    .grid {
-        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-        gap: 0.75rem !important;
-    }
-    .whitespace-nowrap {
-        white-space: normal !important;
-    }
-
-    /* 5. 입력창, 버튼, 선택창 모바일 다이어트 */
-    input, select, textarea, button {
-        font-size: 12px !important;
-        max-width: 100% !important;
-    }
-
-    /* 6. 차트 박스 모바일 크기 최적화 */
-    canvas, img, svg {
-        max-width: 100% !important;
-        height: auto !important;
-        max-height: 200px !important;
-    }
-
-    /* 7. 모달 팝업창 모바일 비율 맞춤 */
-    [id$="-modal"] > div {
-        width: 92% !important;
-        max-height: 85vh !important;
-        padding: 1rem !important;
-        margin: auto !important;
-    }
-
-    /* 8. 농가 리스트 (글자 줄바꿈 방지 & 미니 글자) */
-    .sticky-table th, 
-    .sticky-table td {
-        font-size: 0.68rem !important;
-        padding: 0.25rem 0.15rem !important;
-        white-space: nowrap !important;
-    }
-
-    /* 9. 농가 상세 정보 표 (유기적 폭 & 밀착 여백) */
-    #inline-detail-section, 
-    #detail-view {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    #inline-detail-section table,
-    #detail-view table {
-        width: 100% !important;
-        table-layout: auto !important;
-    }
-
-    #inline-detail-section th, #inline-detail-section td,
-    #detail-view th, #detail-view td {
-        padding: 0.25rem 0.25rem !important;
-        font-size: 0.68rem !important;
-        word-break: keep-all !important;
-    }
-}
 </style>
 </head>
 <body class="h-full flex flex-col font-sans text-slate-900 antialiased selection:bg-red-100 bg-slate-100">
@@ -250,7 +257,7 @@
             <div class="h-14 flex items-center justify-between border-b border-slate-100">
                 <div class="flex items-center space-x-3 sm:space-x-4">
                     <div class="flex items-center cursor-pointer py-1" onclick="resetWholePageToInitialState()" title="선진한마을 - 클릭 시 홈 이동">
-                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="1360.63" height="425.197" viewBox="0 0 1360.63 425.197" class="h-10 w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="1360.63" height="425.197" viewBox="0 0 1360.63 425.197" class="h-10 w-auto" style="height: 38px !important; width: auto !important;">
                             <defs>
                             <clipPath id="clip_1">
                             <path transform="matrix(1,0,0,-1,0,425.197)" d="M0 425.197H1360.63V0H0Z"/>
