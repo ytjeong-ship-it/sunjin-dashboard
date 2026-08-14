@@ -122,6 +122,37 @@
         max-height: 200px !important;
     }
 }    
+/* 📱 오직 모바일 화면(폭 768px 이하)에서만 유기적으로 반응하도록 설정 */
+@media (max-width: 768px) {
+    /* 1. 모바일 농가 리스트 (글자 줄바꿈 방지 & 미니 글자) */
+    .sticky-table th, 
+    .sticky-table td {
+        font-size: 0.68rem !important; /* 미니 글자 (약 11px) */
+        padding: 0.25rem 0.15rem !important;
+        white-space: nowrap !important;
+    }
+
+    /* 2. 모바일 농가 상세 정보 영역 (유기적 폭 & 밀착 여백) */
+    #inline-detail-section, 
+    #detail-view {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #inline-detail-section table,
+    #detail-view table {
+        width: 100% !important;
+        table-layout: auto !important; /* 내용물 길이에 맞춰 셀 폭 자동 배분 */
+    }
+
+    #inline-detail-section th, #inline-detail-section td,
+    #detail-view th, #detail-view td {
+        padding: 0.25rem 0.25rem !important;
+        font-size: 0.68rem !important;
+        word-break: keep-all !important;
+    }
+}
 </style>
 </head>
 <body class="h-full flex flex-col font-sans text-slate-900 antialiased selection:bg-red-100 bg-slate-100">
