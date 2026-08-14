@@ -80,8 +80,9 @@
             thead { display: table-header-group !important; }
             tr { break-inside: auto !important; page-break-inside: auto !important; }
         }
-/* 📱 모바일 화면(768px 이하) 레이아웃 및 글자 뭉개짐 방지 최적화 */
+/* 📱 [모바일 전체] 전역 유동적 반응형 통합 최적화 */
 @media (max-width: 768px) {
+
     /* 1. 상단 고정 헤더 높이 자동 확장 및 줄바꿈 허용 */
     header {
         position: relative !important;
@@ -95,44 +96,70 @@
         gap: 0.5rem;
     }
     main {
-        margin-top: 1rem !important; /* 상단 여백 재조정 */
+        margin-top: 1rem !important;
     }
 
     /* 2. 상단 제목 및 배지/버튼 크기 모바일 축소 */
     header h1 {
-        font-size: 0.75rem !important; /* 글자 크기 축소 */
+        font-size: 0.75rem !important;
         white-space: nowrap;
     }
     #user-display-badge, header button {
         padding: 0.25rem 0.5rem !important;
-        font-size: 0.65rem !important; /* 버튼 글자 크기 축소 */
-        white-space: nowrap; /* 글자 줄바꿈 강제 방지 */
+        font-size: 0.65rem !important;
+        white-space: nowrap;
     }
 
-    /* 3. 대시보드 타일 카드 내 글자 뭉개짐 방지 */
+    /* 3. 모바일 화면 가로 찢어짐(스크롤) 방지 & 전역 유동성 */
+    html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+    }
+
+    div, section, main, header, footer, article, nav {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 4. PC용 다열(Grid) 카드 1열 세로 정렬 & 글자 줄바꿈 */
     .grid {
-        grid-template-columns: repeat(1, minmax(0, 1fr)) !important; /* 1열 배치로 넓게 변경 */
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
     }
     .whitespace-nowrap {
-        white-space: normal !important; /* 박스를 벗어나는 긴 글자 자연스럽게 정리 */
+        white-space: normal !important;
     }
 
-    /* 4. 차트 박스 높이 모바일 맞춤 확장 */
-    canvas {
+    /* 5. 입력창, 버튼, 선택창 모바일 다이어트 */
+    input, select, textarea, button {
+        font-size: 12px !important;
+        max-width: 100% !important;
+    }
+
+    /* 6. 차트 박스 모바일 크기 최적화 */
+    canvas, img, svg {
+        max-width: 100% !important;
+        height: auto !important;
         max-height: 200px !important;
     }
-}    
-/* 📱 오직 모바일 화면(폭 768px 이하)에서만 유기적으로 반응하도록 설정 */
-@media (max-width: 768px) {
-    /* 1. 모바일 농가 리스트 (글자 줄바꿈 방지 & 미니 글자) */
+
+    /* 7. 모달 팝업창 모바일 비율 맞춤 */
+    [id$="-modal"] > div {
+        width: 92% !important;
+        max-height: 85vh !important;
+        padding: 1rem !important;
+        margin: auto !important;
+    }
+
+    /* 8. 농가 리스트 (글자 줄바꿈 방지 & 미니 글자) */
     .sticky-table th, 
     .sticky-table td {
-        font-size: 0.68rem !important; /* 미니 글자 (약 11px) */
+        font-size: 0.68rem !important;
         padding: 0.25rem 0.15rem !important;
         white-space: nowrap !important;
     }
 
-    /* 2. 모바일 농가 상세 정보 영역 (유기적 폭 & 밀착 여백) */
+    /* 9. 농가 상세 정보 표 (유기적 폭 & 밀착 여백) */
     #inline-detail-section, 
     #detail-view {
         width: 100% !important;
@@ -143,7 +170,7 @@
     #inline-detail-section table,
     #detail-view table {
         width: 100% !important;
-        table-layout: auto !important; /* 내용물 길이에 맞춰 셀 폭 자동 배분 */
+        table-layout: auto !important;
     }
 
     #inline-detail-section th, #inline-detail-section td,
