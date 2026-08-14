@@ -80,7 +80,49 @@
             thead { display: table-header-group !important; }
             tr { break-inside: auto !important; page-break-inside: auto !important; }
         }
-    </style>
+/* 📱 모바일 화면(768px 이하) 레이아웃 및 글자 뭉개짐 방지 최적화 */
+@media (max-width: 768px) {
+    /* 1. 상단 고정 헤더 높이 자동 확장 및 줄바꿈 허용 */
+    header {
+        position: relative !important;
+        height: auto !important;
+    }
+    header .h-14, header .h-12 {
+        height: auto !important;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    main {
+        margin-top: 1rem !important; /* 상단 여백 재조정 */
+    }
+
+    /* 2. 상단 제목 및 배지/버튼 크기 모바일 축소 */
+    header h1 {
+        font-size: 0.75rem !important; /* 글자 크기 축소 */
+        white-space: nowrap;
+    }
+    #user-display-badge, header button {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.65rem !important; /* 버튼 글자 크기 축소 */
+        white-space: nowrap; /* 글자 줄바꿈 강제 방지 */
+    }
+
+    /* 3. 대시보드 타일 카드 내 글자 뭉개짐 방지 */
+    .grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important; /* 1열 배치로 넓게 변경 */
+    }
+    .whitespace-nowrap {
+        white-space: normal !important; /* 박스를 벗어나는 긴 글자 자연스럽게 정리 */
+    }
+
+    /* 4. 차트 박스 높이 모바일 맞춤 확장 */
+    canvas {
+        max-height: 200px !important;
+    }
+}    
+</style>
 </head>
 <body class="h-full flex flex-col font-sans text-slate-900 antialiased selection:bg-red-100 bg-slate-100">
 
@@ -1053,7 +1095,39 @@
             </p>
         </div>
     </footer>
+<!-- 팝업 모달: 최신 공지사항 모달 -->
+    <div id="notice-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 fade-in-section flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-2.5 bg-red-50 text-sunjin-red rounded-2xl">
+                            <i data-lucide="megaphone" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-black text-sunjin-red uppercase tracking-wider">SYSTEM NOTICE</span>
+                            <h3 id="notice-modal-title" class="text-base font-black text-slate-800 leading-snug">공지사항</h3>
+                        </div>
+                    </div>
+                    <span id="notice-modal-date" class="text-[11px] font-extrabold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg"></span>
+                </div>
 
+                <div class="py-2 max-h-[350px] overflow-y-auto">
+                    <p id="notice-modal-content" class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap"></p>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" id="notice-dont-show-today" class="w-4 h-4 text-sunjin-red rounded border-slate-300 focus:ring-sunjin-red">
+                    <span class="text-xs font-bold text-slate-500">오늘 하루 보지 않기</span>
+                </label>
+                <button onclick="closeNoticeModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-extrabold transition shadow">
+                    확인 및 닫기
+                </button>
+            </div>
+        </div>
+    </div>
     <script>
         Chart.register(ChartDataLabels);
 
@@ -1726,6 +1800,8 @@
                 restoreLoginButtonState();
                 return;
             }
+
+            checkAndShowNotice();
 
             loadingOverlay.classList.remove('hidden');
             const startTime = performance.now();
@@ -3260,6 +3336,58 @@
                 }
             }, AUTO_REFRESH_INTERVAL);
         };
+// 🎯 최신 공지사항 조회 및 팝업 띄우기
+        function checkAndShowNotice() {
+            if (!currentUserEmail || !currentUserPassword) return;
+
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('action', 'getLatestNotice');
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+            urlObj.searchParams.set('t', new Date().getTime());
+
+            fetch(urlObj.toString())
+                .then(res => res.json())
+                .then(notice => {
+                    if (!notice || !notice.noticeId) return;
+
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    const hideUntil = localStorage.getItem(`hide_notice_${notice.noticeId}`);
+
+                    // 오늘 하루 보지 않기가 설정되어 있다면 팝업을 띄우지 않음
+                    if (hideUntil === todayStr) return;
+
+                    const titleEl = document.getElementById('notice-modal-title');
+                    const dateEl = document.getElementById('notice-modal-date');
+                    const contentEl = document.getElementById('notice-modal-content');
+                    const modal = document.getElementById('notice-modal');
+
+                    if (titleEl) titleEl.textContent = notice.title;
+                    if (dateEl) dateEl.textContent = notice.dateStr;
+                    if (contentEl) contentEl.textContent = notice.content;
+
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                        modal.setAttribute('data-notice-id', notice.noticeId);
+                    }
+                    lucide.createIcons();
+                })
+                .catch(err => console.error("공지사항 수신 에러:", err));
+        }
+
+        function closeNoticeModal() {
+            const modal = document.getElementById('notice-modal');
+            const dontShowCheck = document.getElementById('notice-dont-show-today');
+            
+            if (modal) {
+                const noticeId = modal.getAttribute('data-notice-id');
+                if (dontShowCheck && dontShowCheck.checked && noticeId) {
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    localStorage.setItem(`hide_notice_${noticeId}`, todayStr);
+                }
+                modal.classList.add('hidden');
+            }
+        }
     </script>
 </body>
 </html>
