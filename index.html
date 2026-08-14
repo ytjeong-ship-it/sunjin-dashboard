@@ -228,8 +228,13 @@
 
                     <div id="login-error-msg" class="hidden text-xs text-red-600 font-bold text-center bg-red-50 p-2.5 rounded-lg border border-red-100">
                         인증에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.
-                    </div>
-
+                    	</div>
+				<!-- 🎯 로그인 버튼 위에 비밀번호 재설정 링크 추가 -->
+					<div class="text-right mb-2">
+  						<button type="button" onclick="openResetModal()" class="text-xs text-slate-500 hover:text-sunjin-red underline">
+   						 비밀번호를 잊으셨나요?
+  							</button>
+						</div>
                     <button type="submit" id="btn-login-submit" class="w-full py-3 bg-sunjin-red hover:bg-red-700 text-white rounded-xl text-xs font-extrabold shadow-lg transition flex items-center justify-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed">
                         <span id="btn-login-text" class="flex items-center gap-2">
                             <i data-lucide="log-in" class="w-4 h-4"></i>로그인 및 데이터 조회
@@ -237,7 +242,6 @@
                     </button>
                 </form>
             </div>
-
             <div class="mt-8 pt-4 border-t border-slate-100 text-center">
                 <p class="text-[11px] font-semibold text-slate-400 tracking-tight">
                     문의: 양돈사업본부 재무팀 정윤택 / <a href="mailto:ytjeong@sunjin.com" class="text-sunjin-red font-bold hover:underline">ytjeong@sunjin.com</a>
@@ -245,6 +249,63 @@
             </div>
         </div>
     </div>
+<!-- 🔐 비밀번호 재설정 모달 (팝업창) -->
+<div id="reset-password-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-[200]">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+    
+    <h2 class="text-xl font-bold text-slate-800 mb-4">🔑 비밀번호 재설정</h2>
+    
+    <!-- 1. 이메일 입력 -->
+    <div class="mb-4">
+      <label class="block text-xs font-semibold text-slate-600 mb-1">등록된 이메일 계정</label>
+      <div class="flex gap-2">
+        <input type="email" id="reset-email" placeholder="example@sunjin.com" 
+               class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400">
+        <button type="button" id="btn-send-code" onclick="requestAuthCode()" 
+                class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-medium transition shrink-0 disabled:opacity-50">
+          인증번호 발송
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. 인증번호 입력 & 카운트다운 타이머 -->
+    <div class="mb-4">
+      <label class="block text-xs font-semibold text-slate-600 mb-1">인증번호 6자리</label>
+      <div class="relative flex items-center">
+        <input type="text" id="auth-code" maxlength="6" placeholder="6자리 숫자 입력" 
+               class="w-full border rounded-lg pl-3 pr-16 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400">
+        
+        <!-- ⏱️ 카운트다운 타이머 -->
+        <span id="timer-display" class="absolute right-3 text-xs font-bold text-red-500 hidden">
+          03:00
+        </span>
+      </div>
+    </div>
+
+    <!-- 3. 새 비밀번호 입력 -->
+    <div class="mb-3">
+      <label class="block text-xs font-semibold text-slate-600 mb-1">새 비밀번호</label>
+      <input type="password" id="reset-new-password" placeholder="변경할 새 비밀번호" 
+             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400">
+    </div>
+
+    <!-- 4. 새 비밀번호 재확인 입력 -->
+    <div class="mb-5">
+      <label class="block text-xs font-semibold text-slate-600 mb-1">새 비밀번호 확인</label>
+      <input type="password" id="reset-new-password-confirm" placeholder="새 비밀번호 다시 입력" 
+             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400">
+    </div>
+
+    <!-- 버튼 영역 -->
+    <div class="flex justify-end gap-2">
+      <button type="button" id="btn-reset-cancel" onclick="closeResetModal()" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-lg">취소</button>
+      <button type="button" id="btn-reset-submit" onclick="submitNewPassword()" class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+        비밀번호 변경 완료
+      </button>
+    </div>
+
+  </div>
+</div>
 
     <!-- 0. 전체 화면 로딩 오버레이 -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/85 backdrop-blur-md z-40 flex flex-col items-center justify-center text-white no-print hidden">
@@ -3453,6 +3514,198 @@
                 modal.classList.add('hidden');
             }
         }
+// ==========================================
+// 🔑 비밀번호 재설정 모달 및 타이머 로직 (최종 완결판)
+// ==========================================
+var timerInterval = null;
+
+// 1. 모달 열기
+function openResetModal() {
+  var modal = document.getElementById("reset-password-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+  } else {
+    alert("오류: reset-password-modal 모달창을 찾을 수 없습니다.");
+  }
+}
+
+// 2. 모달 닫기 및 상태 초기화
+function closeResetModal() {
+  if (timerInterval) clearInterval(timerInterval);
+  
+  var timerDisplay = document.getElementById("timer-display");
+  var resetEmail = document.getElementById("reset-email");
+  var authCode = document.getElementById("auth-code");
+  var resetNewPassword = document.getElementById("reset-new-password");
+  var resetNewPasswordConfirm = document.getElementById("reset-new-password-confirm");
+  var modal = document.getElementById("reset-password-modal");
+  
+  var btnSubmit = document.getElementById("btn-reset-submit");
+  var btnCancel = document.getElementById("btn-reset-cancel");
+  var btnSendCode = document.getElementById("btn-send-code");
+
+  if (timerDisplay) timerDisplay.classList.add("hidden");
+  
+  if (resetEmail) { resetEmail.value = ""; resetEmail.disabled = false; }
+  if (authCode) { authCode.value = ""; authCode.disabled = false; }
+  if (resetNewPassword) { resetNewPassword.value = ""; resetNewPassword.disabled = false; }
+  if (resetNewPasswordConfirm) { resetNewPasswordConfirm.value = ""; resetNewPasswordConfirm.disabled = false; }
+  
+  if (btnSubmit) { 
+    btnSubmit.disabled = false; 
+    btnSubmit.textContent = "비밀번호 변경 완료"; 
+  }
+  if (btnCancel) btnCancel.disabled = false;
+  if (btnSendCode) btnSendCode.disabled = false;
+
+  if (modal) modal.classList.add("hidden");
+}
+
+// 3. 인증번호 발송 요청
+function requestAuthCode() {
+  var resetEmail = document.getElementById("reset-email");
+  var email = resetEmail ? resetEmail.value.trim() : "";
+  
+  if (!email) {
+    alert("이메일을 입력해 주세요.");
+    return;
+  }
+
+  alert("인증번호를 발송 중입니다... 잠시만 기다려 주세요.");
+
+  var targetUrl = (typeof GAS_URL !== 'undefined') ? GAS_URL : ((typeof GOOGLE_SHEET_API_URL !== 'undefined') ? GOOGLE_SHEET_API_URL : "");
+
+  if (!targetUrl) {
+    alert("오류: 구글 앱스 스크립트 URL이 설정되지 않았습니다.");
+    return;
+  }
+
+  fetch(targetUrl + "?action=sendAuthCode&email=" + encodeURIComponent(email))
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.error) {
+        alert("❌ " + data.error);
+      } else {
+        alert("✅ " + data.message);
+        startTimer(180);
+      }
+    })
+    .catch(function(err) {
+      alert("통신 오류가 발생했습니다: " + err);
+    });
+}
+
+// 4. 3분 카운트다운 타이머
+function startTimer(durationInSeconds) {
+  var timer = durationInSeconds;
+  var timerDisplay = document.getElementById("timer-display");
+  
+  if (timerInterval) clearInterval(timerInterval);
+
+  if (timerDisplay) {
+    timerDisplay.classList.remove("hidden", "text-slate-400");
+    timerDisplay.classList.add("text-red-500");
+  }
+
+  timerInterval = setInterval(function() {
+    var minutes = parseInt(timer / 60, 10);
+    var seconds = parseInt(timer % 60, 10);
+
+    var displayMin = minutes < 10 ? "0" + minutes : minutes;
+    var displaySec = seconds < 10 ? "0" + seconds : seconds;
+
+    if (timerDisplay) {
+      timerDisplay.textContent = displayMin + ":" + displaySec;
+    }
+
+    if (--timer < 0) {
+      clearInterval(timerInterval);
+      if (timerDisplay) {
+        timerDisplay.textContent = "시간만료";
+        timerDisplay.classList.remove("text-red-500");
+        timerDisplay.classList.add("text-slate-400");
+      }
+      alert("⚠️ 인증번호 유효시간(3분)이 지났습니다. 인증번호를 다시 발송해 주세요.");
+    }
+  }, 1000);
+}
+
+// 5. 비밀번호 최종 변경 (2차 비밀번호 검증 & 클릭 시 입력창 잠금)
+function submitNewPassword() {
+  var resetEmail = document.getElementById("reset-email");
+  var authCodeInput = document.getElementById("auth-code");
+  var resetNewPassword = document.getElementById("reset-new-password");
+  var resetNewPasswordConfirm = document.getElementById("reset-new-password-confirm");
+  
+  var btnSubmit = document.getElementById("btn-reset-submit");
+  var btnCancel = document.getElementById("btn-reset-cancel");
+  var btnSendCode = document.getElementById("btn-send-code");
+
+  var email = resetEmail ? resetEmail.value.trim() : "";
+  var authCode = authCodeInput ? authCodeInput.value.trim() : "";
+  var newPassword = resetNewPassword ? resetNewPassword.value.trim() : "";
+  var newPasswordConfirm = resetNewPasswordConfirm ? resetNewPasswordConfirm.value.trim() : "";
+
+  if (!email || !authCode || !newPassword || !newPasswordConfirm) {
+    alert("모든 항목(이메일, 인증번호, 새 비밀번호, 새 비밀번호 확인)을 입력해 주세요.");
+    return;
+  }
+
+  if (newPassword !== newPasswordConfirm) {
+    alert("❌ 입력하신 두 비밀번호가 일치하지 않습니다. 다시 확인해 주세요.");
+    if (resetNewPasswordConfirm) resetNewPasswordConfirm.focus();
+    return;
+  }
+
+  var targetUrl = (typeof GAS_URL !== 'undefined') ? GAS_URL : ((typeof GOOGLE_SHEET_API_URL !== 'undefined') ? GOOGLE_SHEET_API_URL : "");
+
+  if (!targetUrl) {
+    alert("오류: 구글 앱스 스크립트 URL이 설정되지 않았습니다.");
+    return;
+  }
+
+  // 중복 클릭 및 수정 방지 잠금
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "변경 처리 중...";
+  }
+  if (btnCancel) btnCancel.disabled = true;
+  if (btnSendCode) btnSendCode.disabled = true;
+
+  if (resetEmail) resetEmail.disabled = true;
+  if (authCodeInput) authCodeInput.disabled = true;
+  if (resetNewPassword) resetNewPassword.disabled = true;
+  if (resetNewPasswordConfirm) resetNewPasswordConfirm.disabled = true;
+
+  function unlockForm() {
+    if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = "비밀번호 변경 완료"; }
+    if (btnCancel) btnCancel.disabled = false;
+    if (btnSendCode) btnSendCode.disabled = false;
+    if (resetEmail) resetEmail.disabled = false;
+    if (authCodeInput) authCodeInput.disabled = false;
+    if (resetNewPassword) resetNewPassword.disabled = false;
+    if (resetNewPasswordConfirm) resetNewPasswordConfirm.disabled = false;
+  }
+
+  fetch(targetUrl + "?action=resetPasswordWithCode"
+    + "&email=" + encodeURIComponent(email)
+    + "&authCode=" + encodeURIComponent(authCode)
+    + "&newPassword=" + encodeURIComponent(newPassword))
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.error) {
+        alert("❌ 변경 실패: " + data.error);
+        unlockForm();
+      } else {
+        alert("🎉 " + data.message);
+        closeResetModal();
+      }
+    })
+    .catch(function(err) {
+      alert("통신 오류가 발생했습니다: " + err);
+      unlockForm();
+    });
+}
     </script>
 </body>
 </html>
