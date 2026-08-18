@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>선진한마을 - 농가 약품비 분석 및 관리 시스템</title>
+    <title>선진한마을 - 비육농장 약품비 분석 및 정산 관리 시스템</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23ffffff'/%3E%3Ctext x='50' y='50' dominant-baseline='central' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='70' font-weight='900' font-style='italic' fill='%23F51932'%3ES%3C/text%3E%3C/svg%3E">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
@@ -341,7 +342,7 @@
                         </svg>
                     </div>
                     <div class="h-5 w-px bg-slate-200"></div>
-                    <h1 class="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight">농가 약품비 분석 및 관리 시스템</h1>
+                    <h1 class="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight">비육농장 약품비 분석 및 정산 관리 시스템</h1>
                     <span id="sync-status-text" class="hidden lg:inline-block text-[11px] text-slate-400 font-medium ml-2"></span>
                 </div>
 
@@ -369,6 +370,9 @@
                     </button>
                     <button id="main-tab-chart" onclick="switchMainTab('chart')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
                         <i data-lucide="line-chart" class="w-4 h-4"></i>차트 분석
+                    </button>
+<button id="main-tab-settlement" onclick="switchMainTab('settlement')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
+                        <i data-lucide="calculator" class="w-4 h-4"></i>월별 정산 성적 분석
                     </button>
                 </div>
 
@@ -1117,7 +1121,237 @@
                 </div>
             </div>
         </div>
+<!-- ================= 탭 3: SETTLEMENT ANALYSIS VIEW (신규 이식) ================= -->
+        <div id="settlement-analysis-view" class="hidden flex flex-col gap-6 fade-in-section">
+            
+            <!-- 메인 필터 영역 -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-300 flex flex-wrap gap-5 items-end justify-between">
+                <div class="flex flex-wrap gap-5 items-end flex-1">
+                    <div class="w-60 relative">
+                        <label class="block text-xs font-extrabold text-slate-800 mb-1.5">
+                            <i class="fa-solid fa-magnifying-glass text-sunjin-red me-1"></i>농장명 검색
+                        </label>
+                        <input type="text" id="search-farm-diag" placeholder="농장명 검색..." autocomplete="off"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-sunjin-red focus:outline-none shadow-sm"
+                               oninput="onSearchInput('diag')">
+                        <div id="search-results-diag" class="hidden absolute left-0 right-0 top-16 z-50 bg-white border border-slate-300 rounded-xl shadow-xl max-h-56 overflow-y-auto text-xs"></div>
+                    </div>
 
+                    <div class="w-48">
+                        <label class="block text-xs font-extrabold text-slate-800 mb-1.5">
+                            <i class="fa-solid fa-sitemap text-sunjin-red me-1"></i>사업부 선택
+                        </label>
+                        <select id="sel-dept" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-sunjin-red focus:outline-none shadow-sm" onchange="filterFarmsByDept('diag')">
+                            <option value="">전체 사업부</option>
+                        </select>
+                    </div>
+
+                    <div class="w-72">
+                        <label class="block text-xs font-extrabold text-slate-800 mb-1.5">
+                            <i class="fa-solid fa-house-chimney text-sunjin-red me-1"></i>농장 선택 (총 <span id="lbl-total-farms" class="text-sunjin-red">0</span>개)
+                        </label>
+                        <select id="sel-farm" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-sunjin-red focus:outline-none shadow-sm" onchange="onFarmChange()">
+                            <option value="">농장을 선택하세요</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="resetTab1()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl text-xs font-extrabold text-slate-700 transition-colors shrink-0 shadow-sm">
+                    <i class="fa-solid fa-rotate-left me-1"></i>초기화
+                </button>
+            </div>
+
+            <div id="diag-empty" class="bg-white border border-slate-300 rounded-2xl p-16 text-center text-slate-500 shadow-sm">
+                <i class="fa-solid fa-filter text-5xl text-slate-300 mb-4"></i>
+                <p class="text-lg font-extrabold text-slate-800 mb-1">농장을 선택해 주세요</p>
+                <p class="text-xs text-slate-500">상단에서 농장을 선택하면 실시간 단일 정산 상황판과 종합 성적 리포트가 출력됩니다.</p>
+            </div>
+
+            <div id="diag-data" class="hidden space-y-6">
+
+                <!-- POSITION 1: [선택 정산 세부 상황판] -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between pb-2 border-b border-slate-100 gap-3">
+                        <div class="flex items-center space-x-2">
+                            <div class="p-2 bg-red-100 text-sunjin-red rounded-lg text-sm font-bold">
+                                <i class="fa-solid fa-gauge-high"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-extrabold text-slate-900">선택 정산 세부 상황판</h3>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="sel-dash-year" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-sunjin-red" onchange="onDashYearChange()"></select>
+                            <select id="sel-dash-month" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-sunjin-red" onchange="onDashMonthChange()"></select>
+                            <select id="sel-dash-batch" class="bg-orange-50/70 border border-sunjin-orange/60 rounded-lg px-3 py-1.5 text-xs font-mono font-extrabold text-slate-900 focus:ring-2 focus:ring-sunjin-orange" onchange="renderDashboardPanel()"></select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
+                        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-3.5 rounded-xl shadow-sm flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-300 block">선택 정산 출하두당 위탁사육비</span>
+                            <div class="my-auto py-1">
+                                <span class="text-2xl font-black text-sunjin-orange block tracking-tight" id="dash-kpi-cost">0원</span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-700/60 flex justify-between items-center text-xs">
+                                <span class="text-slate-300 text-xs font-semibold" id="lbl-kpi-rank-title">선택 연도/사업부 대비 순위</span>
+                                <span class="font-black text-amber-300 text-sm" id="dash-kpi-rank">-</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-500 block">총 사육 일수</span>
+                            <div class="my-auto py-1">
+                                <span class="text-2xl font-black text-slate-900 block tracking-tight" id="dash-kpi-days">0 일</span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-200/80 flex justify-between items-center text-xs text-slate-600">
+                                <span class="font-semibold">전입~출하 기간</span>
+                                <span class="font-extrabold text-slate-800 font-mono text-xs" id="dash-kpi-days-sub">-</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-500 block mb-1">입식 및 생육 핵심 지표</span>
+                            <div class="grid grid-cols-2 gap-3 my-auto py-1">
+                                <div>
+                                    <span class="text-xs text-slate-400 font-bold block mb-0.5">전입 평체</span>
+                                    <span class="text-3xl font-black text-slate-900 tracking-tight block" id="dash-kpi-inweight">0 kg</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-slate-400 font-bold block mb-0.5">일당증체량(ADG)</span>
+                                    <span class="text-3xl font-black text-sunjin-red tracking-tight block" id="dash-kpi-adg">0.0 g</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 백분위 프로필 차트 -->
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-xs font-bold text-slate-800">
+                                <i class="fa-solid fa-chart-bar text-sunjin-red me-1"></i>선택 정산건 6대 지표 성적 백분위 프로필
+                            </h4>
+                            <span class="text-[10px] text-slate-400">※ 상위에 가까울수록 높은 성적 막대가 표시됩니다</span>
+                        </div>
+                        <div class="h-48 relative">
+                            <canvas id="chart-dash-batch-profile"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POSITION 2: 6대 지표 표 (좌) & 산점도 그래프 (우) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                    <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between overflow-hidden">
+                        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center shrink-0">
+                            <h3 class="text-xs font-bold text-slate-800 flex items-center">
+                                <i class="fa-solid fa-list-check me-1.5 text-sunjin-red"></i>선택 정산건 6대 지표 성적
+                            </h3>
+                            <span id="lbl-metrics-subtitle" class="text-[11px] text-slate-400 font-bold">- 기준</span>
+                        </div>
+
+                        <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-100 text-slate-600 font-bold text-[11px]">
+                                        <tr>
+                                            <th class="p-2.5 rounded-l">지표 항목</th>
+                                            <th class="p-2.5 text-right">정산값</th>
+                                            <th class="p-2.5 text-center rounded-r">순위 (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-metrics" class="font-medium divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+
+                            <div class="pt-3 border-t border-slate-100">
+                                <h5 class="text-[11px] font-bold text-slate-600 mb-3"><i class="fa-solid fa-chart-simple text-sunjin-orange me-1"></i>선택 연도/사업부 분포 위치 시각화</h5>
+                                <div id="metrics-graph-container" class="space-y-3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 산점도 그래프 & 비교군 선택 드롭다운 -->
+                    <div class="lg:col-span-7 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex flex-col md:flex-row md:items-center justify-between mb-3 pb-2 border-b gap-2">
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800">
+                                        <i class="fa-solid fa-chart-scatter text-sunjin-red me-1.5"></i>
+                                        <span id="lbl-scatter-year" class="text-sunjin-red">2026년</span> <span id="lbl-scatter-dept" class="text-sunjin-red">선택 사업부</span> 정산건별 요인 vs 출하두당 사육비 산점도
+                                    </h4>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <label class="text-[11px] font-extrabold text-sky-700 shrink-0"><i class="fa-solid fa-filter me-1"></i>비교군 선택:</label>
+                                    <select id="sel-compare-farm" class="bg-sky-50 border border-sky-300 rounded-lg px-2.5 py-1 text-xs font-bold text-sky-900 focus:ring-2 focus:ring-sky-500 max-w-[180px] h-8" onchange="onCompareFarmChange()">
+                                        <option value="">비교군 선택 (없음)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap gap-1.5 mb-3" id="scatter-metric-btn-group">
+                                <button onclick="selectScatterMetric('growth')" id="btn-scatter-growth" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sunjin-red text-white shadow-sm transition-all">기간육성율</button>
+                                <button onclick="selectScatterMetric('fcr')" id="btn-scatter-fcr" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">사료요구율(FCR)</button>
+                                <button onclick="selectScatterMetric('adg')" id="btn-scatter-adg" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">일당증체량</button>
+                                <button onclick="selectScatterMetric('pay')" id="btn-scatter-pay" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">지급율</button>
+                                <button onclick="selectScatterMetric('grade1')" id="btn-scatter-grade1" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">1등급이상출현율</button>
+                                <button onclick="selectScatterMetric('offGrade')" id="btn-scatter-offGrade" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">등외등급출현율</button>
+                            </div>
+
+                            <div id="scatter-click-panel" class="hidden mb-2 p-2.5 bg-red-50 border border-red-200 rounded-lg space-y-1.5 transition-all text-xs max-h-44 overflow-y-auto">
+                            </div>
+                        </div>
+
+                        <div class="h-[380px] relative w-full">
+                            <canvas id="chart-scatter"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POSITION 3: [월별 추이 차트] -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-1 pb-2 border-b">
+                                <h4 class="text-xs font-bold text-slate-800 flex items-center">
+                                    <i class="fa-solid fa-coins text-sunjin-orange me-1.5"></i>월별 출하두당 위탁사육비 추이
+                                </h4>
+                                <span class="text-[10px] bg-amber-50 text-sunjin-orange border border-amber-200 px-2 py-0.5 rounded font-bold shrink-0">3개년 고정</span>
+                            </div>
+                        </div>
+                        <div class="h-72 relative mt-2">
+                            <canvas id="chart-monthly-cost"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 pb-2 border-b gap-2">
+                                <h4 class="text-xs font-bold text-slate-800 flex items-center">
+                                    <i class="fa-solid fa-chart-line text-sunjin-red me-1.5"></i>월별 성적 요인 vs 실제 사육비 추이
+                                </h4>
+                                <span class="text-[10px] bg-red-50 text-sunjin-red border border-red-200 px-2 py-0.5 rounded font-bold shrink-0">3개년 고정</span>
+                            </div>
+
+                            <div class="flex flex-wrap gap-1 mb-2" id="metric-btn-group">
+                                <button onclick="selectTrendMetric('growth')" id="btn-metric-growth" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-sunjin-red text-white shadow-sm transition-all">기간육성율</button>
+                                <button onclick="selectTrendMetric('fcr')" id="btn-metric-fcr" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">사료요구율</button>
+                                <button onclick="selectTrendMetric('adg')" id="btn-metric-adg" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">일당증체량</button>
+                                <button onclick="selectTrendMetric('pay')" id="btn-metric-pay" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">지급율</button>
+                                <button onclick="selectTrendMetric('grade1')" id="btn-metric-grade1" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">1등급이상</button>
+                                <button onclick="selectTrendMetric('offGrade')" id="btn-metric-offGrade" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">등외등급</button>
+                            </div>
+                        </div>
+
+                        <div class="h-72 relative">
+                            <canvas id="chart-settlement-monthly-trend"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
     </main>
 
     <!-- 슬라이드 오버 형태의 농장 의견 소통 드로어 (Drawer) 패널 -->
@@ -1763,27 +1997,42 @@
                 });
         }
 
-        function switchMainTab(tab) {
-            currentMainTab = tab;
-            const dView = document.getElementById('dashboard-view');
-            const cView = document.getElementById('chart-analysis-view');
+function switchMainTab(tab) {
+    currentMainTab = tab;
+    const dView = document.getElementById('dashboard-view');
+    const cView = document.getElementById('chart-analysis-view');
+    const sView = document.getElementById('settlement-analysis-view');
 
-            const btnDash = document.getElementById('main-tab-dashboard');
-            const btnChart = document.getElementById('main-tab-chart');
+    const btnDash = document.getElementById('main-tab-dashboard');
+    const btnChart = document.getElementById('main-tab-chart');
+    const btnSettle = document.getElementById('main-tab-settlement');
 
-            if (dView) dView.classList.toggle('hidden', tab !== 'dashboard');
-            if (cView) cView.classList.toggle('hidden', tab !== 'chart');
+    if (dView) dView.classList.toggle('hidden', tab !== 'dashboard');
+    if (cView) cView.classList.toggle('hidden', tab !== 'chart');
+    if (sView) sView.classList.toggle('hidden', tab !== 'settlement');
 
-            const inactiveStyle = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:bg-slate-100 flex items-center gap-1.5";
-            const activeStyle = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all tab-active flex items-center gap-1.5";
+    const inactiveStyle = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:bg-slate-100 flex items-center gap-1.5";
+    const activeStyle = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all tab-active flex items-center gap-1.5";
 
-            if (btnDash) btnDash.className = tab === 'dashboard' ? activeStyle : inactiveStyle;
-            if (btnChart) btnChart.className = tab === 'chart' ? activeStyle : inactiveStyle;
+    if (btnDash) btnDash.className = tab === 'dashboard' ? activeStyle : inactiveStyle;
+    if (btnChart) btnChart.className = tab === 'chart' ? activeStyle : inactiveStyle;
+    if (btnSettle) btnSettle.className = tab === 'settlement' ? activeStyle : inactiveStyle;
 
-            if (tab === 'chart') {
-                renderAdvancedAnalysisCharts();
+    if (tab === 'chart') {
+        renderAdvancedAnalysisCharts();
+    } else if (tab === 'settlement') {
+        // 🎯 이미 수신된 데이터가 없을 때만 최초 1회 로드하고, 데이터가 이미 있으면 즉시 탭만 전환
+        if (!settlementRawData || settlementRawData.length === 0) {
+            fetchSettlementData();
+        } else {
+            // 이미 로드된 데이터가 있는 경우, 농장이 선택되어 있다면 차트 갱신만 진행
+            const farm = document.getElementById('sel-farm') ? document.getElementById('sel-farm').value : '';
+            if (farm && settlementFarmStats[farm]) {
+                renderMonthlyTrendChart3Years(settlementFarmStats[farm].monthlyData);
             }
         }
+    }
+}
 
         function syncAndApplyFilters(type, value) {
             const searchMain = document.getElementById('search-input');
@@ -1953,6 +2202,11 @@
 
                     hideLoginModal();
                     parseLEADExcel(data);
+
+                    // 🎯 [추가] 약품비 로드 완료 후 정산 데이터도 백그라운드 선로드 (로딩창 방지)
+                    if (!settlementRawData || settlementRawData.length === 0) {
+                        fetchSettlementData();
+                    }
 
                     const now = new Date();
                     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
@@ -3706,6 +3960,1013 @@ function submitNewPassword() {
       unlockForm();
     });
 }
-    </script>
+// =================================================================
+// 🎯 월별 정산 성적 분석 전용 자바스크립트 로직 (충돌 방지 네임스페이스 적용)
+// =================================================================
+let settlementRawData = [];
+let settlementFarmStats = {};
+let settlementFarmDeptMap = {};
+
+let scatterChartObj = null;
+let monthlyCostChartObj = null;
+let monthlyTrendChartObj = null;
+let dashProfileChartObj = null;
+
+let activeTrendMetric = 'growth'; 
+let activeScatterMetric = 'growth'; 
+
+const parseSettlementNum = val => {
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    if (!val) return 0;
+    const clean = String(val).replace(/,/g, '').trim();
+    return isNaN(clean) ? 0 : Number(clean);
+};
+
+const parseSettlementCost = val => Math.round(parseSettlementNum(val));
+
+function formatSettlementDateOnly(dateVal) {
+    if (!dateVal) return '-';
+    const str = String(dateVal).trim();
+    if (str.includes('T')) return str.split('T')[0];
+    if (str.length >= 10 && str.charAt(4) === '-' && str.charAt(7) === '-') return str.substring(0, 10);
+    return str;
+}
+
+function formatSettlementRankLabel(rank) {
+    if (rank <= 50) return `상위 ${rank}%`;
+    return `하위 ${100 - rank}%`;
+}
+
+function calcSettlementGeometricMean(arr) {
+    const valid = arr.map(v => parseSettlementNum(v)).filter(v => v > 0);
+    if (!valid.length) return 0;
+    const sumLog = valid.reduce((acc, val) => acc + Math.log(val), 0);
+    return Math.exp(sumLog / valid.length);
+}
+
+function calcSettlementWeightedCostAverage(rowsGroup) {
+    let totalCostSum = 0;
+    let totalHeadSum = 0;
+
+    rowsGroup.forEach(r => {
+        const heads = parseSettlementNum(r["출하두수"] || r["출하 두수"]) || 1;
+        const costPerHead = parseSettlementCost(r["출하 두당 사육비"] || r["출하두당사육비"]);
+        
+        if (costPerHead > 0 && heads > 0) {
+            totalCostSum += (costPerHead * heads);
+            totalHeadSum += heads;
+        }
+    });
+
+    return totalHeadSum > 0 ? Math.round(totalCostSum / totalHeadSum) : 0;
+}
+
+function calcSettlementTopPercentile(arr, value, lowerIsBetter = false) {
+    if (!arr || !arr.length) return 50;
+    const validArr = arr.filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
+    if (!validArr.length) return 50;
+    
+    let countBetter = 0;
+    validArr.forEach(v => {
+        if (lowerIsBetter ? v < value : v > value) {
+            countBetter++;
+        }
+    });
+    const topPct = Math.round((countBetter / validArr.length) * 100) + 1;
+    return Math.min(99, Math.max(1, topPct));
+}
+
+function generateSettlementFarmStats() {
+    settlementFarmStats = {};
+    settlementFarmDeptMap = {};
+    const farmGroups = {};
+
+    settlementRawData.forEach((row, idx) => {
+        row._origIndex = idx;
+        const farm = row["농장명"];
+        const dept = row["사업부"];
+
+        if (!farm) return;
+        const farmKey = String(farm).trim();
+        if (dept) settlementFarmDeptMap[farmKey] = String(dept).trim();
+
+        if (!farmGroups[farmKey]) {
+            farmGroups[farmKey] = [];
+        }
+        farmGroups[farmKey].push(row);
+    });
+
+    Object.keys(farmGroups).forEach(farm => {
+        const rows = farmGroups[farm];
+        
+        const monthMap = {};
+        rows.forEach(r => {
+            const ym = `${r["출하 년도"]}-${String(r["출하 월"]).padStart(2, '0')}`;
+            if (!monthMap[ym]) monthMap[ym] = [];
+            monthMap[ym].push(r);
+        });
+
+        // 🎯 실제 시트의 '출하두수'를 곱해 산출하는 출하두수 가중평균(Weighted Average)
+        const calcWeightedAvg = (groupArr, propKey) => {
+            let totalWeightedVal = 0;
+            let totalHeadSum = 0;
+
+            groupArr.forEach(r => {
+                const heads = parseSettlementNum(r["출하두수"]) || 0;
+                const val = parseSettlementNum(r[propKey]) || 0;
+
+                if (val > 0 && heads > 0) {
+                    totalWeightedVal += (val * heads); // (성적 지표 × 실제 출하두수)
+                    totalHeadSum += heads;             // 출하두수 누계
+                }
+            });
+
+            return totalHeadSum > 0 ? (totalWeightedVal / totalHeadSum) : 0;
+        };
+
+        const monthlyAggregated = Object.keys(monthMap).sort().map(ym => {
+            const group = monthMap[ym];
+
+            return {
+                ym: ym,
+                year: parseSettlementNum(ym.split('-')[0]),
+                month: parseSettlementNum(ym.split('-')[1]),
+                cost: calcSettlementWeightedCostAverage(group),
+                // 💡 실제 시트의 정확한 열 이름으로 출하두수 가중평균 적용
+                growth: calcWeightedAvg(group, "기간육성율"),
+                fcr: calcWeightedAvg(group, "사료요구율"),
+                adg: calcWeightedAvg(group, "일당증체량"),
+                pay: calcWeightedAvg(group, "지급율(%)"),
+                grade1: calcWeightedAvg(group, "1등급이상출현율(%)"),
+                offGrade: calcWeightedAvg(group, "등외등급출현율(%)")
+            };
+        });
+
+        settlementFarmStats[farm] = {
+            dept: settlementFarmDeptMap[farm] || "기타",
+            monthlyData: monthlyAggregated,
+            rows: rows
+        };
+    });
+}
+
+
+function fetchSettlementData() {
+    if (!currentUserEmail || !currentUserPassword) return;
+
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+
+    const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+    urlObj.searchParams.set('action', 'getSettlementData');
+    urlObj.searchParams.set('email', currentUserEmail);
+    urlObj.searchParams.set('password', currentUserPassword);
+    urlObj.searchParams.set('t', new Date().getTime());
+
+    fetch(urlObj.toString())
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) throw new Error(data.error);
+            let fetchedSettlement = Array.isArray(data) ? data : [];
+
+            let targetDept = "";
+            let targetRole = "";
+
+            if (typeof currentUser !== 'undefined' && currentUser) {
+                targetDept = currentUser.dept || currentUser.department || "";
+                targetRole = currentUser.role || "";
+            }
+
+            if (!targetDept) targetDept = sessionStorage.getItem('user_dept') || "";
+            if (!targetRole) targetRole = sessionStorage.getItem('user_role') || "";
+
+            if (!targetDept && typeof parsedData !== 'undefined' && parsedData.length > 0) {
+                targetDept = parsedData[0].dept || "";
+            }
+
+            if (targetRole !== '관리자' && targetDept) {
+                const cleanUserDept = String(targetDept).replace(/\s+/g, '');
+                fetchedSettlement = fetchedSettlement.filter(r => {
+                    const rowDept = String(r["사업부"] || r["사업 부"] || r["dept"] || '').replace(/\s+/g, '');
+                    return rowDept === cleanUserDept;
+                });
+            }
+
+            settlementRawData = fetchedSettlement;
+
+            settlementRawData.forEach((r, idx) => {
+                r._origIndex = idx;
+                
+                const getVal = (keyName) => {
+                    if (r[keyName] !== undefined && r[keyName] !== null && r[keyName] !== '') return r[keyName];
+                    const foundKey = Object.keys(r).find(k => k.trim().replace(/\s+/g, '') === keyName.trim().replace(/\s+/g, ''));
+                    return foundKey ? r[foundKey] : 0;
+                };
+
+                r["농장명"] = String(getVal("농장명") || getVal("농장 명") || '').trim();
+                r["사업부"] = String(getVal("사업부") || getVal("사업 부") || '').trim();
+                r["출하 년도"] = parseSettlementNum(getVal("출하 년도") || getVal("출하년도"));
+                r["출하 월"] = parseSettlementNum(getVal("출하 월") || getVal("출하월"));
+                
+                r["출하두수"] = parseSettlementNum(getVal("출하두수"));
+                r["기간증체량"] = parseSettlementNum(getVal("기간증체량"));
+                r["기간육성율"] = parseSettlementNum(getVal("기간육성율"));
+                r["일당증체량"] = parseSettlementNum(getVal("일당증체량"));
+                r["지급율(%)"] = parseSettlementNum(getVal("지급율(%)") || getVal("지급율"));
+                r["1등급이상출현율(%)"] = parseSettlementNum(getVal("1등급이상출현율(%)"));
+                r["등외등급출현율(%)"] = parseSettlementNum(getVal("등외등급출현율(%)"));
+                r["사료요구율"] = parseSettlementNum(getVal("사료요구율"));
+                r["출하 두당 사육비"] = parseSettlementCost(getVal("출하 두당 사육비") || getVal("출하두당사육비"));
+                
+                r["전입평체"] = parseSettlementNum(getVal("전입평체"));
+                r["사육일수"] = parseSettlementNum(getVal("사육일수"));
+            });
+
+            generateSettlementFarmStats();
+            initSettlementDeptDropdown();
+        })
+        .catch(err => {
+            console.error('Settlement fetch error:', err);
+            showNotification(`❌ 차트 데이터 처리 오류: ${err.message}`, 'error');
+        })
+        .finally(() => {
+            if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        });
+}
+
+function initSettlementDeptDropdown() {
+    const selDept = document.getElementById('sel-dept');
+    if (!selDept) return;
+    selDept.innerHTML = '';
+
+    let targetDept = "";
+    let targetRole = "";
+
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        targetDept = currentUser.dept || currentUser.department || "";
+        targetRole = currentUser.role || "";
+    }
+    if (!targetDept) targetDept = sessionStorage.getItem('user_dept') || "";
+    if (!targetRole) targetRole = sessionStorage.getItem('user_role') || "";
+
+    if (!targetDept && typeof parsedData !== 'undefined' && parsedData.length > 0) {
+        targetDept = parsedData[0].dept || "";
+    }
+
+    if (targetRole === '관리자') {
+        const depts = [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort();
+        selDept.add(new Option('전체 사업부', ''));
+        depts.forEach(d => selDept.add(new Option(d, d)));
+        selDept.disabled = false;
+    } else if (targetDept) {
+        selDept.add(new Option(targetDept, targetDept, true, true));
+        selDept.value = targetDept;
+        selDept.disabled = true;
+    } else {
+        const depts = [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort();
+        selDept.add(new Option('전체 사업부', ''));
+        depts.forEach(d => selDept.add(new Option(d, d)));
+        selDept.disabled = false;
+    }
+
+    filterFarmsByDept('diag');
+}
+
+function filterFarmsByDept(prefix) {
+    const selDept = document.getElementById('sel-dept');
+    let dept = selDept ? selDept.value : '';
+    let farms = Object.keys(settlementFarmStats);
+    if (dept) farms = farms.filter(f => settlementFarmStats[f].dept === dept);
+    farms.sort();
+    populateSettlementFarmDropdowns(farms);
+}
+
+function populateSettlementFarmDropdowns(filteredFarms = null) {
+    const farms = filteredFarms || Object.keys(settlementFarmStats).sort();
+    const lblTotal = document.getElementById('lbl-total-farms');
+    if (lblTotal) lblTotal.innerText = farms.length;
+    
+    const selFarm = document.getElementById('sel-farm');
+    if (!selFarm) return;
+    const curDiag = selFarm.value;
+
+    selFarm.innerHTML = '<option value="">농장을 선택하세요</option>';
+    farms.forEach(f => selFarm.add(new Option(f, f)));
+
+    if (farms.includes(curDiag)) selFarm.value = curDiag;
+}
+
+function onSearchInput(prefix) {
+    const query = document.getElementById(`search-farm-${prefix}`).value.trim().toLowerCase();
+    const resultsEl = document.getElementById(`search-results-${prefix}`);
+
+    if (!query) {
+        resultsEl.classList.add('hidden');
+        return;
+    }
+
+    let dept = document.getElementById('sel-dept').value;
+    let farms = Object.keys(settlementFarmStats);
+    if (dept) farms = farms.filter(f => settlementFarmStats[f].dept === dept);
+
+    const matches = farms.filter(f => f.toLowerCase().includes(query));
+
+    if (!matches.length) {
+        resultsEl.innerHTML = '<div class="p-2 text-slate-400 text-center">검색 결과 없음</div>';
+    } else {
+        resultsEl.innerHTML = matches.map(f => `
+            <div class="p-2 hover:bg-red-50 cursor-pointer font-bold border-b border-slate-100 flex justify-between" onclick="selectSearchedFarm('${prefix}', '${f}')">
+                <span>${f}</span>
+                <span class="text-[10px] text-slate-400 font-normal">${settlementFarmStats[f].dept}</span>
+            </div>
+        `).join('');
+    }
+    resultsEl.classList.remove('hidden');
+}
+
+function selectSearchedFarm(prefix, farmName) {
+    document.getElementById(`search-farm-${prefix}`).value = farmName;
+    document.getElementById(`search-results-${prefix}`).classList.add('hidden');
+
+    const targetSelect = document.getElementById('sel-farm');
+    targetSelect.value = farmName;
+    onFarmChange();
+}
+
+function resetTab1() {
+    document.getElementById('search-farm-diag').value = '';
+    document.getElementById('sel-dept').value = '';
+    filterFarmsByDept('diag');
+    document.getElementById('sel-farm').value = '';
+    document.getElementById('scatter-click-panel').classList.add('hidden');
+    document.getElementById('sel-compare-farm').value = '';
+    onFarmChange();
+}
+
+function onFarmChange() {
+    const farm = document.getElementById('sel-farm').value;
+    if (!farm || !settlementFarmStats[farm]) {
+        document.getElementById('diag-empty').classList.remove('hidden');
+        document.getElementById('diag-data').classList.add('hidden');
+        return;
+    }
+
+    document.getElementById('diag-empty').classList.add('hidden');
+    document.getElementById('diag-data').classList.remove('hidden');
+
+    const farmStat = settlementFarmStats[farm];
+    const farmRows = farmStat.rows;
+    const years = [...new Set(farmRows.map(r => r["출하 년도"]).filter(y => y > 0))].sort((a,b) => b-a);
+
+    const dashYearSel = document.getElementById('sel-dash-year');
+    dashYearSel.innerHTML = '';
+
+    years.forEach(y => {
+        dashYearSel.add(new Option(`${y}년`, y));
+    });
+
+    onDashYearChange();
+    renderMonthlyCostChart3Years(farmStat.monthlyData);
+    renderMonthlyTrendChart3Years(farmStat.monthlyData);
+}
+
+function onDashYearChange() {
+    const farm = document.getElementById('sel-farm').value;
+    const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
+    if (!farm || !settlementFarmStats[farm]) return;
+
+    const farmRows = settlementFarmStats[farm].rows.filter(r => r["출하 년도"] === year);
+    const months = [...new Set(farmRows.map(r => r["출하 월"]))].sort((a,b) => a-b);
+
+    const dashMonthSel = document.getElementById('sel-dash-month');
+    dashMonthSel.innerHTML = '';
+    months.forEach(m => dashMonthSel.add(new Option(`${m}월`, m)));
+
+    onDashMonthChange();
+}
+
+function onDashMonthChange() {
+    const farm = document.getElementById('sel-farm').value;
+    const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
+    const month = parseSettlementNum(document.getElementById('sel-dash-month').value);
+    if (!farm || !settlementFarmStats[farm]) return;
+
+    const matches = settlementFarmStats[farm].rows.filter(r => r["출하 년도"] === year && r["출하 월"] === month);
+
+    const dashBatchSel = document.getElementById('sel-dash-batch');
+    dashBatchSel.innerHTML = '';
+
+    matches.forEach((r, idx) => {
+        const cost = parseSettlementCost(r["출하 두당 사육비"]);
+        dashBatchSel.add(new Option(`정산 #${idx+1} (${cost.toLocaleString()}원)`, idx));
+    });
+
+    renderDashboardPanel();
+}
+
+function renderDashboardPanel() {
+    const farm = document.getElementById('sel-farm').value;
+    const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
+    const month = parseSettlementNum(document.getElementById('sel-dash-month').value);
+    const batchIdx = parseSettlementNum(document.getElementById('sel-dash-batch').value);
+
+    if (!farm || !settlementFarmStats[farm]) return;
+
+    const matches = settlementFarmStats[farm].rows.filter(r => r["출하 년도"] === year && r["출하 월"] === month);
+    const targetRow = matches[batchIdx];
+
+    if (!targetRow) return;
+
+    const farmStat = settlementFarmStats[farm];
+    document.getElementById('lbl-scatter-dept').innerText = farmStat.dept;
+    document.getElementById('lbl-scatter-year').innerText = `${year}년`;
+
+    const cost = parseSettlementCost(targetRow["출하 두당 사육비"]);
+    document.getElementById('dash-kpi-cost').innerText = `${cost.toLocaleString()}원`;
+
+    const groupRowsForKpi = settlementRawData.filter(r => r["사업부"] === farmStat.dept && r["출하 년도"] === year);
+    const groupCosts = groupRowsForKpi.map(r => parseSettlementCost(r["출하 두당 사육비"]));
+    
+    const rank = calcSettlementTopPercentile(groupCosts, cost, true);
+    const rankTxt = formatSettlementRankLabel(rank);
+    document.getElementById('dash-kpi-rank').innerText = rankTxt;
+
+    const rankTitleEl = document.getElementById('lbl-kpi-rank-title');
+    if (rankTitleEl) {
+        rankTitleEl.innerText = `${year}년 ${farmStat.dept} 대비 순위`;
+    }
+
+    const days = parseSettlementNum(targetRow["사육일수"]) || 115;
+    document.getElementById('dash-kpi-days').innerText = `${days} 일`;
+
+    const rawInDate = targetRow["평균전입일"] || targetRow["전입일"] || '-';
+    const rawOutDate = targetRow["평균출하일"] || targetRow["출하일"] || '-';
+    const inDate = formatSettlementDateOnly(rawInDate);
+    const outDate = formatSettlementDateOnly(rawOutDate);
+
+    document.getElementById('dash-kpi-days-sub').innerText = `${inDate} ~ ${outDate}`;
+
+    const inWeight = parseSettlementNum(targetRow["전입평체"]);
+    const adg = parseSettlementNum(targetRow["일당증체량"]);
+    
+    document.getElementById('dash-kpi-inweight').innerText = `${inWeight.toFixed(1)} kg`;
+    document.getElementById('dash-kpi-adg').innerText = `${adg.toFixed(1)} g`;
+
+    renderDashProfileChart(targetRow);
+    renderSelectedBatchMetricsTable(targetRow);
+    renderScatterChart(year, targetRow);
+}
+
+function renderSelectedBatchMetricsTable(targetRow) {
+    const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
+    const farm = document.getElementById('sel-farm').value;
+    const farmStat = settlementFarmStats[farm];
+    const dept = farmStat ? farmStat.dept : '';
+
+    // 🎯 [요청사항 반영] 상단 6대 지표 표 서브타이틀 동적 변경 (예: 2026년 F사업팀 기준)
+    const subTitleEl = document.getElementById('lbl-metrics-subtitle');
+    if (subTitleEl) {
+        subTitleEl.innerText = `${year}년 ${dept} 기준`;
+    }
+
+    const groupRows = settlementRawData.filter(r => r["사업부"] === dept && r["출하 년도"] === year);
+
+    const mGrowth = calcSettlementTopPercentile(groupRows.map(r => r["기간육성율"]), targetRow["기간육성율"]);
+    const mFcr = calcSettlementTopPercentile(groupRows.map(r => r["사료요구율"]), targetRow["사료요구율"], true);
+    const mAdg = calcSettlementTopPercentile(groupRows.map(r => r["일당증체량"]), targetRow["일당증체량"]);
+    const mPay = calcSettlementTopPercentile(groupRows.map(r => r["지급율(%)"]), targetRow["지급율(%)"]);
+    const mG1 = calcSettlementTopPercentile(groupRows.map(r => r["1등급이상출현율(%)"]), targetRow["1등급이상출현율(%)"]);
+    const mOff = calcSettlementTopPercentile(groupRows.map(r => r["등외등급출현율(%)"]), targetRow["등외등급출현율(%)"], true);
+
+    const metrics = [
+        { name: "기간육성율", val: `${parseSettlementNum(targetRow["기간육성율"]).toFixed(1)}%`, rank: mGrowth, rankLabel: formatSettlementRankLabel(mGrowth) },
+        { name: "사료요구율(FCR)", val: `${parseSettlementNum(targetRow["사료요구율"]).toFixed(2)}`, rank: mFcr, rankLabel: formatSettlementRankLabel(mFcr) },
+        { name: "일당증체량", val: `${parseSettlementNum(targetRow["일당증체량"]).toFixed(1)}g`, rank: mAdg, rankLabel: formatSettlementRankLabel(mAdg) },
+        { name: "지급율", val: `${parseSettlementNum(targetRow["지급율(%)"]).toFixed(1)}%`, rank: mPay, rankLabel: formatSettlementRankLabel(mPay) },
+        { name: "1등급이상출현율", val: `${parseSettlementNum(targetRow["1등급이상출현율(%)"]).toFixed(1)}%`, rank: mG1, rankLabel: formatSettlementRankLabel(mG1) },
+        { name: "등외등급출현율", val: `${parseSettlementNum(targetRow["등외등급출현율(%)"]).toFixed(1)}%`, rank: mOff, rankLabel: formatSettlementRankLabel(mOff) }
+    ];
+
+    const metricsTbody = document.getElementById('table-metrics');
+    if (metricsTbody) {
+        metricsTbody.innerHTML = metrics.map(m => `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-2.5 px-2 font-bold text-slate-700">${m.name}</td>
+                <td class="py-2.5 px-2 text-right font-black text-slate-900">${m.val}</td>
+                <td class="py-2.5 px-2 text-center font-bold text-sunjin-red">${m.rankLabel}</td>
+            </tr>
+        `).join('');
+    }
+
+    const graphContainer = document.getElementById('metrics-graph-container');
+    if (graphContainer) {
+        graphContainer.innerHTML = metrics.map(m => `
+            <div class="space-y-0.5">
+                <div class="flex items-center space-x-3 text-xs">
+                    <span class="w-28 font-bold text-slate-600 truncate">${m.name}</span>
+                    <div class="flex-1 percentile-track">
+                        <div class="percentile-pin" style="left: ${m.rank}%;"></div>
+                    </div>
+                    <span class="w-20 text-right font-bold text-sunjin-red">${m.rankLabel}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+function renderDashProfileChart(targetRow) {
+    const canvas = document.getElementById('chart-dash-batch-profile');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (dashProfileChartObj) dashProfileChartObj.destroy();
+
+    const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
+    const farm = document.getElementById('sel-farm').value;
+    const farmStat = settlementFarmStats[farm];
+    const dept = farmStat ? farmStat.dept : '';
+
+    // 💡 [핵심] rawData ➔ settlementRawData 참조로 수정
+    const groupRows = settlementRawData.filter(r => r["사업부"] === dept && r["출하 년도"] === year);
+
+    const pGrowth = calcSettlementTopPercentile(groupRows.map(r => r["기간육성율"]), targetRow["기간육성율"]);
+    const pFcr = calcSettlementTopPercentile(groupRows.map(r => r["사료요구율"]), targetRow["사료요구율"], true);
+    const pAdg = calcSettlementTopPercentile(groupRows.map(r => r["일당증체량"]), targetRow["일당증체량"]);
+    const pPay = calcSettlementTopPercentile(groupRows.map(r => r["지급율(%)"]), targetRow["지급율(%)"]);
+    const pG1 = calcSettlementTopPercentile(groupRows.map(r => r["1등급이상출현율(%)"]), targetRow["1등급이상출현율(%)"]);
+    const pOff = calcSettlementTopPercentile(groupRows.map(r => r["등외등급출현율(%)"]), targetRow["등외등급출현율(%)"], true);
+
+    const rawRanks = [pGrowth, pFcr, pAdg, pPay, pG1, pOff];
+    const barHeights = rawRanks.map(r => 101 - r);
+
+    dashProfileChartObj = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['기간육성율', '사료요구율', '일당증체량', '지급율', '1등급이상', '등외등급'],
+            datasets: [{
+                label: '백분위 위치',
+                data: barHeights,
+                backgroundColor: [
+                    'rgba(254, 27, 14, 0.85)',
+                    'rgba(127, 195, 28, 0.85)',
+                    'rgba(2, 132, 199, 0.85)',
+                    'rgba(147, 51, 234, 0.85)',
+                    'rgba(234, 179, 8, 0.85)',
+                    'rgba(100, 116, 139, 0.85)'
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                y: { 
+                    min: 0, 
+                    max: 100, 
+                    grid: { color: 'rgba(226, 232, 240, 0.6)' }, 
+                    ticks: { 
+                        stepSize: 10,
+                        font: { size: 9, weight: 'bold' }, 
+                        callback: function(val) {
+                            if (val === 100) return '상위 0%';
+                            if (val === 90) return '상위 10%';
+                            if (val === 80) return '상위 20%';
+                            if (val === 70) return '상위 30%';
+                            if (val === 60) return '상위 40%';
+                            if (val === 50) return '상위 50%';
+                            if (val === 40) return '하위 40%';
+                            if (val === 30) return '하위 30%';
+                            if (val === 20) return '하위 20%';
+                            if (val === 10) return '하위 10%';
+                            if (val === 0) return '하위 0%';
+                            return '';
+                        }
+                    } 
+                }
+            },
+            plugins: {
+                // 💡 막대 그래프 중앙의 숫자 값 노출 제거
+                datalabels: { display: false }, 
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { 
+                        label: ctx => {
+                            const origRank = rawRanks[ctx.dataIndex];
+                            return ` 위치: ${formatSettlementRankLabel(origRank)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderScatterChart(targetYear, targetSelectedRow) {
+    const ctx = document.getElementById('chart-scatter').getContext('2d');
+    if (scatterChartObj) scatterChartObj.destroy();
+
+    const selectedFarm = document.getElementById('sel-farm').value;
+    if (!selectedFarm || !settlementFarmStats[selectedFarm]) return;
+
+    const dept = settlementFarmStats[selectedFarm].dept;
+
+    const metricMap = {
+        growth: { label: '기간육성율 (%)', prop: '기간육성율', unit: '%' },
+        fcr: { label: '사료요구율 (FCR)', prop: '사료요구율', unit: '' },
+        adg: { label: '일당증체량 (g)', prop: '일당증체량', unit: 'g' },
+        pay: { label: '지급율 (%)', prop: '지급율(%)', unit: '%' },
+        grade1: { label: '1등급이상출현율 (%)', prop: '1등급이상출현율(%)', unit: '%' },
+        offGrade: { label: '등외등급출현율 (%)', prop: '등외등급출현율(%)', unit: '%' }
+    };
+
+    const cfg = metricMap[activeScatterMetric];
+    let filteredRows = settlementRawData.filter(r => r["사업부"] === dept && r["출하 년도"] === targetYear);
+
+    const validFarmsInYear = [...new Set(
+        filteredRows
+            .filter(r => parseSettlementNum(r[cfg.prop]) > 0 && parseSettlementCost(r["출하 두당 사육비"]) > 0)
+            .map(r => r["농장명"])
+    )].sort();
+
+    updateCompareFarmDropdown(validFarmsInYear);
+
+    const compFarmSel = document.getElementById('sel-compare-farm');
+    const selectedCompareFarm = compFarmSel ? compFarmSel.value : '';
+
+    const pointsOther = [];          
+    const pointsCompare = [];        
+    const pointsFarmOther = [];      
+    const pointsSelected = [];       
+
+    filteredRows.forEach(r => {
+        const xVal = parseSettlementNum(r[cfg.prop]);
+        const yVal = parseSettlementCost(r["출하 두당 사육비"]);
+        const farmName = r["농장명"];
+        const ym = `${r["출하 년도"]}.${r["출하 월"]}월`;
+
+        if (xVal > 0 && yVal > 0) {
+            const pt = { x: xVal, y: yVal, farm: farmName, date: ym };
+
+            if (targetSelectedRow && r._origIndex === targetSelectedRow._origIndex) {
+                pointsSelected.push(pt);
+            } else if (farmName === selectedFarm) {
+                pointsFarmOther.push(pt);
+            } else if (selectedCompareFarm && farmName === selectedCompareFarm) {
+                pointsCompare.push(pt);
+            } else {
+                pointsOther.push(pt);
+            }
+        }
+    });
+
+    scatterChartObj = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: `${dept} 타 농가`,
+                    data: pointsOther,
+                    backgroundColor: 'rgba(148, 163, 184, 0.65)',
+                    pointRadius: 5.5,
+                    pointHoverRadius: 8
+                },
+                {
+                    label: selectedCompareFarm ? `비교군: ${selectedCompareFarm}` : `비교군 농가`,
+                    data: pointsCompare,
+                    backgroundColor: '#0284c7', 
+                    pointRadius: 8,
+                    pointHoverRadius: 11
+                },
+                {
+                    label: `${selectedFarm} 타 정산`,
+                    data: pointsFarmOther,
+                    backgroundColor: '#F58200',
+                    pointRadius: 7.5,
+                    pointHoverRadius: 10
+                },
+                {
+                    label: `선택 정산건`,
+                    data: pointsSelected,
+                    backgroundColor: '#F51932',
+                    pointRadius: 10,
+                    pointHoverRadius: 13
+                }
+            ]
+        },
+       options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 10, bottom: 5, left: 5, right: 10 } },
+    onClick: (e, elements) => {
+        if (elements && elements.length > 0) {
+            const firstElement = elements[0];
+            const clickedPt = scatterChartObj.data.datasets[firstElement.datasetIndex].data[firstElement.index];
+
+            const matchedPoints = [];
+            scatterChartObj.data.datasets.forEach(ds => {
+                ds.data.forEach(pt => {
+                    if (Math.abs(pt.x - clickedPt.x) < 0.001 && Math.abs(pt.y - clickedPt.y) < 1) {
+                        matchedPoints.push(pt);
+                    }
+                });
+            });
+
+            applyMultiplePointsToPanel(matchedPoints, cfg);
+        }
+    },
+    scales: {
+        x: { grid: { display: false }, title: { display: true, text: `${cfg.label} 수치`, font: { size: 11, weight: 'bold' } } },
+        y: { grid: { display: false }, title: { display: true, text: '출하두당 사육비 (원)', font: { size: 11, weight: 'bold' } }, ticks: { callback: v => v.toLocaleString() + '원' } }
+    },
+    plugins: {
+        // 💡 텍스트 뭉침 방지: 산점도 점 위에 글자 표시 숨김
+        datalabels: { display: false }, 
+        legend: {
+            display: true,
+            position: 'top',
+            align: 'end',
+            labels: { font: { size: 11, weight: 'bold' }, boxWidth: 12 }
+        },
+        tooltip: {
+            backgroundColor: '#1e293b',
+            padding: 10,
+            callbacks: {
+                label: ctx => ` ${ctx.raw.farm} (${ctx.raw.date}): ${cfg.label.split(' ')[0]} ${ctx.raw.x}${ctx.raw.unit || ''}, 사육비 ${ctx.raw.y.toLocaleString()}원`
+            }
+        }
+    }
+}
+});
+}
+
+function updateCompareFarmDropdown(validFarms) {
+    const compSel = document.getElementById('sel-compare-farm');
+    if (!compSel) return;
+    const curVal = compSel.value;
+    
+    compSel.innerHTML = '<option value="">비교군 선택 (없음)</option>';
+    validFarms.forEach(f => {
+        compSel.add(new Option(f, f));
+    });
+
+    if (validFarms.includes(curVal)) {
+        compSel.value = curVal;
+    } else {
+        compSel.value = "";
+    }
+}
+
+function selectScatterMetric(key) {
+    activeScatterMetric = key;
+    document.querySelectorAll('.scatter-btn').forEach(btn => {
+        btn.className = "scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+    });
+    const activeBtn = document.getElementById(`btn-scatter-${key}`);
+    if (activeBtn) {
+        activeBtn.className = "scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sunjin-red text-white shadow-sm transition-all";
+    }
+
+    const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
+    const month = parseSettlementNum(document.getElementById('sel-dash-month').value);
+    const batchIdx = parseSettlementNum(document.getElementById('sel-dash-batch').value);
+
+    const farm = document.getElementById('sel-farm').value;
+    const matches = settlementFarmStats[farm].rows.filter(r => r["출하 년도"] === year && r["출하 월"] === month);
+    const targetRow = matches[batchIdx];
+
+    renderScatterChart(year, targetRow);
+}
+
+function onCompareFarmChange() {
+    const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
+    const month = parseSettlementNum(document.getElementById('sel-dash-month').value);
+    const batchIdx = parseSettlementNum(document.getElementById('sel-dash-batch').value);
+
+    const farm = document.getElementById('sel-farm').value;
+    if(!farm || !settlementFarmStats[farm]) return;
+    
+    const matches = settlementFarmStats[farm].rows.filter(r => r["출하 년도"] === year && r["출하 월"] === month);
+    const targetRow = matches[batchIdx];
+
+    renderScatterChart(year, targetRow);
+}
+
+function applyMultiplePointsToPanel(pointsList, cfg) {
+    const panel = document.getElementById('scatter-click-panel');
+    if (!pointsList || !pointsList.length) {
+        panel.classList.add('hidden');
+        return;
+    }
+
+    panel.innerHTML = pointsList.map(pt => `
+        <div class="flex items-center justify-between bg-white p-2 rounded-md border border-red-200 shadow-sm">
+            <div>
+                <span class="font-bold text-sunjin-red text-xs me-2">${pt.farm}</span>
+                <span class="text-slate-500 text-[11px] me-2 font-mono">[${pt.date}]</span>
+                <span class="text-slate-700 font-bold me-2 text-[11px]">${cfg.label.split(' ')[0]}: ${pt.x}${cfg.unit}</span>
+                <span class="text-slate-900 font-extrabold text-[11px]">사육비: ${pt.y.toLocaleString()}원</span>
+            </div>
+            <button onclick="navigateToSelectedFarm('${pt.farm}')" class="px-2 py-0.5 bg-sunjin-red hover:bg-red-700 text-white rounded text-[10px] font-bold shadow-sm transition-colors flex items-center shrink-0">
+                <i class="fa-solid fa-arrow-right-to-bracket me-1"></i>[농장 정보 보기]
+            </button>
+        </div>
+    `).join('');
+
+    panel.classList.remove('hidden');
+}
+
+function navigateToSelectedFarm(farmName) {
+    if (!farmName) return;
+
+    const clickPanel = document.getElementById('scatter-click-panel');
+    if (clickPanel) {
+        clickPanel.classList.add('hidden');
+    }
+
+    const selFarm = document.getElementById('sel-farm');
+    
+    if (settlementFarmStats[farmName]) {
+        const targetDept = settlementFarmStats[farmName].dept;
+        document.getElementById('sel-dept').value = targetDept;
+        filterFarmsByDept('diag');
+    }
+
+    selFarm.value = farmName;
+    onFarmChange();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderMonthlyCostChart3Years(monthlyData) {
+    const ctx = document.getElementById('chart-monthly-cost').getContext('2d');
+    if (monthlyCostChartObj) monthlyCostChartObj.destroy();
+
+    const recentMonthly = monthlyData.slice(-36);
+    const labels = recentMonthly.map(d => d.ym);
+    const costs = recentMonthly.map(d => Math.round(d.cost));
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(245, 130, 0, 0.35)');
+    gradient.addColorStop(1, 'rgba(245, 130, 0, 0.0)');
+
+    monthlyCostChartObj = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '출하두당 위탁사육비 (원)',
+                    data: costs,
+                    borderColor: '#F58200',
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#F58200'
+                }
+            ]
+        },
+options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 }, callback: v => v.toLocaleString() + '원' } }
+    },
+    plugins: {
+        // 💡 꺾은선 숫자 겹침 방지: 마우스 오버 시에만 툴팁으로 표시
+        datalabels: { display: false }, 
+        legend: { display: false },
+        tooltip: {
+            backgroundColor: '#1e293b',
+            padding: 10,
+            callbacks: { label: ctx => ` 두당 사육비: ${ctx.raw.toLocaleString()}원` }
+        }
+    }
+}
+    });
+}
+
+function renderMonthlyTrendChart3Years(monthlyData) {
+    // 🎯 탭 1과의 ID 충돌 방지를 위해 변경된 ID 지정
+    const canvas = document.getElementById('chart-settlement-monthly-trend');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (monthlyTrendChartObj && typeof monthlyTrendChartObj.destroy === 'function') {
+        monthlyTrendChartObj.destroy();
+        monthlyTrendChartObj = null;
+    }
+
+    const metricConfigs = {
+        growth: { label: '기간육성율 (%)', props: ['growth', '기간육성율', '육성율'], unit: '%', digits: 1, color: '#FE1B0E' },
+        fcr: { label: '사료요구율 (FCR)', props: ['fcr', '사료요구율', 'FCR'], unit: '', digits: 2, color: '#7FC31C' },
+        adg: { label: '일당증체량 (g)', props: ['adg', '일당증체량', '증체량'], unit: 'g', digits: 1, color: '#0284c7' },
+        pay: { label: '지급율 (%)', props: ['pay', '지급율(%)', '지급율'], unit: '%', digits: 1, color: '#9333ea' },
+        grade1: { label: '1등급이상출현율 (%)', props: ['grade1', '1등급이상출현율(%)', '1등급이상출현율', '1등급이상'], unit: '%', digits: 1, color: '#eab308' },
+        offGrade: { label: '등외등급출현율 (%)', props: ['offGrade', '등외등급출현율(%)', '등외등급출현율', '등외등급'], unit: '%', digits: 1, color: '#64748b' }
+    };
+
+    const currentMetricKey = activeTrendMetric || 'growth';
+    const cfg = metricConfigs[currentMetricKey] || metricConfigs.growth;
+    const recentMonthly = Array.isArray(monthlyData) ? monthlyData.slice(-36) : [];
+
+    const labels = recentMonthly.map(d => d.ym || `${d.year}-${String(d.month).padStart(2, '0')}`);
+
+    const metricValues = recentMonthly.map(d => {
+        let rawVal = null;
+        for (let p of cfg.props) {
+            if (d[p] !== undefined && d[p] !== null && d[p] !== '' && !isNaN(Number(d[p]))) {
+                rawVal = Number(d[p]);
+                break;
+            }
+        }
+        return (rawVal === null || isNaN(rawVal)) ? 0 : Number(rawVal.toFixed(cfg.digits));
+    });
+
+    const costValues = recentMonthly.map(d => {
+        const cost = Math.round(Number(d.cost || d["출하 두당 사육비"] || 0));
+        return (isNaN(cost) || cost <= 0) ? 0 : cost;
+    });
+
+    monthlyTrendChartObj = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: cfg.label,
+                    data: metricValues,
+                    borderColor: cfg.color,
+                    borderWidth: 3,
+                    backgroundColor: cfg.color,
+                    yAxisID: 'y1',
+                    tension: 0.3,
+                    pointRadius: 4
+                },
+                {
+                    label: '실제 출하두당 사육비 (원)',
+                    data: costValues,
+                    borderColor: '#1e293b',
+                    borderWidth: 2,
+                    backgroundColor: '#1e293b',
+                    borderDash: [5, 5],
+                    yAxisID: 'y2',
+                    tension: 0.3,
+                    pointRadius: 3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                y1: { 
+                    type: 'linear', 
+                    position: 'left', 
+                    grid: { display: false }, 
+                    title: { display: true, text: cfg.label, font: { size: 10, weight: 'bold' } } 
+                },
+                y2: { 
+                    type: 'linear', 
+                    position: 'right', 
+                    grid: { display: false }, 
+                    title: { display: true, text: '실제 사육비 (원)', font: { size: 10, weight: 'bold' } }, 
+                    ticks: { callback: v => v.toLocaleString() + '원' } 
+                }
+            },
+            plugins: {
+                datalabels: { display: false },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    padding: 10,
+                    callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}${ctx.datasetIndex === 0 ? cfg.unit : '원'}` }
+                }
+            }
+        }
+    });
+}
+
+function selectTrendMetric(key) {
+    activeTrendMetric = key;
+    
+    // 버튼 스타일 업데이트
+    document.querySelectorAll('.metric-btn').forEach(btn => {
+        btn.className = "metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+    });
+    const activeBtn = document.getElementById(`btn-metric-${key}`);
+    if (activeBtn) {
+        activeBtn.className = "metric-btn px-2 py-1 rounded text-[10px] font-bold bg-sunjin-red text-white shadow-sm transition-all";
+    }
+
+    // 현재 선택된 농장의 월별 데이터로 차트 갱신
+    const farm = document.getElementById('sel-farm') ? document.getElementById('sel-farm').value : '';
+    if (farm && settlementFarmStats[farm]) {
+        renderMonthlyTrendChart3Years(settlementFarmStats[farm].monthlyData);
+    }
+}
+</script>
 </body>
 </html>
