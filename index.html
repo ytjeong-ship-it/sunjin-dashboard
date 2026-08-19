@@ -393,7 +393,7 @@
                         <i data-lucide="line-chart" class="w-4 h-4"></i>차트 분석
                     </button>
 <button id="main-tab-settlement" onclick="switchMainTab('settlement')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
-                        <i data-lucide="calculator" class="w-4 h-4"></i>월별 정산 성적 분석
+                        <i data-lucide="calculator" class="w-4 h-4"></i>정산 성적 분석
                     </button>
                 </div>
 
@@ -2134,7 +2134,7 @@ function switchMainTab(tab) {
     const inlineCard = document.getElementById('inline-detail-section');
     if (inlineCard) inlineCard.classList.add('hidden');
 
-    // 🎯 4. [월별 정산 성적 분석] 상황판 숨김 & 안내 메시지창 표시
+    // 🎯 4. [정산 성적 분석] 상황판 숨김 & 안내 메시지창 표시
     resetTab1();
 
     // 🎯 5. UI 드롭다운 및 테이블 재렌더링
@@ -4040,7 +4040,7 @@ function submitNewPassword() {
     });
 }
 // =================================================================
-// 🎯 월별 정산 성적 분석 전용 자바스크립트 로직 (충돌 방지 네임스페이스 적용)
+// 🎯 정산 성적 분석 전용 자바스크립트 로직 (충돌 방지 네임스페이스 적용)
 // =================================================================
 let settlementRawData = [];
 let settlementFarmStats = {};
