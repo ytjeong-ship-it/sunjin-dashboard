@@ -1520,6 +1520,9 @@
         const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbz1MVbZebgm9_w_0E27HBD7ZcvdukkL5d2vAf6kpPxQW4nv5ejHMT-Le0EPbaU6yNbM/exec";
         const AUTO_REFRESH_INTERVAL = 3600000;
 
+let pageLoginTime = null;
+let currentSessionId = null;
+
         let currentUserEmail = sessionStorage.getItem('user_email') || "";
         let currentUserPassword = sessionStorage.getItem('user_password') || "";
         let currentMainTab = 'dashboard';
@@ -2284,11 +2287,25 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             updateTelemetryPanel(timeStr);
 
-            if (isLoginAttempt) {
-                showNotification(`🔑 안녕하세요, ${currentUserEmail}님. 데이터 수신이 완료되었습니다.`, 'success');
-            } else if (isManual) {
-                showNotification('🔄 선진한마을 데이터를 맞춤 연동하였습니다.', 'success');
-            }
+if (isLoginAttempt) {
+    showNotification(`🔑 안녕하세요, ${currentUserEmail}님. 데이터 수신이 완료되었습니다.`, 'success');
+    
+    // 🎯 [신규] 로그인 성공 시 접속 로그 전송 및 세션 정보 저장
+    pageLoginTime = new Date();
+    currentSessionId = 'S_' + new Date().getTime() + '_' + Math.floor(Math.random() * 1000);
+    sessionStorage.setItem('pageLoginTime', pageLoginTime.getTime());
+    sessionStorage.setItem('currentSessionId', currentSessionId);
+
+    const logUrl = new URL(GOOGLE_SHEET_API_URL.trim());
+    logUrl.searchParams.set('action', 'addLog');
+    logUrl.searchParams.set('email', currentUserEmail);
+    logUrl.searchParams.set('password', currentUserPassword);
+    logUrl.searchParams.set('category', '로그인');
+    logUrl.searchParams.set('details', '시스템 접속 (대시보드 진입)');
+    logUrl.searchParams.set('t', new Date().getTime());
+
+    fetch(logUrl.toString()).catch(e => console.error("접속 로그 전송 실패:", e));
+}
         })
         .catch(err => {
             console.error('Data Sync Error:', err);
@@ -5057,6 +5074,32 @@ function selectTrendMetric(key) {
         renderMonthlyTrendChart3Years(settlementFarmStats[farm].monthlyData);
     }
 }
+// ========================================================
+// 🎯 [여기에 아래 3번 코드를 그대로 붙여넣으세요]
+// ========================================================
+window.addEventListener('beforeunload', function () {
+    const savedLoginTime = sessionStorage.getItem('pageLoginTime');
+    const savedSessionId = sessionStorage.getItem('currentSessionId');
+
+    if (currentUserEmail && savedLoginTime) {
+        const leaveTime = new Date().getTime();
+        const durationSec = Math.round((leaveTime - parseInt(savedLoginTime)) / 1000);
+        
+        const minutes = Math.floor(durationSec / 60);
+        const seconds = durationSec % 60;
+        const durationStr = minutes > 0 ? `${minutes}분 ${seconds}초` : `${seconds}초`;
+
+        const logUrl = new URL(GOOGLE_SHEET_API_URL.trim());
+        logUrl.searchParams.set('action', 'addLog');
+        logUrl.searchParams.set('email', currentUserEmail);
+        logUrl.searchParams.set('password', currentUserPassword);
+        logUrl.searchParams.set('category', '체류시간');
+        logUrl.searchParams.set('details', `총 체류시간: ${durationStr} (${durationSec}초)`);
+        logUrl.searchParams.set('t', new Date().getTime());
+
+        navigator.sendBeacon(logUrl.toString());
+    }
+});
 </script>
 </body>
 </html>
