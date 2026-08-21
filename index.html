@@ -717,7 +717,7 @@
                             <div class="flex items-center justify-between mb-4">
                                 <h4 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
                                     <span class="w-2.5 h-2.5 bg-sunjin-red rounded-full"></span>
-                                    지원약품비율
+                                    지원 약품 비율
                                 </h4>
                                 <span class="text-[10px] bg-red-50 text-sunjin-red px-2.5 py-0.5 rounded-full font-bold">지원비율 통계</span>
                             </div>
@@ -2060,17 +2060,6 @@ function switchMainTab(tab) {
 
     if (tab === 'chart') {
         renderAdvancedAnalysisCharts();
-    } else if (tab === 'settlement') {
-        // 🎯 이미 수신된 데이터가 없을 때만 최초 1회 로드하고, 데이터가 이미 있으면 즉시 탭만 전환
-        if (!settlementRawData || settlementRawData.length === 0) {
-            fetchSettlementData();
-        } else {
-            // 이미 로드된 데이터가 있는 경우, 농장이 선택되어 있다면 차트 갱신만 진행
-            const farm = document.getElementById('sel-farm') ? document.getElementById('sel-farm').value : '';
-            if (farm && settlementFarmStats[farm]) {
-                renderMonthlyTrendChart3Years(settlementFarmStats[farm].monthlyData);
-            }
-        }
     }
 }
 
@@ -2226,23 +2215,38 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
     checkAndShowNotice();
 
-    loadingOverlay.classList.remove('hidden');
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
     const startTime = performance.now();
 
+    // 🎯 1. 약품비 대시보드 데이터 요청 URL
     const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
     urlObj.searchParams.set('t', new Date().getTime());
     urlObj.searchParams.set('email', currentUserEmail);
     urlObj.searchParams.set('password', currentUserPassword);
 
-    fetch(urlObj.toString())
-        .then(res => {
-            lastFetchLatencyMs = Math.round(performance.now() - startTime);
-            if (!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
-            return res.json();
-        })
-        .then(data => {
+    const p1 = fetch(urlObj.toString()).then(res => {
+        lastFetchLatencyMs = Math.round(performance.now() - startTime);
+        if (!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
+        return res.json();
+    });
+
+    // 🎯 2. 정산 성적 분석 데이터 요청 URL
+    const settleUrl = new URL(GOOGLE_SHEET_API_URL.trim());
+    settleUrl.searchParams.set('action', 'getSettlementData');
+    settleUrl.searchParams.set('email', currentUserEmail);
+    settleUrl.searchParams.set('password', currentUserPassword);
+    settleUrl.searchParams.set('t', new Date().getTime());
+
+    const p2 = fetch(settleUrl.toString()).then(res => res.json()).catch(err => {
+        console.error("정산 데이터 수신 오류:", err);
+        return [];
+    });
+
+    // 🎯 두 데이터가 모두 들어올 때까지 로그인 로딩창을 유지했다가 한 번에 화면 오픈!
+    Promise.all([p1, p2])
+        .then(([data, resData]) => {
             if (data.error) throw new Error(data.error);
-            if (!Array.isArray(data) || data.length < 5) throw new Error('수신된 데이터 포맷이 올바르지 않거나 이메일/비밀번호 권한이 없습니다.');
+            if (!Array.isArray(data) || data.length < 5) throw new Error('수신된 데이터 포맷이 올바르지 않거나 권한이 없습니다.');
 
             if (data.userInfo) {
                 window.currentUser = {
@@ -2259,53 +2263,93 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             }
 
             rawReceivedRows = data;
-            errorAlert.classList.add('hidden');
+            if (errorAlert) errorAlert.classList.add('hidden');
             if (loginErrorMsg) loginErrorMsg.classList.add('hidden');
 
-            hideLoginModal();
+            // 🎯 A. 약품비 대시보드 데이터 파싱
             parseLEADExcel(data);
 
-            // 🎯 로그인 성공 시 기존 정산 데이터 메모리 삭제
-            settlementRawData = [];
-            settlementFarmStats = {};
-            settlementFarmDeptMap = {};
+            // 🎯 B. 정산 성적 데이터 파싱 및 스탯 생성
+            let fetchedSettlement = Array.isArray(resData) ? resData : (resData.rows || []);
+            let userInfo = resData.userInfo || {};
+            
+            if (userInfo.dept) sessionStorage.setItem('user_dept', userInfo.dept);
+            if (userInfo.role) sessionStorage.setItem('user_role', userInfo.role);
 
-            // 🎯 [핵심] 로그인 완료 시 대시보드 상세 카드, 차트분석, 정산 탭 전체를 아무것도 선택되지 않은 기초 상태로 완벽 초기화
+            settlementRawData = fetchedSettlement;
+
+            settlementRawData.forEach((r, idx) => {
+                r._origIndex = idx;
+                const getVal = (keyName) => {
+                    if (r[keyName] !== undefined && r[keyName] !== null && r[keyName] !== '') return r[keyName];
+                    const foundKey = Object.keys(r).find(k => k.trim().replace(/\s+/g, '') === keyName.trim().replace(/\s+/g, ''));
+                    return foundKey ? r[foundKey] : 0;
+                };
+
+                r["농장명"] = String(getVal("농장명") || getVal("농장 명") || '').trim();
+                r["사업부"] = String(getVal("사업부") || getVal("사업 부") || '').trim();
+                r["출하 년도"] = parseSettlementNum(getVal("출하 년도") || getVal("출하년도"));
+                r["출하 월"] = parseSettlementNum(getVal("출하 월") || getVal("출하월"));
+                r["출하두수"] = parseSettlementNum(getVal("출하두수"));
+                r["기간증체량"] = parseSettlementNum(getVal("기간증체량"));
+                r["기간육성율"] = parseSettlementNum(getVal("기간육성율"));
+                r["일당증체량"] = parseSettlementNum(getVal("일당증체량"));
+                r["지급율(%)"] = parseSettlementNum(getVal("지급율(%)") || getVal("지급율"));
+                r["1등급이상출현율(%)"] = parseSettlementNum(getVal("1등급이상출현율(%)"));
+                r["등외등급출현율(%)"] = parseSettlementNum(getVal("등외등급출현율(%)"));
+                r["사료요구율"] = parseSettlementNum(getVal("사료요구율"));
+                r["출하 두당 사육비"] = parseSettlementCost(getVal("출하 두당 사육비") || getVal("출하두당사육비"));
+                r["전입평체"] = parseSettlementNum(getVal("전입평체"));
+                r["사육일수"] = parseSettlementNum(getVal("사육일수"));
+            });
+
+            generateSettlementFarmStats();
+
+            // 🎯 C. 정산 탭 드롭다운 구성
+            const selDept = document.getElementById('sel-dept');
+            if (selDept) {
+                selDept.innerHTML = '';
+                const allDepts = [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort();
+                const userRole = window.currentUser ? window.currentUser.role : '일반';
+                const userDept = window.currentUser ? window.currentUser.dept : '';
+
+                if (userRole === '관리자') {
+                    selDept.add(new Option('전체 사업부', ''));
+                    allDepts.forEach(d => selDept.add(new Option(d, d)));
+                    selDept.value = '';
+                    selDept.disabled = false;
+                } else {
+                    if (userDept) {
+                        selDept.add(new Option(userDept, userDept, true, true));
+                        selDept.value = userDept;
+                        selDept.disabled = true;
+                    } else {
+                        selDept.add(new Option('전체 사업부', ''));
+                        allDepts.forEach(d => selDept.add(new Option(d, d)));
+                        selDept.disabled = false;
+                    }
+                }
+            }
+
+            filterFarmsByDept('diag');
+
+            // 🎯 D. 모든 데이터 준비 완벽 종료 후 로그인창 닫기
+            hideLoginModal();
             resetWholePageToInitialState();
 
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
             const syncStatusEl = document.getElementById('sync-status-text');
-            if (syncStatusEl) {
-                syncStatusEl.textContent = `최종 동기화 시각: ${timeStr} (1시간마다 자동 갱신)`;
-            }
+            if (syncStatusEl) syncStatusEl.textContent = `최종 동기화 시각: ${timeStr} (1시간마다 자동 갱신)`;
 
             const userEmailEl = document.getElementById('current-user-email');
-            if (userEmailEl) {
-                userEmailEl.textContent = currentUserEmail;
-            }
+            if (userEmailEl) userEmailEl.textContent = currentUserEmail;
 
             updateTelemetryPanel(timeStr);
 
-if (isLoginAttempt) {
-    showNotification(`🔑 안녕하세요, ${currentUserEmail}님. 데이터 수신이 완료되었습니다.`, 'success');
-    
-    // 🎯 [신규] 로그인 성공 시 접속 로그 전송 및 세션 정보 저장
-    pageLoginTime = new Date();
-    currentSessionId = 'S_' + new Date().getTime() + '_' + Math.floor(Math.random() * 1000);
-    sessionStorage.setItem('pageLoginTime', pageLoginTime.getTime());
-    sessionStorage.setItem('currentSessionId', currentSessionId);
-
-    const logUrl = new URL(GOOGLE_SHEET_API_URL.trim());
-    logUrl.searchParams.set('action', 'addLog');
-    logUrl.searchParams.set('email', currentUserEmail);
-    logUrl.searchParams.set('password', currentUserPassword);
-    logUrl.searchParams.set('category', '로그인');
-    logUrl.searchParams.set('details', '시스템 접속 (대시보드 진입)');
-    logUrl.searchParams.set('t', new Date().getTime());
-
-    fetch(logUrl.toString()).catch(e => console.error("접속 로그 전송 실패:", e));
-}
+            if (isLoginAttempt) {
+                showNotification(`🔑 안녕하세요, ${currentUserEmail}님. 모든 데이터 수신이 완료되었습니다.`, 'success');
+            }
         })
         .catch(err => {
             console.error('Data Sync Error:', err);
@@ -2313,14 +2357,12 @@ if (isLoginAttempt) {
                 loginErrorMsg.textContent = err.message || '인증에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.';
                 loginErrorMsg.classList.remove('hidden');
                 showLoginModal();
-            } else {
-                document.getElementById('error-title').textContent = '인증 실패 또는 데이터 수신 오류';
-                document.getElementById('error-desc').textContent = err.message || '등록된 이메일 및 E열 비밀번호를 다시 확인해 주세요.';
+            } else if (errorAlert) {
                 errorAlert.classList.remove('hidden');
             }
         })
         .finally(() => {
-            loadingOverlay.classList.add('hidden');
+            if (loadingOverlay) loadingOverlay.classList.add('hidden');
             restoreLoginButtonState();
         });
 }
@@ -2965,34 +3007,51 @@ if (isLoginAttempt) {
             currentKPIs.totalHead = filteredData.reduce((sum, d) => sum + d.headcountTotal, 0);
             currentKPIs.totalPur = filteredData.reduce((sum, d) => sum + d.purchaseTotal, 0);
             
-            const validFarms = filteredData.filter(d => d.medicineCost > 0);
-            currentKPIs.avgCost = validFarms.length > 0 ? (validFarms.reduce((sum, d) => sum + d.medicineCost, 0) / validFarms.length) : 0;
+            // 🎯 1번: 평균 입식 두당 약품비 (전체 filteredData 기준 가중평균)
+            currentKPIs.avgCost = currentKPIs.totalHead > 0 
+                ? Math.round(currentKPIs.totalPur / currentKPIs.totalHead) 
+                 : 0;
 
+            // 🎯 2번: 입식두당 약품비 추이 (6개월 차트 - medicineCost > 0 조건 제거)
             const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
-            const sums = new Array(months.length).fill(0);
-            const counts = new Array(months.length).fill(0);
+            const purSums = new Array(months.length).fill(0);
+            const headSums = new Array(months.length).fill(0);
 
             filteredData.forEach(d => {
-                d.costTrendVals.slice(0, lastValidTrendIdx + 1).forEach((v, idx) => {
-                    if (v > 0) {
-                        sums[idx] += v;
-                        counts[idx]++;
-                    }
-                });
-            });
+                 d.costTrendVals.slice(0, lastValidTrendIdx + 1).forEach((v, idx) => {
+                    const head = d.headcountVals[idx] || 0;
+                    // 단가가 존재하고 두수가 존재하는 경우 전체 매입액/두수에 누적
+                    if (head > 0) {
+                        purSums[idx] += (v * head); // 단가 × 두수 = 매입액
+                        headSums[idx] += head;
+                   }
+                 });
+             });
 
             if (activeDept === 'ALL' && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0 && !search && !region && !size && !rearingGrade && !costGrade) {
-                currentKPIs.trendData = buSummaryData.costTrendVals.slice(0, lastValidTrendIdx + 1);
+                  currentKPIs.trendData = buSummaryData.costTrendVals.slice(0, lastValidTrendIdx + 1);
             } else {
-                currentKPIs.trendData = sums.map((s, i) => counts[i] ? Math.round(s / counts[i]) : 0);
+                  currentKPIs.trendData = purSums.map((pur, i) => headSums[i] ? Math.round(pur / headSums[i]) : 0);
             }
 
+            // 🎯 4번: 약품 종류별 점유 비중 (전체 filteredData 기준 매입액 가중평균)
             let vSum = 0, aSum = 0, tSum = 0, nSum = 0, oSum = 0;
-            filteredData.forEach(d => { 
-                vSum += d.ratios[0]; aSum += d.ratios[1]; tSum += d.ratios[2]; nSum += d.ratios[3]; oSum += d.ratios[4]; 
-            });
-            const div = filteredData.length || 1;
-            currentKPIs.ratios = [vSum/div, aSum/div, tSum/div, nSum/div, oSum/div];
+            let totalPurSum = 0;
+
+            filteredData.forEach(d => {
+              const pur = d.purchaseTotal || 0;
+              if (pur > 0) {
+                vSum += (d.ratios[0] * pur);
+                aSum += (d.ratios[1] * pur);
+                tSum += (d.ratios[2] * pur);
+                nSum += (d.ratios[3] * pur);
+                oSum += (d.ratios[4] * pur);
+                totalPurSum += pur;
+              }
+        });
+
+        const div = totalPurSum || 1;
+        currentKPIs.ratios = [vSum/div, aSum/div, tSum/div, nSum/div, oSum/div];
 
             updateKPIs();
             renderTable();
@@ -3196,8 +3255,8 @@ if (isLoginAttempt) {
                     <p class="text-xs font-semibold text-slate-500 uppercase">지원 약품 비율</p>
                     <h3 class="text-3xl font-black text-sunjin-red mt-1">${ratioVal.toFixed(1)}%</h3>
                     <div class="mt-4 space-y-2 text-left">
-                        <div class="flex justify-between text-xs font-bold"><span class="text-slate-600">총 지원매입액</span><span class="text-slate-900">${formatWon(item.supportMedTotal)}</span></div>
-                        <div class="flex justify-between text-xs font-bold border-t border-slate-100 pt-2"><span class="text-slate-600">총 약품매입액</span><span class="text-slate-900">${formatWon(item.purchaseTotal)}</span></div>
+                        <div class="flex justify-between text-xs font-bold"><span class="text-slate-600">총 지원 매입액</span><span class="text-slate-900">${formatWon(item.supportMedTotal)}</span></div>
+                        <div class="flex justify-between text-xs font-bold border-t border-slate-100 pt-2"><span class="text-slate-600">총 약품 매입액</span><span class="text-slate-900">${formatWon(item.purchaseTotal)}</span></div>
                     </div>
                 </div>`;
 
@@ -3347,17 +3406,22 @@ if (isLoginAttempt) {
                 
                 regions.forEach(reg => {
                     chartLabels.push(reg);
-                    const rFarms = deptFarms.filter(d => d.region === reg && d.medicineCost > 0);
-                    const val = rFarms.length > 0 ? (rFarms.reduce((s, f) => s + f.medicineCost, 0) / rFarms.length) : 0;
+                    // 🎯 특정 사업부 선택 시: 지역 내 전체 농가의 (총 매입액 / 총 입식두수)
+                    const rFarms = deptFarms.filter(d => d.region === reg);
+                    const rTotalPur = rFarms.reduce((s, f) => s + (f.purchaseTotal || 0), 0);
+                    const rTotalHead = rFarms.reduce((s, f) => s + (f.headcountTotal || 0), 0);
+                    const val = rTotalHead > 0 ? (rTotalPur / rTotalHead) : 0;
                     chartAvgs.push(Math.round(val));
                 });
             } else {
                 const depts = [...new Set(filteredData.map(d => d.dept))].filter(Boolean).sort();
                 depts.forEach(dept => {
                     chartLabels.push(dept);
+                    // 🎯 한마을BU 전체 선택 시: 사업부 내 전체 농가의 (총 매입액 / 총 입식두수)
                     const farms = filteredData.filter(d => d.dept === dept);
-                    const validFarms = farms.filter(f => f.medicineCost > 0);
-                    const val = validFarms.length > 0 ? (validFarms.reduce((s, f) => s + f.medicineCost, 0) / validFarms.length) : 0;
+                    const deptTotalPur = farms.reduce((s, f) => s + (f.purchaseTotal || 0), 0);
+                    const deptTotalHead = farms.reduce((s, f) => s + (f.headcountTotal || 0), 0);
+                    const val = deptTotalHead > 0 ? (deptTotalPur / deptTotalHead) : 0;
                     chartAvgs.push(Math.round(val));
                 });
             }
