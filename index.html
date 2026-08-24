@@ -169,6 +169,15 @@
         .fade-in-section {
             animation: fadeIn 0.35s ease-out forwards;
         }
+
+        /* 📱 1번 카드 기간 필터 작은 화면 대응 */
+    #date-start-month, #date-end-month {
+        font-size: 10px !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+        }
+
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
@@ -441,14 +450,39 @@
         <div id="dashboard-view" class="flex flex-col gap-6">
 
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-4 print-col-2 print-break-avoid">
-                <div class="lg:col-span-4 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-center gap-1.5 hover:shadow-md transition duration-300">
-                    <div class="flex items-center space-x-2.5">
-                        <span class="w-3 h-3 rounded-full bg-sunjin-red shrink-0"></span>
-                        <h2 class="text-base sm:text-lg font-black text-slate-800 whitespace-nowrap leading-snug">
-                            비육농장 농장별 약품비 현황
-                        </h2>
+<!-- 🎯 1번 카드 (옆 카드들과 높이 및 비율 완벽 수평 정렬) -->
+                <div class="lg:col-span-4 bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sunjin-red shrink-0"></span>
+                            <h2 class="text-xs sm:text-sm font-black text-slate-800 whitespace-nowrap">
+                                비육농장 약품비 현황
+                            </h2>
+                        </div>
+                        <!-- 우측 상단: 백신 제외 문구 + 기간 초기화 버튼 -->
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-slate-400 font-bold whitespace-nowrap">*구제역 백신 제외</span>
+                            <button type="button" onclick="resetPeriodFilterOnly()" title="기간 선택을 초기 상태(전체)로 리셋합니다." class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 transition-all flex items-center gap-1">
+                                <i data-lucide="rotate-ccw" class="w-3 h-3 text-slate-500"></i>초기화
+                            </button>
+                        </div>
                     </div>
-                    <p class="text-xs text-slate-400 font-bold pl-5 whitespace-nowrap">*구제역 백신 제외</p>
+
+                    <!-- 하단 필터바 (반응형 자동 줄바꿈 & 유동 크기 적용) -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <!-- 버튼 3종 -->
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" onclick="setPeriodFilter('3m')" id="btn-period-3m" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">최근 3개월</button>
+                            <button type="button" onclick="setPeriodFilter('6m')" id="btn-period-6m" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">최근 6개월</button>
+                            <button type="button" onclick="setPeriodFilter('all')" id="btn-period-all" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-sunjin-red text-white shadow-sm transition-all">전체</button>
+                        </div>
+                        <!-- 년/월 달력 (유동 너비 적용) -->
+                        <div class="flex items-center gap-1 text-xs font-bold text-slate-600 flex-1 min-w-[170px] justify-end">
+                            <input type="month" id="date-start-month" onchange="onCustomMonthChange()" class="flex-1 max-w-[100px] min-w-[80px] bg-slate-50 border border-slate-300 rounded-lg px-1 py-0.5 text-[10px] font-extrabold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sunjin-red shadow-sm cursor-pointer">
+                            <span class="text-slate-400 text-[10px] shrink-0">~</span>
+                            <input type="month" id="date-end-month" onchange="onCustomMonthChange()" class="flex-1 max-w-[100px] min-w-[80px] bg-slate-50 border border-slate-300 rounded-lg px-1 py-0.5 text-[10px] font-extrabold text-slate-800 focus:outline-none focus:ring-1 focus:ring-sunjin-red shadow-sm cursor-pointer">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="lg:col-span-5 bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-center hover:shadow-md transition duration-300">
@@ -1569,8 +1603,152 @@ let currentSessionId = null;
             '영남사업팀': 4
         };
 
-        let currentSortField = 'medicineCost'; 
+let currentSortField = 'medicineCost'; 
         let currentSortAsc = false;
+
+        // 🎯 기간 필터 전역 변수
+        let activePeriodMode = 'all'; // 'all', '3m', '6m', 'custom'
+        let selectedStartYM = '2025_11월';
+        let selectedEndYM = '2026_07월';
+
+        function toIsoMonthStr(rawYM) {
+            if (!rawYM) return '';
+            let str = String(rawYM).replace('월', '').replace('_', '-').trim();
+            let parts = str.split('-');
+            if (parts.length >= 2) {
+                let y = parts[0].length === 2 ? '20' + parts[0] : parts[0];
+                let m = parts[1].padStart(2, '0');
+                return `${y}-${m}`;
+            }
+            return str;
+        }
+
+        function getRealValidMaxMonthIdx() {
+            let maxIdx = 0;
+            if (Array.isArray(parsedData) && parsedData.length > 0) {
+                parsedData.forEach(d => {
+                    if (Array.isArray(d.headcountVals)) {
+                        d.headcountVals.forEach((v, idx) => { if (v > 0) maxIdx = Math.max(maxIdx, idx); });
+                    }
+                    if (Array.isArray(d.purchaseVals)) {
+                        d.purchaseVals.forEach((v, idx) => { if (v > 0) maxIdx = Math.max(maxIdx, idx); });
+                    }
+                });
+            }
+            if (maxIdx > 0) return maxIdx;
+            if (mappings && Array.isArray(mappings.costTrend) && mappings.costTrend.length > 0) {
+                return mappings.costTrend.length - 1;
+            }
+            return 0;
+        }
+
+        function setPeriodFilter(mode) {
+            activePeriodMode = mode;
+            const btn3m = document.getElementById('btn-period-3m');
+            const btn6m = document.getElementById('btn-period-6m');
+            const btnAll = document.getElementById('btn-period-all');
+
+            const activeStyle = "px-2.5 py-1 rounded-lg text-xs font-bold bg-sunjin-red text-white shadow-sm transition-all";
+            const inactiveStyle = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+
+            if (btn3m) btn3m.className = mode === '3m' ? activeStyle : inactiveStyle;
+            if (btn6m) btn6m.className = mode === '6m' ? activeStyle : inactiveStyle;
+            if (btnAll) btnAll.className = mode === 'all' ? activeStyle : inactiveStyle;
+
+            const maxIndex = getRealValidMaxMonthIdx();
+            
+            if (mappings && Array.isArray(mappings.costTrend) && mappings.costTrend.length > 0) {
+                const firstYM = mappings.costTrend[0].month;
+                const lastYM = mappings.costTrend[maxIndex] ? mappings.costTrend[maxIndex].month : mappings.costTrend[mappings.costTrend.length - 1].month;
+
+                if (mode === 'all') {
+                    selectedStartYM = firstYM;
+                    selectedEndYM = lastYM;
+                } else if (mode === '3m') {
+                    const startIdx = Math.max(0, maxIndex - 2);
+                    selectedStartYM = mappings.costTrend[startIdx] ? mappings.costTrend[startIdx].month : mappings.costTrend[0].month;
+                    selectedEndYM = lastYM;
+                } else if (mode === '6m') {
+                    const startIdx = Math.max(0, maxIndex - 5);
+                    selectedStartYM = mappings.costTrend[startIdx] ? mappings.costTrend[startIdx].month : mappings.costTrend[0].month;
+                    selectedEndYM = lastYM;
+                }
+            }
+
+            updateMonthPickerInputs();
+            applyFilters();
+        }
+
+// 💡 기간 전용 초기화 버튼 동작 함수
+        function resetPeriodFilterOnly() {
+            setPeriodFilter('all');
+            showNotification('🔄 기간 선택이 초기 상태(전체)로 리셋되었습니다.', 'info');
+        }
+
+        function updateMonthPickerInputs() {
+            const startInput = document.getElementById('date-start-month');
+            const endInput = document.getElementById('date-end-month');
+            
+            if (!mappings || !Array.isArray(mappings.costTrend) || mappings.costTrend.length === 0) return;
+
+            // 🎯 데이터가 존재하는 최소/최대 연월 파악 (2025-11 ~ 2026-07)
+            const minIsoYM = toIsoMonthStr(mappings.costTrend[0].month);
+            const maxValidIdx = getRealValidMaxMonthIdx();
+            const maxValidYM = mappings.costTrend[maxValidIdx] ? mappings.costTrend[maxValidIdx].month : mappings.costTrend[mappings.costTrend.length - 1].month;
+            const maxIsoYM = toIsoMonthStr(maxValidYM);
+
+            if (!selectedStartYM) selectedStartYM = mappings.costTrend[0].month;
+            if (!selectedEndYM) selectedEndYM = maxValidYM;
+
+            // 🎯 달력 UI 팝업창에서 데이터 없는 2026년 8월 이후를 클릭 불가능(Disabled)하게 제한
+            if (startInput) {
+                startInput.min = minIsoYM;
+                startInput.max = maxIsoYM;
+                startInput.value = toIsoMonthStr(selectedStartYM);
+            }
+            if (endInput) {
+                endInput.min = minIsoYM;
+                endInput.max = maxIsoYM;
+                endInput.value = toIsoMonthStr(selectedEndYM);
+            }
+        }
+
+        function onCustomMonthChange() {
+            const startInput = document.getElementById('date-start-month');
+            const endInput = document.getElementById('date-end-month');
+
+            let startVal = startInput ? startInput.value : '';
+            let endVal = endInput ? endInput.value : '';
+
+            const minIsoYM = toIsoMonthStr(mappings.costTrend[0].month);
+            const maxValidIdx = getRealValidMaxMonthIdx();
+            const maxIsoYM = toIsoMonthStr(mappings.costTrend[maxValidIdx].month);
+
+            // 🎯 비정상적인 접근(직접 타이핑 등)으로 범위 밖 연월 선택 시 자동 교정
+            if (startVal && startVal < minIsoYM) startVal = minIsoYM;
+            if (endVal && endVal > maxIsoYM) endVal = maxIsoYM;
+
+            if (startVal && endVal) {
+                if (startVal > endVal) {
+                    showNotification('⚠️ 시작월은 종료월보다 이후일 수 없습니다.', 'error');
+                    updateMonthPickerInputs();
+                    return;
+                }
+
+                const startObj = mappings.costTrend.find(m => toIsoMonthStr(m.month) === startVal);
+                const endObj = mappings.costTrend.find(m => toIsoMonthStr(m.month) === endVal);
+
+                selectedStartYM = startObj ? startObj.month : startVal;
+                selectedEndYM = endObj ? endObj.month : endVal;
+
+                activePeriodMode = 'custom';
+                if (document.getElementById('btn-period-3m')) document.getElementById('btn-period-3m').className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+                if (document.getElementById('btn-period-6m')) document.getElementById('btn-period-6m').className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+                if (document.getElementById('btn-period-all')) document.getElementById('btn-period-all').className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+
+                applyFilters();
+            }
+        }
 
         let lastValidTrendIdx = -1;
         let lastValidHeadcountIdx = -1;
@@ -2111,7 +2289,27 @@ function switchMainTab(tab) {
     currentSortAsc = false;
     currentSelectedFarmCode = "";
 
-    // 🎯 2. 대시보드 & 차트분석 필터/검색창 리셋
+    // 🎯 2. [추가] 기간 필터 변수 및 버튼/달력 UI 완전 초기화 ('all' 모드 복원)
+    activePeriodMode = 'all';
+    const maxIndex = getRealValidMaxMonthIdx();
+    if (mappings && Array.isArray(mappings.costTrend) && mappings.costTrend.length > 0) {
+        selectedStartYM = mappings.costTrend[0].month;
+        selectedEndYM = mappings.costTrend[maxIndex] ? mappings.costTrend[maxIndex].month : mappings.costTrend[mappings.costTrend.length - 1].month;
+    }
+
+    const btn3m = document.getElementById('btn-period-3m');
+    const btn6m = document.getElementById('btn-period-6m');
+    const btnAll = document.getElementById('btn-period-all');
+    const activeStyle = "px-2.5 py-1 rounded-lg text-xs font-bold bg-sunjin-red text-white shadow-sm transition-all";
+    const inactiveStyle = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+
+    if (btn3m) btn3m.className = inactiveStyle;
+    if (btn6m) btn6m.className = inactiveStyle;
+    if (btnAll) btnAll.className = activeStyle;
+
+    updateMonthPickerInputs();
+
+    // 🎯 3. 대시보드 & 차트분석 필터/검색창 리셋
     syncAndApplyFilters('search', '');
     syncAndApplyFilters('dept', '');
     syncAndApplyFilters('region', '');
@@ -2119,20 +2317,20 @@ function switchMainTab(tab) {
     syncAndApplyFilters('rearingGrade', '');
     syncAndApplyFilters('costGrade', '');
 
-    // 🎯 3. [종합 대시보드] 상세 입식/매입 타임라인 카드 완전 숨김
+    // 🎯 4. [종합 대시보드] 상세 입식/매입 타임라인 카드 완전 숨김
     const inlineCard = document.getElementById('inline-detail-section');
     if (inlineCard) inlineCard.classList.add('hidden');
 
-    // 🎯 4. [정산 성적 분석] 상황판 숨김 & 안내 메시지창 표시
+    // 🎯 5. [정산 성적 분석] 상황판 숨김 & 안내 메시지창 표시
     resetTab1();
 
-    // 🎯 5. UI 드롭다운 및 테이블 재렌더링
+    // 🎯 6. UI 드롭다운 및 테이블 재렌더링
     renderTabs();
     populateRegions();
     populateRearingGrades();
     applyFilters();
 
-    // 🎯 6. 첫 화면인 '종합 대시보드'로 이동 및 상단 스크롤
+    // 🎯 7. 첫 화면인 '종합 대시보드'로 이동 및 상단 스크롤
     switchMainTab('dashboard');
     window.scrollTo({ top: 0, behavior: 'instant' });
 }
@@ -2502,7 +2700,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                         supportMedRatio: (mappings.supportMedRatio !== -1) ? cleanNum(r[mappings.supportMedRatio]) : 0
                     });
                     summaryRows.push(r);
-                } else if (farmName.includes('한마을') || deptName.includes('한마을') || col0Val.includes('한마을')) {
+} else if (farmName.includes('한마을') || deptName.includes('한마을') || col0Val.includes('한마을')) {
                     const parsedMed = cleanNum(r[mappings.medicineCost]);
                     if (parsedMed > 0) buSummaryData.medicineCost = parsedMed;
                     
@@ -2521,19 +2719,28 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                     if (countCandidate > 0 && countCandidate < 1000) buSummaryData.farmCount = countCandidate;
                     else buSummaryData.farmCount = 97;
 
-                    if (mappings.costTrend.length > 0) {
+                    if (mappings.costTrend && mappings.costTrend.length > 0) {
                         buSummaryData.costTrendVals = mappings.costTrend.map(m => cleanNum(r[m.idx]));
                     }
-                    if (mappings.ratios.length > 0) {
+                    if (mappings.ratios && mappings.ratios.length > 0) {
                         buSummaryData.ratios = mappings.ratios.map(idx => cleanNum(r[idx]));
+                    }
+                    // 💡 [핵심] 한마을BU 전체의 월별 입식 두수 및 매입액 배열 수집
+                    if (mappings.headcount && mappings.headcount.length > 0) {
+                        buSummaryData.headcountVals = mappings.headcount.map(m => cleanNum(r[m.idx]));
+                    }
+                    if (mappings.purchase && mappings.purchase.length > 0) {
+                        buSummaryData.purchaseVals = mappings.purchase.map(m => cleanNum(r[m.idx]));
                     }
 
                     summaryRows.push(r);
-                } else if (farmName.includes('합계') || farmName.includes('평균') || farmName.includes('소계') || 
+                }
+                 else if (farmName.includes('합계') || farmName.includes('평균') || farmName.includes('소계') || 
                     farmName.includes('전체') || deptName.includes('합계') || deptName.includes('평균') ||
                     farmName.includes('사업부') || farmName.includes('사업팀') || farmName.includes('BU') || farmName.includes('팀')) {
                     summaryRows.push(r);
-                } else if (farmName) {
+                }
+                 else if (farmName) {
                     parsedData.push({
                         dept: deptName, region: String(r[mappings.region] || '').trim(), farmCode, farmName, manager: String(r[mappings.manager] || '').trim(),
                         farmSize: getFarmSizeCategory(r[mappings.farmSize]), breedingSize: cleanNum(r[mappings.breedingSize]), rearingGrade: String(r[mappings.rearingGrade] || '').trim(),
@@ -2554,7 +2761,16 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             parsedData.forEach(item => { item.gradeCategory = calculateGrade(item.medicineCost, item.purchaseTotal, item.headcountTotal); });
 
-            detectLastValidMonths();
+detectLastValidMonths();
+            
+            // 🎯 초기 기본 기간을 전체(2025_11월 ~ 최신월)로 동적 세팅
+            const maxIdx = getRealValidMaxMonthIdx();
+            if (mappings.costTrend && mappings.costTrend.length > 0) {
+                selectedStartYM = mappings.costTrend[0].month;
+                selectedEndYM = mappings.costTrend[maxIdx] ? mappings.costTrend[maxIdx].month : mappings.costTrend[mappings.costTrend.length - 1].month;
+            }
+            
+            updateMonthPickerInputs();
             renderTabs();
             populateRegions();
             populateRearingGrades();
@@ -2654,6 +2870,16 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 });
                 filterContainer.innerHTML = filterBtnHtml;
 
+                // 🎯 1. 현재 선택된 기간 필터 슬라이싱 구간(Start ~ End) 구하기
+                const allIsoMonths = mappings.costTrend.map(m => toIsoMonthStr(m.month));
+                const isoStartVal = toIsoMonthStr(selectedStartYM);
+                const isoEndVal = toIsoMonthStr(selectedEndYM);
+
+                let startIdx = allIsoMonths.findIndex(m => m === isoStartVal);
+                let endIdx = allIsoMonths.findIndex(m => m === isoEndVal);
+                if (startIdx === -1) startIdx = 0;
+                if (endIdx === -1 || endIdx < startIdx) endIdx = getRealValidMaxMonthIdx();
+
                 let targetFarms = [];
                 let isAllScope = (selectedModalSizeCategory === 'ALL');
 
@@ -2663,44 +2889,45 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                     targetFarms = parsedData.filter(d => d.farmSize === selectedModalSizeCategory);
                 }
 
+                // 🎯 2. 선택 규모 농가들의 '선택 기간' 입식두수 및 약품 매입액 실시간 합산
                 let totalHead = 0;
                 let totalPur = 0;
-                let avgCost = 0;
 
-                if (isAllScope && buSummaryData.totalHead > 0) {
-                    totalHead = buSummaryData.totalHead;
-                    totalPur = buSummaryData.totalPurchase;
-                    avgCost = buSummaryData.medicineCost;
-                } else {
-                    totalHead = targetFarms.reduce((s, f) => s + (f.headcountTotal || 0), 0);
-                    totalPur = targetFarms.reduce((s, f) => s + (f.purchaseTotal || 0), 0);
-                    const validFarms = targetFarms.filter(f => f.medicineCost > 0);
-                    avgCost = validFarms.length > 0 ? Math.round(validFarms.reduce((s, f) => s + f.medicineCost, 0) / validFarms.length) : 0;
-                }
+                targetFarms.forEach(f => {
+                    if (f.purchaseVals && f.headcountVals) {
+                        for (let i = startIdx; i <= endIdx; i++) {
+                            totalPur += (f.purchaseVals[i] || 0);
+                            totalHead += (f.headcountVals[i] || 0);
+                        }
+                    }
+                });
+
+                let avgCost = totalHead > 0 ? Math.round(totalPur / totalHead) : 0;
 
                 if (document.getElementById('size-kpi-total-head')) document.getElementById('size-kpi-total-head').textContent = Math.round(totalHead).toLocaleString() + ' 두';
                 if (document.getElementById('size-kpi-total-pur')) document.getElementById('size-kpi-total-pur').textContent = formatWon(totalPur);
                 if (document.getElementById('size-kpi-avg-cost')) document.getElementById('size-kpi-avg-cost').textContent = formatWon(avgCost);
 
-                const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
-                let costTrendArr = new Array(months.length).fill(0);
+                // 🎯 3. 선택 기간 내 월별 추이 데이터 집계
+                const displayMonths = mappings.costTrend.map(m => m.month).slice(startIdx, endIdx + 1);
+                let costTrendArr = new Array(displayMonths.length).fill(0);
 
-                if (isAllScope && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0) {
-                    costTrendArr = buSummaryData.costTrendVals.slice(0, lastValidTrendIdx + 1);
-                } else {
-                    let costTrendCounts = new Array(months.length).fill(0);
-                    targetFarms.forEach(f => {
-                        if (f.costTrendVals) {
-                            f.costTrendVals.slice(0, lastValidTrendIdx + 1).forEach((v, idx) => {
-                                if (v > 0) { costTrendArr[idx] += v; costTrendCounts[idx]++; }
-                            });
-                        }
-                    });
-                    costTrendArr = costTrendArr.map((sum, i) => costTrendCounts[i] ? Math.round(sum / costTrendCounts[i]) : 0);
-                }
+                let periodPurSums = new Array(displayMonths.length).fill(0);
+                let periodHeadSums = new Array(displayMonths.length).fill(0);
+
+                targetFarms.forEach(f => {
+                    for (let i = startIdx; i <= endIdx; i++) {
+                        const relIdx = i - startIdx;
+                        periodPurSums[relIdx] += (f.purchaseVals[i] || 0);
+                        periodHeadSums[relIdx] += (f.headcountVals[i] || 0);
+                    }
+                });
+
+                // 선택 기간 내 6개월 누계 이동 가중평균
+                costTrendArr = periodPurSums.map((pur, idx) => periodHeadSums[idx] > 0 ? Math.round(pur / periodHeadSums[idx]) : 0);
 
                 if (activeCharts['modalSizeCostLine']) {
-                    activeCharts['modalSizeCostLine'].data.labels = months;
+                    activeCharts['modalSizeCostLine'].data.labels = displayMonths;
                     activeCharts['modalSizeCostLine'].data.datasets[0].data = costTrendArr;
                     activeCharts['modalSizeCostLine'].update();
                 } else {
@@ -2709,7 +2936,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                         activeCharts['modalSizeCostLine'] = new Chart(canvas.getContext('2d'), {
                             type: 'line',
                             data: {
-                                labels: months,
+                                labels: displayMonths,
                                 datasets: [{
                                     label: '평균 입식두당 약품비',
                                     data: costTrendArr,
@@ -2733,7 +2960,16 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                     }
                 }
 
-                let totalSupPur = targetFarms.reduce((s, f) => s + (f.supportMedTotal || 0), 0);
+                // 🎯 4. 선택 기간 내 지원약품 비율 및 성분 비중 연산
+                let totalSupPur = 0;
+                targetFarms.forEach(f => {
+                    if (f.supportMedVals) {
+                        for (let i = startIdx; i <= endIdx; i++) {
+                            totalSupPur += (f.supportMedVals[i] || 0);
+                        }
+                    }
+                });
+
                 let supportRatioVal = totalPur > 0 ? (totalSupPur / totalPur) * 100 : 0;
                 let selfPaidRatioVal = Math.max(0, 100 - supportRatioVal);
 
@@ -2765,11 +3001,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 }
 
                 let normTypeRatios = [0, 0, 0, 0, 0];
-                if (isAllScope && buSummaryData.ratios && buSummaryData.ratios.length === 5) {
-                    let rRaw = buSummaryData.ratios.map(v => v <= 1.0 ? v * 100 : v);
-                    const sumR = rRaw.reduce((a, b) => a + b, 0) || 1;
-                    normTypeRatios = rRaw.map(v => parseFloat(((v / sumR) * 100).toFixed(1)));
-                } else if (targetFarms.length > 0) {
+                if (targetFarms.length > 0) {
                     let typeSums = [0, 0, 0, 0, 0];
                     targetFarms.forEach(f => {
                         if (f.ratios) {
@@ -2805,33 +3037,36 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                     }
                 }
 
-                let dtHeadArr = new Array(lastValidHeadcountIdx + 1).fill(0);
-                let dtPurArr = new Array(lastValidPurchaseIdx + 1).fill(0);
-                let dtSupArr = new Array(lastValidSupportMedIdx + 1).fill(0);
-                let dtInflowArr = new Array(lastValidSupportInflowIdx + 1).fill(0);
+                // 🎯 5. 하단 타임라인 차트 및 데이터 표 선택 기간 슬라이싱 반영
+                let dtHeadArr = new Array(displayMonths.length).fill(0);
+                let dtPurArr = new Array(displayMonths.length).fill(0);
+                let dtSupArr = new Array(displayMonths.length).fill(0);
+                let dtInflowArr = new Array(displayMonths.length).fill(0);
 
                 targetFarms.forEach(f => {
-                    if (f.headcountVals) f.headcountVals.slice(0, lastValidHeadcountIdx + 1).forEach((v, i) => dtHeadArr[i] += v);
-                    if (f.purchaseVals) f.purchaseVals.slice(0, lastValidPurchaseIdx + 1).forEach((v, i) => dtPurArr[i] += v);
-                    if (f.supportMedVals) f.supportMedVals.slice(0, lastValidSupportMedIdx + 1).forEach((v, i) => dtSupArr[i] += v);
-                    if (f.supportInflowVals) f.supportInflowVals.slice(0, lastValidSupportInflowIdx + 1).forEach((v, i) => dtInflowArr[i] += v);
+                    for (let i = startIdx; i <= endIdx; i++) {
+                        const relIdx = i - startIdx;
+                        if (f.headcountVals) dtHeadArr[relIdx] += (f.headcountVals[i] || 0);
+                        if (f.purchaseVals) dtPurArr[relIdx] += (f.purchaseVals[i] || 0);
+                        if (f.supportMedVals) dtSupArr[relIdx] += (f.supportMedVals[i] || 0);
+                        if (f.supportInflowVals) dtInflowArr[relIdx] += (f.supportInflowVals[i] || 0);
+                    }
                 });
 
-                if (document.getElementById('modal-dt-total-head')) document.getElementById('modal-dt-total-head').textContent = `누계: ${totalHead.toLocaleString()} 두`;
-                if (document.getElementById('modal-dt-total-pur')) document.getElementById('modal-dt-total-pur').textContent = `누계: ${formatWon(totalPur)}`;
-                if (document.getElementById('modal-dt-total-sup')) document.getElementById('modal-dt-total-sup').textContent = `누계: ${formatWon(totalSupPur)}`;
+                if (document.getElementById('modal-dt-total-head')) document.getElementById('modal-dt-total-head').textContent = `선택기간 누계: ${totalHead.toLocaleString()} 두`;
+                if (document.getElementById('modal-dt-total-pur')) document.getElementById('modal-dt-total-pur').textContent = `선택기간 누계: ${formatWon(totalPur)}`;
+                if (document.getElementById('modal-dt-total-sup')) document.getElementById('modal-dt-total-sup').textContent = `선택기간 누계: ${formatWon(totalSupPur)}`;
 
-                drawTimelineChart('chart-modal-dt-head', mappings.headcount.map(m=>m.month).slice(0, lastValidHeadcountIdx + 1), dtHeadArr, '#3b82f6', ' 두');
-                drawTimelineChart('chart-modal-dt-pur', mappings.purchase.map(m=>m.month).slice(0, lastValidPurchaseIdx + 1), dtPurArr, '#10b981', ' 원');
-                drawTimelineChart('chart-modal-dt-sup', mappings.supportMed.map(m=>m.month).slice(0, lastValidSupportMedIdx + 1), dtSupArr, '#8b5cf6', ' 원');
+                drawTimelineChart('chart-modal-dt-head', displayMonths, dtHeadArr, '#3b82f6', ' 두');
+                drawTimelineChart('chart-modal-dt-pur', displayMonths, dtPurArr, '#10b981', ' 원');
+                drawTimelineChart('chart-modal-dt-sup', displayMonths, dtSupArr, '#8b5cf6', ' 원');
 
-                const slicedTrendMonths = mappings.costTrend.slice(0, lastValidTrendIdx + 1);
                 const theadGroupA = document.getElementById('modal-thead-group-a');
                 const tbodyGroupA = document.getElementById('modal-tbody-group-a');
 
                 if(theadGroupA && tbodyGroupA) {
                     let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                    slicedTrendMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                    displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
                     theadGroupA.innerHTML = headerHtml;
 
                     tbodyGroupA.innerHTML = `
@@ -2845,13 +3080,12 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                         </tr>`;
                 }
 
-                const slicedHeadcountMonths = mappings.headcount.slice(0, lastValidHeadcountIdx + 1);
                 const theadGroupB = document.getElementById('modal-thead-group-b');
                 const tbodyGroupB = document.getElementById('modal-tbody-group-b');
 
                 if(theadGroupB && tbodyGroupB) {
                     let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                    slicedHeadcountMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                    displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
                     theadGroupB.innerHTML = headerHtml;
 
                     tbodyGroupB.innerHTML = `
@@ -3004,37 +3238,86 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 }
             }
 
-            currentKPIs.totalHead = filteredData.reduce((sum, d) => sum + d.headcountTotal, 0);
-            currentKPIs.totalPur = filteredData.reduce((sum, d) => sum + d.purchaseTotal, 0);
-            
-            // 🎯 1번: 평균 입식 두당 약품비 (전체 filteredData 기준 가중평균)
-            currentKPIs.avgCost = currentKPIs.totalHead > 0 
-                ? Math.round(currentKPIs.totalPur / currentKPIs.totalHead) 
-                 : 0;
+// 🎯 1. 기간 슬라이싱 인덱스 구간 구하기 (포맷 안전 변환 적용)
+            const allMonths = mappings.costTrend.map(m => m.month);
+            const allIsoMonths = allMonths.map(m => toIsoMonthStr(m));
 
-            // 🎯 2번: 입식두당 약품비 추이 (6개월 차트 - medicineCost > 0 조건 제거)
-            const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
-            const purSums = new Array(months.length).fill(0);
-            const headSums = new Array(months.length).fill(0);
+            const isoStartVal = toIsoMonthStr(selectedStartYM);
+            const isoEndVal = toIsoMonthStr(selectedEndYM);
 
+            let startSliceIdx = allIsoMonths.findIndex(m => m === isoStartVal);
+            let endSliceIdx = allIsoMonths.findIndex(m => m === isoEndVal);
+
+            if (startSliceIdx === -1) startSliceIdx = 0;
+            if (endSliceIdx === -1 || endSliceIdx < startSliceIdx) endSliceIdx = getRealValidMaxMonthIdx();
+
+            // 🎯 2. 농가별 선택 기간 수치 실시간 재산출
             filteredData.forEach(d => {
-                 d.costTrendVals.slice(0, lastValidTrendIdx + 1).forEach((v, idx) => {
-                    const head = d.headcountVals[idx] || 0;
-                    // 단가가 존재하고 두수가 존재하는 경우 전체 매입액/두수에 누적
-                    if (head > 0) {
-                        purSums[idx] += (v * head); // 단가 × 두수 = 매입액
-                        headSums[idx] += head;
-                   }
-                 });
-             });
+                let pPeriodSum = 0;
+                let hPeriodSum = 0;
 
+                for (let i = startSliceIdx; i <= endSliceIdx; i++) {
+                    pPeriodSum += (d.purchaseVals[i] || 0);
+                    hPeriodSum += (d.headcountVals[i] || 0);
+                }
+
+                d.periodHeadcountTotal = hPeriodSum;
+                d.periodPurchaseTotal = pPeriodSum;
+
+                // 선택 기간 입식두당 약품비 (가중평균)
+                d.medicineCost = hPeriodSum > 0 ? Math.round(pPeriodSum / hPeriodSum) : 0;
+
+                // 선택 기간 출하두당 약품비
+                const rearingRate = d.avgRearingRate > 1.0 ? (d.avgRearingRate / 100) : (d.avgRearingRate || 0.935);
+                d.shipmentCost = (d.medicineCost > 0 && rearingRate > 0) ? Math.round(d.medicineCost / rearingRate) : 0;
+
+                // 선택 기간 등급 및 목표대비 재산출
+                d.gradeCategory = calculateGrade(d.medicineCost, pPeriodSum, hPeriodSum);
+                d.vsMedian = d.medicineCost > 0 ? (d.medicineCost - 4700) : 0;
+            });
+
+            // 🎯 3. 상단 대시보드 요약 KPI 수치 실시간 업데이트
+            const periodFarmsWithHead = filteredData.filter(d => d.periodHeadcountTotal > 0);
+            currentKPIs.totalHead = filteredData.reduce((sum, d) => sum + (d.periodHeadcountTotal || 0), 0);
+            currentKPIs.totalPur = filteredData.reduce((sum, d) => sum + (d.periodPurchaseTotal || 0), 0);
+            currentKPIs.avgCost = currentKPIs.totalHead > 0 ? Math.round(currentKPIs.totalPur / currentKPIs.totalHead) : 0;
+
+// 🎯 4. 입식두당 약품비 추이 차트 (엑셀 수식과 100% 일치하는 6개월 누계 이동 가중평균)
+            const maxValidIdx = getRealValidMaxMonthIdx();
+            const totalMonths = maxValidIdx + 1;
+            const monthlyPurSums = new Array(totalMonths).fill(0);
+            const monthlyHeadSums = new Array(totalMonths).fill(0);
+
+            // 선택된 농가(filteredData)의 실제 월별 매입액(purchaseVals)과 입식두수(headcountVals) 누적
+            filteredData.forEach(d => {
+                for (let i = 0; i < totalMonths; i++) {
+                    monthlyPurSums[i] += (d.purchaseVals[i] || 0);
+                    monthlyHeadSums[i] += (d.headcountVals[i] || 0);
+                }
+            });
+
+            // 각 월 기준 최근 6개월(max(0, i-5) ~ i)의 (누적 매입액 ÷ 누적 두수) 가중평균 계산
+            const fullTrendData = monthlyPurSums.map((_, i) => {
+                const startIdx = Math.max(0, i - 5);
+                let windowPurSum = 0;
+                let windowHeadSum = 0;
+                for (let j = startIdx; j <= i; j++) {
+                    windowPurSum += monthlyPurSums[j];
+                    windowHeadSum += monthlyHeadSums[j];
+                }
+                return windowHeadSum > 0 ? Math.round(windowPurSum / windowHeadSum) : 0;
+            });
+
+            // 한마을BU 전체 상태일 경우 엑셀 상단 BU 요약행 수치를 우선 적용하며, 필터 선택 시 실시간 연산값 적용
             if (activeDept === 'ALL' && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0 && !search && !region && !size && !rearingGrade && !costGrade) {
-                  currentKPIs.trendData = buSummaryData.costTrendVals.slice(0, lastValidTrendIdx + 1);
+                currentKPIs.trendData = buSummaryData.costTrendVals.slice(startSliceIdx, endSliceIdx + 1);
             } else {
-                  currentKPIs.trendData = purSums.map((pur, i) => headSums[i] ? Math.round(pur / headSums[i]) : 0);
+                currentKPIs.trendData = fullTrendData.slice(startSliceIdx, endSliceIdx + 1);
             }
 
-            // 🎯 4번: 약품 종류별 점유 비중 (전체 filteredData 기준 매입액 가중평균)
+            currentKPIs.displayMonths = allMonths.slice(startSliceIdx, endSliceIdx + 1);
+
+             // 🎯 4번: 약품 종류별 점유 비중 (전체 filteredData 기준 매입액 가중평균)
             let vSum = 0, aSum = 0, tSum = 0, nSum = 0, oSum = 0;
             let totalPurSum = 0;
 
@@ -3062,7 +3345,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             }
         }
 
-        function updateKPIs() {
+function updateKPIs() {
             const searchVal = document.getElementById('search-input')?.value.trim();
             const regionVal = document.getElementById('filter-region')?.value;
             const sizeVal = document.getElementById('filter-size')?.value;
@@ -3072,15 +3355,44 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             const isAllDeptAndNoSubFilter = (activeDept === 'ALL') && !searchVal && !regionVal && !sizeVal && !rearingGradeVal && !costGradeVal;
 
             let displayFarmsCount = filteredData.length;
-            let displayAvgCost = currentKPIs.avgCost;
             let displayTotalHead = currentKPIs.totalHead;
             let displayTotalPur = currentKPIs.totalPur;
+            let displayAvgCost = currentKPIs.avgCost;
 
-            if (isAllDeptAndNoSubFilter && buSummaryData.medicineCost > 0) {
-                displayFarmsCount = buSummaryData.farmCount || 97;
-                displayAvgCost = buSummaryData.medicineCost;
-                if (buSummaryData.totalHead > 0) displayTotalHead = buSummaryData.totalHead;
-                if (buSummaryData.totalPurchase > 0) displayTotalPur = buSummaryData.totalPurchase;
+            // 💡 [보안 및 수치 완벽 해결] 한마을BU 선택 상태인 경우 유저 권한/소속과 상관없이 백엔드 BU 전체 요약행 데이터로 기간 연산
+            if (isAllDeptAndNoSubFilter) {
+                if (activePeriodMode === 'all' && buSummaryData.medicineCost > 0) {
+                    displayFarmsCount = buSummaryData.farmCount || 97;
+                    displayAvgCost = buSummaryData.medicineCost;
+                    if (buSummaryData.totalHead > 0) displayTotalHead = buSummaryData.totalHead;
+                    if (buSummaryData.totalPurchase > 0) displayTotalPur = buSummaryData.totalPurchase;
+                } else if (mappings && mappings.costTrend && mappings.costTrend.length > 0) {
+                    const allIsoMonths = mappings.costTrend.map(m => toIsoMonthStr(m.month));
+                    const isoStartVal = toIsoMonthStr(selectedStartYM);
+                    const isoEndVal = toIsoMonthStr(selectedEndYM);
+
+                    let startIdx = allIsoMonths.findIndex(m => m === isoStartVal);
+                    let endIdx = allIsoMonths.findIndex(m => m === isoEndVal);
+                    if (startIdx === -1) startIdx = 0;
+                    if (endIdx === -1 || endIdx < startIdx) endIdx = getRealValidMaxMonthIdx();
+
+                    let buPeriodHead = 0;
+                    let buPeriodPur = 0;
+
+                    if (buSummaryData.purchaseVals && buSummaryData.headcountVals && buSummaryData.purchaseVals.length > 0) {
+                        for (let i = startIdx; i <= endIdx; i++) {
+                            buPeriodPur += (buSummaryData.purchaseVals[i] || 0);
+                            buPeriodHead += (buSummaryData.headcountVals[i] || 0);
+                        }
+                    }
+
+                    displayFarmsCount = buSummaryData.farmCount || 97;
+                    if (buPeriodHead > 0) {
+                        displayTotalHead = buPeriodHead;
+                        displayTotalPur = buPeriodPur;
+                        displayAvgCost = Math.round(buPeriodPur / buPeriodHead);
+                    }
+                }
             }
 
             if (document.getElementById('kpi-total-farms')) document.getElementById('kpi-total-farms').innerText = displayFarmsCount + ' 개소';
@@ -3171,7 +3483,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
         function showSelectedRatioAndDetails(item) {
             const card = document.getElementById('inline-detail-section');
-            if (!card) return;
+            if (!card || !item) return;
             
             currentSelectedFarmCode = item.farmCode;
             card.classList.remove('hidden');
@@ -3181,6 +3493,19 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             }
             document.getElementById('selected-farm-badge').textContent = `코드: ${item.farmCode} | 담당: ${item.manager} (${item.dept})`;
 
+            // 🎯 1. 현재 선택된 기간 필터 구간(Start ~ End) 인덱스 계산
+            const allIsoMonths = mappings.costTrend.map(m => toIsoMonthStr(m.month));
+            const isoStartVal = toIsoMonthStr(selectedStartYM);
+            const isoEndVal = toIsoMonthStr(selectedEndYM);
+
+            let startIdx = allIsoMonths.findIndex(m => m === isoStartVal);
+            let endIdx = allIsoMonths.findIndex(m => m === isoEndVal);
+            if (startIdx === -1) startIdx = 0;
+            if (endIdx === -1 || endIdx < startIdx) endIdx = getRealValidMaxMonthIdx();
+
+            const displayMonths = mappings.costTrend.map(m => m.month).slice(startIdx, endIdx + 1);
+
+            // 🎯 2. 선택 기간 내 약품 성분비 연산
             let rawVals = item.ratios.map(v => v <= 1.0 ? v * 100 : v);
             const sum = rawVals.reduce((a, b) => a + b, 0) || 1;
             const normVals = rawVals.map(v => (v / sum) * 100);
@@ -3226,8 +3551,20 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             });
             document.getElementById('sel-ratio-bars').innerHTML = barsHtml;
 
-            let ratioVal = cleanNum(item.supportMedRatio);
-            if (ratioVal > 0 && ratioVal <= 1.0) ratioVal = ratioVal * 100;
+            // 🎯 3. 선택 기간 내 실제 매입액 및 지원금 합산 연산
+            let periodPurSum = 0;
+            let periodSupSum = 0;
+            let periodHeadSum = 0;
+
+            if (item.purchaseVals && item.supportMedVals && item.headcountVals) {
+                for (let i = startIdx; i <= endIdx; i++) {
+                    periodPurSum += (item.purchaseVals[i] || 0);
+                    periodSupSum += (item.supportMedVals[i] || 0);
+                    periodHeadSum += (item.headcountVals[i] || 0);
+                }
+            }
+
+            let ratioVal = periodPurSum > 0 ? (periodSupSum / periodPurSum) * 100 : 0;
             let selfPaidVal = Math.max(0, 100 - ratioVal);
 
             if (activeCharts['supportRatioPie']) {
@@ -3252,65 +3589,73 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             document.getElementById('support-ratio-stats').innerHTML = `
                 <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm text-center">
-                    <p class="text-xs font-semibold text-slate-500 uppercase">지원 약품 비율</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase">선택 기간 지원 약품 비율</p>
                     <h3 class="text-3xl font-black text-sunjin-red mt-1">${ratioVal.toFixed(1)}%</h3>
                     <div class="mt-4 space-y-2 text-left">
-                        <div class="flex justify-between text-xs font-bold"><span class="text-slate-600">총 지원 매입액</span><span class="text-slate-900">${formatWon(item.supportMedTotal)}</span></div>
-                        <div class="flex justify-between text-xs font-bold border-t border-slate-100 pt-2"><span class="text-slate-600">총 약품 매입액</span><span class="text-slate-900">${formatWon(item.purchaseTotal)}</span></div>
+                        <div class="flex justify-between text-xs font-bold"><span class="text-slate-600">선택기간 지원 매입액</span><span class="text-slate-900">${formatWon(periodSupSum)}</span></div>
+                        <div class="flex justify-between text-xs font-bold border-t border-slate-100 pt-2"><span class="text-slate-600">선택기간 약품 매입액</span><span class="text-slate-900">${formatWon(periodPurSum)}</span></div>
                     </div>
                 </div>`;
 
-            if (document.getElementById('dt-total-cost')) document.getElementById('dt-total-cost').textContent = `평균: ${formatWon(item.medicineCost)}`;
-            if (document.getElementById('dt-total-head')) document.getElementById('dt-total-head').textContent = `누계: ${item.headcountTotal.toLocaleString()} 두`;
-            if (document.getElementById('dt-total-pur')) document.getElementById('dt-total-pur').textContent = `누계: ${formatWon(item.purchaseTotal)}`;
-            if (document.getElementById('dt-total-sup')) document.getElementById('dt-total-sup').textContent = `누계: ${formatWon(item.supportMedTotal)}`;
+            // 🎯 4. 선택 기간 슬라이싱 배열 생성
+            const periodCostVals = item.costTrendVals ? item.costTrendVals.slice(startIdx, endIdx + 1) : [];
+            const periodHeadVals = item.headcountVals ? item.headcountVals.slice(startIdx, endIdx + 1) : [];
+            const periodPurVals = item.purchaseVals ? item.purchaseVals.slice(startIdx, endIdx + 1) : [];
+            const periodSupVals = item.supportMedVals ? item.supportMedVals.slice(startIdx, endIdx + 1) : [];
+            const periodInflowVals = item.supportInflowVals ? item.supportInflowVals.slice(startIdx, endIdx + 1) : [];
 
-            drawTimelineChart('chart-dt-cost', mappings.costTrend.map(m=>m.month).slice(0, lastValidTrendIdx + 1), item.costTrendVals.slice(0, lastValidTrendIdx + 1), '#f59e0b', ' 원');
-            drawTimelineChart('chart-dt-head', mappings.headcount.map(m=>m.month).slice(0, lastValidHeadcountIdx + 1), item.headcountVals.slice(0, lastValidHeadcountIdx + 1), '#3b82f6', ' 두');
-            drawTimelineChart('chart-dt-pur', mappings.purchase.map(m=>m.month).slice(0, lastValidPurchaseIdx + 1), item.purchaseVals.slice(0, lastValidPurchaseIdx + 1), '#10b981', ' 원');
-            drawTimelineChart('chart-dt-sup', mappings.supportMed.map(m=>m.month).slice(0, lastValidSupportMedIdx + 1), item.supportMedVals.slice(0, lastValidSupportMedIdx + 1), '#8b5cf6', ' 원');
+            let periodAvgCost = periodHeadSum > 0 ? Math.round(periodPurSum / periodHeadSum) : (item.medicineCost || 0);
 
-            const slicedTrendMonths = mappings.costTrend.slice(0, lastValidTrendIdx + 1);
+            if (document.getElementById('dt-total-cost')) document.getElementById('dt-total-cost').textContent = `선택기간 평균: ${formatWon(periodAvgCost)}`;
+            if (document.getElementById('dt-total-head')) document.getElementById('dt-total-head').textContent = `선택기간 누계: ${periodHeadSum.toLocaleString()} 두`;
+            if (document.getElementById('dt-total-pur')) document.getElementById('dt-total-pur').textContent = `선택기간 누계: ${formatWon(periodPurSum)}`;
+            if (document.getElementById('dt-total-sup')) document.getElementById('dt-total-sup').textContent = `선택기간 누계: ${formatWon(periodSupSum)}`;
+
+            // 🎯 5. 선택 기간에 맞춰 차트 4종 및 하단 테이블 업데이트
+            drawTimelineChart('chart-dt-cost', displayMonths, periodCostVals, '#f59e0b', ' 원');
+            drawTimelineChart('chart-dt-head', displayMonths, periodHeadVals, '#3b82f6', ' 두');
+            drawTimelineChart('chart-dt-pur', displayMonths, periodPurVals, '#10b981', ' 원');
+            drawTimelineChart('chart-dt-sup', displayMonths, periodSupVals, '#8b5cf6', ' 원');
+
             const theadGroupA = document.getElementById('thead-group-a');
             const tbodyGroupA = document.getElementById('tbody-group-a');
 
             if(theadGroupA && tbodyGroupA) {
                 let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                slicedTrendMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
                 theadGroupA.innerHTML = headerHtml;
 
                 tbodyGroupA.innerHTML = `
                     <tr class="hover:bg-slate-50 border-b border-slate-150">
                         <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
-                        ${item.costTrendVals.slice(0, lastValidTrendIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
+                        ${periodCostVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
                     </tr>
                     <tr class="hover:bg-slate-50">
                         <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
-                        ${item.supportMedVals.slice(0, lastValidSupportMedIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                        ${periodSupVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
                     </tr>`;
             }
 
-            const slicedHeadcountMonths = mappings.headcount.slice(0, lastValidHeadcountIdx + 1);
             const theadGroupB = document.getElementById('thead-group-b');
             const tbodyGroupB = document.getElementById('tbody-group-b');
 
             if(theadGroupB && tbodyGroupB) {
                 let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                slicedHeadcountMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m.month}</th>`; });
+                displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
                 theadGroupB.innerHTML = headerHtml;
 
                 tbodyGroupB.innerHTML = `
                     <tr class="hover:bg-slate-50 border-b border-slate-150">
                         <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
-                        ${item.headcountVals.slice(0, lastValidHeadcountIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
+                        ${periodHeadVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
                     </tr>
                     <tr class="hover:bg-slate-50 border-b border-slate-150">
                         <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
-                        ${item.purchaseVals.slice(0, lastValidPurchaseIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                        ${periodPurVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
                     </tr>
                     <tr class="hover:bg-slate-50">
                         <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
-                        ${item.supportInflowVals.slice(0, lastValidSupportInflowIdx + 1).map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                        ${periodInflowVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
                     </tr>`;
             }
 
@@ -3339,9 +3684,10 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 .catch(() => {});
         }
 
-        function renderCharts() {
+function renderCharts() {
             if (filteredData.length === 0) return;
 
+            // 🎯 1. 농가 등급별 점유율 (도넛 차트)
             const gCounts = { A: 0, B: 0, C: 0, D: 0, D2: 0 };
             filteredData.forEach(d => { if (gCounts[d.gradeCategory] !== undefined) gCounts[d.gradeCategory]++; });
 
@@ -3368,20 +3714,45 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 });
             }
 
-            const months = mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
+// 🎯 2. 입식두당 약품비 추이 차트 (동적 Y축 Min/Max 계산 적용)
+            const displayMonths = currentKPIs.displayMonths && currentKPIs.displayMonths.length > 0 
+                ? currentKPIs.displayMonths 
+                : mappings.costTrend.map(m => m.month).slice(0, lastValidTrendIdx + 1);
+
+            const trendDataClean = currentKPIs.trendData.map(v => Math.round(cleanNum(v)));
+            const validTrendVals = trendDataClean.filter(v => v > 0);
+
+            // 데이터 기반 동적 Min / Max 계산 (-1000원 내림, +1000원 올림)
+            let yMin = 0;
+            let yMax = 7000;
+
+            if (validTrendVals.length > 0) {
+                const rawMin = Math.min(...validTrendVals);
+                const rawMax = Math.max(...validTrendVals);
+
+                // 최소값: -1000원 후 1,000원 단위 내림 (0원 미만 방지)
+                yMin = Math.max(0, Math.floor((rawMin - 1000) / 1000) * 1000);
+                // 최대값: +1000원 후 1,000원 단위 올림
+                yMax = Math.ceil((rawMax + 1000) / 1000) * 1000;
+            }
 
             if (activeCharts['compare']) {
-                activeCharts['compare'].data.labels = months;
-                activeCharts['compare'].data.datasets[0].data = currentKPIs.trendData.map(v => Math.round(cleanNum(v)));
+                activeCharts['compare'].data.labels = displayMonths;
+                activeCharts['compare'].data.datasets[0].data = trendDataClean;
+                
+                // Y축 범위 동적 업데이트
+                activeCharts['compare'].options.scales.y.min = yMin;
+                activeCharts['compare'].options.scales.y.max = yMax;
+                
                 activeCharts['compare'].update();
             } else {
                 activeCharts['compare'] = new Chart(document.getElementById('chart-monthly-trend'), {
                     type: 'line',
                     data: {
-                        labels: months,
+                        labels: displayMonths,
                         datasets: [{
                             label: '평균 입식두당 약품비', 
-                            data: currentKPIs.trendData.map(v => Math.round(cleanNum(v))),
+                            data: trendDataClean,
                             borderColor: '#F51932', backgroundColor: 'rgba(245, 25, 50, 0.05)',
                             fill: true, tension: 0.25, borderWidth: 3, pointBackgroundColor: '#F51932'
                         }]
@@ -3390,13 +3761,19 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                         responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false }, datalabels: { display: false } },
                         scales: { 
-                            y: { min: 2000, grace: '15%', ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 9, weight: 'bold' } } },
+                            y: { 
+                                min: yMin,
+                                max: yMax,
+                                grace: '5%', 
+                                ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 9, weight: 'bold' } } 
+                            },
                             x: { ticks: { font: { size: 7.5, weight: 'bold' } } }
                         }
                     }
                 });
             }
 
+            // 🎯 3. 지역별 평균 두당 약품비 차트 (선택 기간 누계 매입액/입식두수 동적 계산)
             let chartLabels = [];
             let chartAvgs = [];
 
@@ -3406,10 +3783,9 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 
                 regions.forEach(reg => {
                     chartLabels.push(reg);
-                    // 🎯 특정 사업부 선택 시: 지역 내 전체 농가의 (총 매입액 / 총 입식두수)
                     const rFarms = deptFarms.filter(d => d.region === reg);
-                    const rTotalPur = rFarms.reduce((s, f) => s + (f.purchaseTotal || 0), 0);
-                    const rTotalHead = rFarms.reduce((s, f) => s + (f.headcountTotal || 0), 0);
+                    const rTotalPur = rFarms.reduce((s, f) => s + (f.periodPurchaseTotal !== undefined ? f.periodPurchaseTotal : (f.purchaseTotal || 0)), 0);
+                    const rTotalHead = rFarms.reduce((s, f) => s + (f.periodHeadcountTotal !== undefined ? f.periodHeadcountTotal : (f.headcountTotal || 0)), 0);
                     const val = rTotalHead > 0 ? (rTotalPur / rTotalHead) : 0;
                     chartAvgs.push(Math.round(val));
                 });
@@ -3417,10 +3793,9 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 const depts = [...new Set(filteredData.map(d => d.dept))].filter(Boolean).sort();
                 depts.forEach(dept => {
                     chartLabels.push(dept);
-                    // 🎯 한마을BU 전체 선택 시: 사업부 내 전체 농가의 (총 매입액 / 총 입식두수)
                     const farms = filteredData.filter(d => d.dept === dept);
-                    const deptTotalPur = farms.reduce((s, f) => s + (f.purchaseTotal || 0), 0);
-                    const deptTotalHead = farms.reduce((s, f) => s + (f.headcountTotal || 0), 0);
+                    const deptTotalPur = farms.reduce((s, f) => s + (f.periodPurchaseTotal !== undefined ? f.periodPurchaseTotal : (f.purchaseTotal || 0)), 0);
+                    const deptTotalHead = farms.reduce((s, f) => s + (f.periodHeadcountTotal !== undefined ? f.periodHeadcountTotal : (f.headcountTotal || 0)), 0);
                     const val = deptTotalHead > 0 ? (deptTotalPur / deptTotalHead) : 0;
                     chartAvgs.push(Math.round(val));
                 });
@@ -3448,6 +3823,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 });
             }
 
+            // 🎯 4. 약품 종류별 평균 점유 비중 차트 & 우측 범주(Legend) 동적 연동
             let rawAvgs = currentKPIs.ratios.map(v => v <= 1.0 ? v * 100 : v);
             const totalSum = rawAvgs.reduce((a, b) => a + b, 0) || 1;
             const normAvgs = rawAvgs.map(v => (v / totalSum) * 100);
@@ -3469,6 +3845,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 });
             }
 
+            // 우측 텍스트 범주 목록 실시간 업데이트
             let oBarsHtml = '';
             normAvgs.forEach((v, idx) => {
                 oBarsHtml += `
@@ -3482,7 +3859,8 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                         </div>
                     </div>`;
             });
-            document.getElementById('legend-overall-ratios').innerHTML = oBarsHtml;
+            const legendEl = document.getElementById('legend-overall-ratios');
+            if (legendEl) legendEl.innerHTML = oBarsHtml;
         }
 
         function renderAdvancedAnalysisCharts() {
