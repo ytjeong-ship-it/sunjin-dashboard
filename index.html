@@ -560,7 +560,7 @@ html {
 
                 <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between hover:shadow-md transition duration-300">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">총 매입 누계액</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">총 약품 매입 누계액</p>
                         <h3 id="kpi-total-purchase" class="text-xl sm:text-2xl font-black text-slate-800 mt-1">-</h3>
                     </div>
                     <div class="bg-slate-100 text-slate-700 p-2.5 rounded-xl"><i data-lucide="wallet" class="w-5 h-5"></i></div>
@@ -772,14 +772,44 @@ html {
                     </div>
 
                     <div>
-                        <div class="mb-4">
-                            <h4 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
-                                <span class="w-2.5 h-2.5 bg-sunjin-red rounded-full"></span>
-                                상세 연동 타임라인 분석 및 트렌드 차트
-                            </h4>
-                            <p class="text-[11px] text-slate-400 mt-1">입식두당 약품비 추세, 입식두수, 약품매입액, 입식지원액, 지원약품매입액</p>
+                        <!-- 💡 [수평 레이아웃 적용] 제목(좌) + 상황판 3종(우, 순서 변경 반영) 수평 배치 -->
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+                            <!-- 좌측 타이틀 -->
+                            <div class="shrink-0">
+                                <h4 class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 bg-sunjin-red rounded-full"></span>
+                                    상세 연동 타임라인 분석 및 트렌드 차트
+                                </h4>
+                                <p class="text-[11px] text-slate-400 mt-1">입식두당 약품비 추세, 입식두수, 약품매입액, 지원약품매입액 선택 기간 현황입니다.</p>
+                            </div>
+
+                            <!-- 우측 핵심 KPI 상황판 3종 (두당 약품비 -> 총 입식두수 -> 총 약품 매입액) -->
+                            <div class="flex flex-wrap items-center gap-2.5 flex-1 max-w-2xl justify-end">
+                                <div class="bg-rose-50/80 px-3.5 py-2 rounded-xl border border-rose-100/90 flex items-center justify-between shadow-xs flex-1 min-w-[150px]">
+                                    <div>
+                                        <p class="text-[9px] font-bold text-rose-700 uppercase tracking-wider">평균 입식 두당 약품비</p>
+                                        <h4 id="detail-kpi-cost" class="text-sm font-black text-rose-900 mt-0.5">- 원</h4>
+                                    </div>
+                                    <div class="p-1.5 bg-rose-100 text-rose-700 rounded-lg"><i data-lucide="pill" class="w-4 h-4"></i></div>
+                                </div>
+                                <div class="bg-blue-50/80 px-3.5 py-2 rounded-xl border border-blue-100/90 flex items-center justify-between shadow-xs flex-1 min-w-[150px]">
+                                    <div>
+                                        <p class="text-[9px] font-bold text-blue-700 uppercase tracking-wider">총 입식 두수 누계</p>
+                                        <h4 id="detail-kpi-head" class="text-sm font-black text-blue-900 mt-0.5">- 두</h4>
+                                    </div>
+                                    <div class="p-1.5 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="database" class="w-4 h-4"></i></div>
+                                </div>
+                                <div class="bg-emerald-50/80 px-3.5 py-2 rounded-xl border border-emerald-100/90 flex items-center justify-between shadow-xs flex-1 min-w-[150px]">
+                                    <div>
+                                        <p class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider">총 약품 매입 누계액</p>
+                                        <h4 id="detail-kpi-pur" class="text-sm font-black text-emerald-900 mt-0.5">- 원</h4>
+                                    </div>
+                                    <div class="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg"><i data-lucide="wallet" class="w-4 h-4"></i></div>
+                                </div>
+                            </div>
                         </div>
 
+                        <!-- 4종 트렌드 차트 -->
                         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6 print-col-2">
                             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
                                 <h5 class="text-[11px] font-extrabold text-amber-700 flex items-center justify-between">
@@ -812,11 +842,12 @@ html {
                             </div>
                         </div>
 
+                        <!-- 2종 상세 타임라인 데이터 표 (중복 텍스트 바 제거 반영) -->
                         <div class="space-y-4">
                             <div class="border border-slate-300 rounded-2xl overflow-hidden bg-slate-50 shadow-sm">
                                 <div class="p-3 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
                                     <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                        <span class="w-1.5 h-1.5 bg-sunjin-red rounded-full"></span>입식두당 약품비 추이 및 지원 약품 매입
+                                        <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>지원 약품 매입액 및 입식지원 매입액
                                     </span>
                                 </div>
                                 <div class="overflow-x-auto w-full">
@@ -830,7 +861,7 @@ html {
                             <div class="border border-slate-300 rounded-2xl overflow-hidden bg-slate-50 shadow-sm">
                                 <div class="p-3 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
                                     <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>입식두수 및 약품/입식지원액
+                                        <span class="w-1.5 h-1.5 bg-sunjin-red rounded-full"></span>입식두수 및 약품 매입액 / 입식두당 약품비 추이
                                     </span>
                                 </div>
                                 <div class="overflow-x-auto w-full">
@@ -3362,6 +3393,15 @@ detectLastValidMonths();
             renderTable();
             renderCharts();
 
+            // 🎯 [핵심 추가] 상세 카드가 열려있는 상태에서 기간 필터 조작 시 실시간 수치 갱신
+            const detailCard = document.getElementById('inline-detail-section');
+            if (detailCard && !detailCard.classList.contains('hidden') && currentSelectedFarmCode) {
+                const activeFarm = parsedData.find(f => String(f.farmCode).trim().toLowerCase() === String(currentSelectedFarmCode).trim().toLowerCase());
+                if (activeFarm) {
+                    showSelectedRatioAndDetails(activeFarm);
+                }
+            }
+
             if (currentMainTab === 'chart') {
                 renderAdvancedAnalysisCharts();
             }
@@ -3627,6 +3667,11 @@ function updateKPIs() {
             const periodInflowVals = item.supportInflowVals ? item.supportInflowVals.slice(startIdx, endIdx + 1) : [];
 
             let periodAvgCost = periodHeadSum > 0 ? Math.round(periodPurSum / periodHeadSum) : (item.medicineCost || 0);
+            
+            // 🎯 [신설] 선택 농가의 선택 기간 핵심 KPI 카드 실시간 수치 바인딩
+            if (document.getElementById('detail-kpi-head')) document.getElementById('detail-kpi-head').textContent = periodHeadSum.toLocaleString() + ' 두';
+            if (document.getElementById('detail-kpi-pur')) document.getElementById('detail-kpi-pur').textContent = formatWon(periodPurSum);
+            if (document.getElementById('detail-kpi-cost')) document.getElementById('detail-kpi-cost').textContent = formatWon(periodAvgCost);
 
             if (document.getElementById('dt-total-cost')) document.getElementById('dt-total-cost').textContent = `선택기간 평균: ${formatWon(periodAvgCost)}`;
             if (document.getElementById('dt-total-head')) document.getElementById('dt-total-head').textContent = `선택기간 누계: ${periodHeadSum.toLocaleString()} 두`;
@@ -3639,6 +3684,7 @@ function updateKPIs() {
             drawTimelineChart('chart-dt-pur', displayMonths, periodPurVals, '#10b981', ' 원');
             drawTimelineChart('chart-dt-sup', displayMonths, periodSupVals, '#8b5cf6', ' 원');
 
+            // 🎯 상단 표: 지원 약품 매입액 + 입식지원 매입액
             const theadGroupA = document.getElementById('thead-group-a');
             const tbodyGroupA = document.getElementById('tbody-group-a');
 
@@ -3649,15 +3695,16 @@ function updateKPIs() {
 
                 tbodyGroupA.innerHTML = `
                     <tr class="hover:bg-slate-50 border-b border-slate-150">
-                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
-                        ${periodCostVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
-                    </tr>
-                    <tr class="hover:bg-slate-50">
                         <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
                         ${periodSupVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
+                        ${periodInflowVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
                     </tr>`;
             }
 
+            // 🎯 하단 표: 입식두수 + 약품 매입액 + 입식두당 약품비 추이
             const theadGroupB = document.getElementById('thead-group-b');
             const tbodyGroupB = document.getElementById('tbody-group-b');
 
@@ -3676,8 +3723,8 @@ function updateKPIs() {
                         ${periodPurVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
                     </tr>
                     <tr class="hover:bg-slate-50">
-                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
-                        ${periodInflowVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
+                        ${periodCostVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
                     </tr>`;
             }
 
