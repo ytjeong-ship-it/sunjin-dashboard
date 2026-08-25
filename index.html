@@ -2527,7 +2527,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
                 r["사료요구율"] = parseSettlementNum(getVal("사료요구율"));
                 r["출하 두당 사육비"] = parseSettlementCost(getVal("출하 두당 사육비") || getVal("출하두당사육비"));
                 r["전입평체"] = parseSettlementNum(getVal("전입평체"));
-                r["사육일수"] = parseSettlementNum(getVal("사육일수"));
+                r["사육일수"] = parseSettlementNum(getVal("평균사육일수") || getVal("평균 사육일수") || getVal("사육일수"));
             });
 
             generateSettlementFarmStats();
@@ -4852,7 +4852,7 @@ function fetchSettlementData() {
                 r["사료요구율"] = parseSettlementNum(getVal("사료요구율"));
                 r["출하 두당 사육비"] = parseSettlementCost(getVal("출하 두당 사육비") || getVal("출하두당사육비"));
                 r["전입평체"] = parseSettlementNum(getVal("전입평체"));
-                r["사육일수"] = parseSettlementNum(getVal("사육일수"));
+                r["사육일수"] = parseSettlementNum(getVal("평균사육일수") || getVal("평균 사육일수") || getVal("사육일수"));
             });
 
             generateSettlementFarmStats();
