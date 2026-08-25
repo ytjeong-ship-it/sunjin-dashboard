@@ -5349,9 +5349,23 @@ function renderScatterChart(targetYear, targetSelectedRow) {
         const yVal = parseSettlementCost(r["출하 두당 사육비"]);
         const farmName = r["농장명"];
         const ym = `${r["출하 년도"]}.${r["출하 월"]}월`;
+        const rYear = r["출하 년도"];
+        const rMonth = r["출하 월"];
 
         if (xVal > 0 && yVal > 0) {
-            const pt = { x: xVal, y: yVal, farm: farmName, date: ym };
+            // 동일 월 내에서 해당 정산건의 회차(batchIdx) 파악
+            const monthMatches = settlementFarmStats[farmName] ? settlementFarmStats[farmName].rows.filter(m => m["출하 년도"] === rYear && m["출하 월"] === rMonth) : [];
+            const bIdx = monthMatches.findIndex(m => m._origIndex === r._origIndex);
+
+            const pt = { 
+                x: xVal, 
+                y: yVal, 
+                farm: farmName, 
+                date: ym,
+                year: rYear,
+                month: rMonth,
+                batchIdx: bIdx >= 0 ? bIdx : 0
+            };
 
             if (targetSelectedRow && r._origIndex === targetSelectedRow._origIndex) {
                 pointsSelected.push(pt);
@@ -5373,7 +5387,7 @@ function renderScatterChart(targetYear, targetSelectedRow) {
                     label: `${dept} 타 농가`,
                     data: pointsOther,
                     backgroundColor: 'rgba(193, 199, 208, 0.4)', 
-                    borderColor: 'rgba(255, 255, 255, 0.6)',     // 🎯 배경 점은 테두리를 얇고 은은하게 설정
+                    borderColor: 'rgba(255, 255, 255, 0.6)',
                     borderWidth: 0.8,
                     pointRadius: 4.5,
                     pointHoverRadius: 7
@@ -5382,7 +5396,7 @@ function renderScatterChart(targetYear, targetSelectedRow) {
                     label: selectedCompareFarm ? `비교군: ${selectedCompareFarm}` : `비교군 농가`,
                     data: pointsCompare,
                     backgroundColor: 'rgba(54, 179, 126, 0.85)',  
-                    borderColor: '#ffffff',                       // 🎯 강조점만 또렷한 흰색 테두리
+                    borderColor: '#ffffff',
                     borderWidth: 1.8,
                     pointRadius: 8,
                     pointHoverRadius: 11
@@ -5391,7 +5405,7 @@ function renderScatterChart(targetYear, targetSelectedRow) {
                     label: `${selectedFarm} 타 정산`,
                     data: pointsFarmOther,
                     backgroundColor: 'rgba(255, 152, 0, 0.85)',   
-                    borderColor: '#ffffff',                       // 🎯 강조점 선명 테두리
+                    borderColor: '#ffffff',
                     borderWidth: 1.8,
                     pointRadius: 8,
                     pointHoverRadius: 11
@@ -5400,7 +5414,7 @@ function renderScatterChart(targetYear, targetSelectedRow) {
                     label: `선택 정산건`,
                     data: pointsSelected,
                     backgroundColor: 'rgba(255, 23, 68, 1.0)',   
-                    borderColor: '#ffffff',                       // 🎯 주인공 점 입체 테두리
+                    borderColor: '#ffffff',
                     borderWidth: 2.2,
                     pointRadius: 10.5,
                     pointHoverRadius: 14
@@ -5416,6 +5430,7 @@ function renderScatterChart(targetYear, targetSelectedRow) {
                     const firstElement = elements[0];
                     const clickedPt = scatterChartObj.data.datasets[firstElement.datasetIndex].data[firstElement.index];
 
+                    // 클릭 시 무조건 안내 박스 패널 출력
                     const matchedPoints = [];
                     scatterChartObj.data.datasets.forEach(ds => {
                         ds.data.forEach(pt => {
@@ -5424,7 +5439,6 @@ function renderScatterChart(targetYear, targetSelectedRow) {
                             }
                         });
                     });
-
                     applyMultiplePointsToPanel(matchedPoints, cfg);
                 }
             },
@@ -5519,7 +5533,7 @@ function applyMultiplePointsToPanel(pointsList, cfg) {
                 <span class="text-slate-700 font-bold me-2 text-[11px]">${cfg.label.split(' ')[0]}: ${pt.x}${cfg.unit}</span>
                 <span class="text-slate-900 font-extrabold text-[11px]">사육비: ${pt.y.toLocaleString()}원</span>
             </div>
-            <button onclick="navigateToSelectedFarm('${pt.farm}')" class="px-2 py-0.5 bg-sunjin-red hover:bg-red-700 text-white rounded text-[10px] font-bold shadow-sm transition-colors flex items-center shrink-0">
+            <button onclick="navigateToSelectedFarm('${pt.farm}', ${pt.year}, ${pt.month}, ${pt.batchIdx})" class="px-2 py-0.5 bg-sunjin-red hover:bg-red-700 text-white rounded text-[10px] font-bold shadow-sm transition-colors flex items-center shrink-0">
                 <i class="fa-solid fa-arrow-right-to-bracket me-1"></i>[농장 정보 보기]
             </button>
         </div>
@@ -5528,7 +5542,7 @@ function applyMultiplePointsToPanel(pointsList, cfg) {
     panel.classList.remove('hidden');
 }
 
-function navigateToSelectedFarm(farmName) {
+function navigateToSelectedFarm(farmName, year, month, batchIdx) {
     if (!farmName) return;
 
     const clickPanel = document.getElementById('scatter-click-panel');
@@ -5536,16 +5550,47 @@ function navigateToSelectedFarm(farmName) {
         clickPanel.classList.add('hidden');
     }
 
-    const selFarm = document.getElementById('sel-farm');
-    
+    // 부서 선택 변경 처리
     if (settlementFarmStats[farmName]) {
         const targetDept = settlementFarmStats[farmName].dept;
-        document.getElementById('sel-dept').value = targetDept;
-        filterFarmsByDept('diag');
+        const selDept = document.getElementById('sel-dept');
+        if (selDept) {
+            selDept.value = targetDept;
+            filterFarmsByDept('diag');
+        }
     }
 
-    selFarm.value = farmName;
+    // 농장 선택 변경
+    const selFarm = document.getElementById('sel-farm');
+    if (selFarm) {
+        selFarm.value = farmName;
+    }
+
+    // 🎯 해당 농장의 정보 로드
     onFarmChange();
+
+    // 🎯 전달받은 특정 연도, 월, 정산 회차로 상단 드롭다운 값 자동 지정 및 상황판 갱신
+    if (year && month !== undefined) {
+        const selYear = document.getElementById('sel-dash-year');
+        if (selYear) {
+            selYear.value = year;
+            onDashYearChange();
+        }
+
+        const selMonth = document.getElementById('sel-dash-month');
+        if (selMonth) {
+            selMonth.value = month;
+            onDashMonthChange();
+        }
+
+        const selBatch = document.getElementById('sel-dash-batch');
+        if (selBatch && batchIdx !== undefined) {
+            selBatch.value = batchIdx;
+        }
+
+        renderDashboardPanel();
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
