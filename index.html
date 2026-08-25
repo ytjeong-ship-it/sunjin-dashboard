@@ -670,8 +670,8 @@ html {
                                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>초기화
                             </button>
 
-                            <button onclick="openFarmSizeModal()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-xl font-extrabold transition flex items-center gap-1.5 cursor-pointer no-print shadow-sm ml-1">
-                                <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-emerald-600"></i>농장규모별 분석
+                            <button onclick="openFarmSizeModal()" class="px-3.5 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                                    📊 한마을BU 농장규모별 통계
                             </button>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
@@ -1060,7 +1060,9 @@ html {
                             <i data-lucide="pie-chart" class="w-6 h-6"></i>
                         </div>
                         <div>
-                            <h3 class="text-base font-black text-slate-800">농장규모별 통계 종합 분석 리포트</h3>
+                            <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <span>📊</span> 한마을BU 농장규모별 통계 종합 분석 리포트
+                            </h3>
                         </div>
                     </div>
                     <button onclick="closeFarmSizeModal()" class="text-slate-400 hover:text-slate-600 transition">
@@ -1589,7 +1591,7 @@ html {
             easing: 'easeOutQuart'
         };
 
-        const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbz1MVbZebgm9_w_0E27HBD7ZcvdukkL5d2vAf6kpPxQW4nv5ejHMT-Le0EPbaU6yNbM/exec";
+        const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyjSFdDoLjf4A_LpEYprWvCQ_g5tjBcHFUpyYj6aTExGao2KHFrTE8tED2JZNcMCNMN/exec";
         const AUTO_REFRESH_INTERVAL = 3600000;
 
 let pageLoginTime = null;
@@ -2280,45 +2282,48 @@ function switchMainTab(tab) {
 }
 
         function syncAndApplyFilters(type, value) {
-            const searchMain = document.getElementById('search-input');
-            const searchChart = document.getElementById('chart-search-input');
-            const deptMain = document.getElementById('filter-dept');
-            const deptChart = document.getElementById('chart-filter-dept');
-            const regionMain = document.getElementById('filter-region');
-            const regionChart = document.getElementById('chart-filter-region');
-            const sizeMain = document.getElementById('filter-size');
-            const sizeChart = document.getElementById('chart-filter-size');
-            const rearingGradeMain = document.getElementById('filter-rearing-grade');
-            const rearingGradeChart = document.getElementById('chart-filter-rearing-grade');
-            const costGradeMain = document.getElementById('filter-cost-grade');
-            const costGradeChart = document.getElementById('chart-filter-cost-grade');
+    const searchMain = document.getElementById('search-input');
+    const searchChart = document.getElementById('chart-search-input');
+    const deptMain = document.getElementById('filter-dept');
+    const deptChart = document.getElementById('chart-filter-dept');
+    const regionMain = document.getElementById('filter-region');
+    const regionChart = document.getElementById('chart-filter-region');
+    const sizeMain = document.getElementById('filter-size');
+    const sizeChart = document.getElementById('chart-filter-size');
+    const rearingGradeMain = document.getElementById('filter-rearing-grade');
+    const rearingGradeChart = document.getElementById('chart-filter-rearing-grade');
+    const costGradeMain = document.getElementById('filter-cost-grade');
+    const costGradeChart = document.getElementById('chart-filter-cost-grade');
 
-            if (type === 'search') {
-                if (searchMain) searchMain.value = value;
-                if (searchChart) searchChart.value = value;
-            } else if (type === 'dept') {
-                if (deptMain) deptMain.value = value;
-                if (deptChart) deptChart.value = value;
-                activeDept = value || 'ALL';
-                renderTabs();
-                populateRegions();
-                populateRearingGrades();
-            } else if (type === 'region') {
-                if (regionMain) regionMain.value = value;
-                if (regionChart) regionChart.value = value;
-            } else if (type === 'size') {
-                if (sizeMain) sizeMain.value = value;
-                if (sizeChart) sizeChart.value = value;
-            } else if (type === 'rearingGrade') {
-                if (rearingGradeMain) rearingGradeMain.value = value;
-                if (rearingGradeChart) rearingGradeChart.value = value;
-            } else if (type === 'costGrade') {
-                if (costGradeMain) costGradeMain.value = value;
-                if (costGradeChart) costGradeChart.value = value;
-            }
+    if (type === 'search') {
+        if (searchMain) searchMain.value = value;
+        if (searchChart) searchChart.value = value;
+    } else if (type === 'dept') {
+        if (deptMain) deptMain.value = value;
+        if (deptChart) deptChart.value = value;
+        
+        // 💡 탭 또는 드롭다운에서 클릭/선택한 값으로 activeDept를 즉시 업데이트 (비어있으면 'ALL')
+        activeDept = value || 'ALL';
+        
+        renderTabs();
+        populateRegions();
+        populateRearingGrades();
+    } else if (type === 'region') {
+        if (regionMain) regionMain.value = value;
+        if (regionChart) regionChart.value = value;
+    } else if (type === 'size') {
+        if (sizeMain) sizeMain.value = value;
+        if (sizeChart) sizeChart.value = value;
+    } else if (type === 'rearingGrade') {
+        if (rearingGradeMain) rearingGradeMain.value = value;
+        if (rearingGradeChart) rearingGradeChart.value = value;
+    } else if (type === 'costGrade') {
+        if (costGradeMain) costGradeMain.value = value;
+        if (costGradeChart) costGradeChart.value = value;
+    }
 
-            applyFilters();
-        }
+    applyFilters();
+}
 
       function resetWholePageToInitialState() {
     // 🎯 1. 전역 선택 상태 및 필터 변수 초기화
@@ -2452,7 +2457,6 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     if (loadingOverlay) loadingOverlay.classList.remove('hidden');
     const startTime = performance.now();
 
-    // 🎯 1. 약품비 대시보드 데이터 요청 URL
     const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
     urlObj.searchParams.set('t', new Date().getTime());
     urlObj.searchParams.set('email', currentUserEmail);
@@ -2464,7 +2468,6 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         return res.json();
     });
 
-    // 🎯 2. 정산 성적 분석 데이터 요청 URL
     const settleUrl = new URL(GOOGLE_SHEET_API_URL.trim());
     settleUrl.searchParams.set('action', 'getSettlementData');
     settleUrl.searchParams.set('email', currentUserEmail);
@@ -2476,7 +2479,6 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         return [];
     });
 
-    // 🎯 두 데이터가 모두 들어올 때까지 로그인 로딩창을 유지했다가 한 번에 화면 오픈!
     Promise.all([p1, p2])
         .then(([data, resData]) => {
             if (data.error) throw new Error(data.error);
@@ -2500,10 +2502,8 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             if (errorAlert) errorAlert.classList.add('hidden');
             if (loginErrorMsg) loginErrorMsg.classList.add('hidden');
 
-            // 🎯 A. 약품비 대시보드 데이터 파싱
             parseLEADExcel(data);
 
-            // 🎯 B. 정산 성적 데이터 파싱 및 스탯 생성
             let fetchedSettlement = Array.isArray(resData) ? resData : (resData.rows || []);
             let userInfo = resData.userInfo || {};
             
@@ -2539,43 +2539,45 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             generateSettlementFarmStats();
 
-            // 🎯 C. 정산 탭 드롭다운 구성
+            // 🎯 C. 정산 탭 드롭다운 구성 (부서명 및 권한 종합 보정)
             const selDept = document.getElementById('sel-dept');
             if (selDept) {
                 selDept.innerHTML = '';
                 const allDepts = [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort();
-                const userRole = window.currentUser ? window.currentUser.role : '일반';
-                const userDept = window.currentUser ? window.currentUser.dept : '';
+                
+                const userRole = window.currentUser ? String(window.currentUser.role || '').toLowerCase() : '일반';
+                const userDept = window.currentUser ? String(window.currentUser.dept || '') : (sessionStorage.getItem('user_dept') || "");
 
-                if (userRole === '관리자') {
+                // 💡 핵심: 정산 데이터 상의 실제 4개 사업부 목록에 사용자의 부서가 안 들어가 있다면 본사/관리자 계정으로 판정
+                const isFieldDept = allDepts.includes(userDept);
+                const isAdmin = (
+                    userRole.includes('관리자') || 
+                    userRole.includes('admin') || 
+                    userRole.includes('전체') || 
+                    userRole.includes('마스터') ||
+                    !isFieldDept
+                );
+
+                if (isAdmin) {
+                    // 관리자/본사 계정: 모든 사업부 선택 가능하도록 드롭다운 오픈
                     selDept.add(new Option('전체 사업부', ''));
                     allDepts.forEach(d => selDept.add(new Option(d, d)));
                     selDept.value = '';
                     selDept.disabled = false;
                 } else {
-                    if (userDept) {
-                        selDept.add(new Option(userDept, userDept, true, true));
-                        selDept.value = userDept;
-                        selDept.disabled = true;
-                    } else {
-                        selDept.add(new Option('전체 사업부', ''));
-                        allDepts.forEach(d => selDept.add(new Option(d, d)));
-                        selDept.disabled = false;
-                    }
+                    // 현장 사업부 일반 사용자: 해당 사업부로 고정
+                    selDept.add(new Option(userDept, userDept, true, true));
+                    selDept.value = userDept;
+                    selDept.disabled = true;
                 }
             }
 
             filterFarmsByDept('diag');
 
-           // 🎯 D. 모든 데이터 준비 완벽 종료 후 로그인창 닫기
             hideLoginModal();
             resetWholePageToInitialState();
-
-            // 🎯 [수정 위치] 로그인 및 모든 데이터 수신이 정상 완료된 직후 공지사항 팝업 출력
             checkAndShowNotice();
 
-
-            // 🎯 [접속 로그 전송] 접속 성공 시 구글 시트 '접속로그' 탭에 실시간 기록
             if (isLoginAttempt || isManual) {
                 const logUrl = new URL(GOOGLE_SHEET_API_URL.trim());
                 logUrl.searchParams.set('action', 'addLog');
@@ -2618,217 +2620,224 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         });
 }
         function parseLEADExcel(rows) {
-            let leafHeaderIdx = -1;
-            for (let i = 0; i < Math.min(rows.length, 12); i++) {
-                if (rows[i] && Array.isArray(rows[i])) {
-                    const rowJoined = rows[i].map(c => cleanStr(c)).join(',');
-                    if (rowJoined.includes('농장코드') || rowJoined.includes('농장명')) { leafHeaderIdx = i; break; }
-                }
-            }
-            if (leafHeaderIdx === -1) leafHeaderIdx = 4;
-
-            const headerRow = rows[leafHeaderIdx] || [];
-            const numCols = headerRow.length;
-
-            let groupRowIdx = -1;
-            for (let i = 0; i < leafHeaderIdx; i++) {
-                if (rows[i] && Array.isArray(rows[i])) {
-                    const rowJoined = rows[i].map(c => cleanStr(c)).join(',');
-                    if (rowJoined.includes('입식두당') && rowJoined.includes('입식두수') && rowJoined.includes('약품매입액')) { groupRowIdx = i; break; }
-                }
-            }
-            if (groupRowIdx === -1) groupRowIdx = Math.max(0, leafHeaderIdx - 2);
-
-            let groupNames = [];
-            let currentGroupName = "";
-            for (let col = 0; col < numCols; col++) {
-                let cellVal = cleanStr(rows[groupRowIdx] ? rows[groupRowIdx][col] : "");
-                if (cellVal) currentGroupName = cellVal;
-                groupNames[col] = currentGroupName;
-            }
-
-            let yearRowIdx = Math.max(0, leafHeaderIdx - 1);
-            let yearNames = [];
-            let currentYear = "";
-            for (let col = 0; col < numCols; col++) {
-                let cellVal = cleanStr(rows[yearRowIdx] ? rows[yearRowIdx][col] : "");
-                if (cellVal && (cellVal.includes('년') || cellVal.includes('202'))) {
-                    const yearDigits = cellVal.replace(/[^0-9]/g, '');
-                    if (yearDigits.length >= 2) currentYear = yearDigits.slice(-2);
-                }
-                yearNames[col] = currentYear;
-            }
-
-            for (let col = 0; col < numCols; col++) {
-                const cellVal = cleanStr(headerRow[col]);
-                if (!cellVal) continue;
-
-                if (cellVal.includes('담당부서') || cellVal.includes('부서')) mappings.dept = col;
-                else if (cellVal.includes('지역')) mappings.region = col;
-                else if (cellVal.includes('농장코드') || cellVal.includes('코드')) mappings.farmCode = col;
-                else if (cellVal.includes('농장명') || cellVal.includes('이름')) mappings.farmName = col;
-                else if (cellVal.includes('담당CM') || cellVal.includes('CM')) mappings.manager = col;
-                else if (cellVal.includes('사육규모')) mappings.breedingSize = col;
-                else if (cellVal.includes('농장규모') || cellVal.includes('규모')) mappings.farmSize = col;
-                else if (cellVal.includes('육성율등급') || cellVal.includes('육성률등급')) mappings.rearingGrade = col;
-                else if (cellVal.includes('평균육성률') || cellVal.includes('평균육성율') || cellVal.includes('육성률') || cellVal.includes('육성율')) mappings.avgRearingRate = col;
-                else if (cellVal.includes('입식두당약품비') || (cellVal.includes('입식두당') && cellVal.includes('약품비'))) mappings.medicineCost = col;
-                else if (cellVal.includes('출하두당약품비') || (cellVal.includes('출하두당') && cellVal.includes('약품비'))) mappings.shipmentCost = col;
-                else if (cellVal.includes('등급분류') || cellVal.includes('등급')) mappings.gradeCategory = col;
-                else if (cellVal.includes('중앙값대비') || cellVal.includes('중앙값')) mappings.vsMedian = col;
-                else if (cellVal.includes('백신')) mappings.ratios[0] = col;
-                else if (cellVal.includes('항균') || cellVal.includes('항생제')) mappings.ratios[1] = col;
-                else if (cellVal.includes('치료제')) mappings.ratios[2] = col;
-                else if (cellVal.includes('영양제')) mappings.ratios[3] = col;
-                else if (cellVal.includes('기타비율') || cellVal.includes('기타외품') || cellVal === '기타') mappings.ratios[4] = col;
-            }
-
-            mappings.costTrend = []; mappings.headcount = []; mappings.purchase = []; mappings.supportInflow = []; mappings.supportMed = [];
-
-            for (let col = 0; col < numCols; col++) {
-                const groupName = groupNames[col] || "";
-                const headerVal = cleanStr(headerRow[col]);
-                if (!headerVal) continue;
-
-                if (headerVal.includes('누계') || headerVal.includes('합계') || headerVal.includes('평균') || headerVal.includes('비율')) {
-                    if (groupName.includes('입식두수')) mappings.headcountTotal = col;
-                    else if (groupName.includes('약품매입액') && !groupName.includes('지원')) mappings.purchaseTotal = col;
-                    else if (groupName.includes('입식지원')) mappings.supportInflowTotal = col;
-                    else if (groupName.includes('지원약품') && !groupName.includes('입식지원')) {
-                        if (headerVal.includes('비율')) mappings.supportMedRatio = col;
-                        else mappings.supportMedTotal = col;
-                    }
-                    continue;
-                }
-
-                const formattedYM = getYearMonthString(yearNames[col] || "", headerVal);
-
-                if (groupName.includes('입식두당') && groupName.includes('약품비')) mappings.costTrend.push({ month: formattedYM, idx: col });
-                else if (groupName.includes('입식두수')) mappings.headcount.push({ month: formattedYM, idx: col });
-                else if (groupName.includes('약품매입액') && !groupName.includes('지원')) mappings.purchase.push({ month: formattedYM, idx: col });
-                else if (groupName.includes('입식지원')) mappings.supportInflow.push({ month: formattedYM, idx: col });
-                else if (groupName.includes('지원약품') && !groupName.includes('입식지원')) mappings.supportMed.push({ month: formattedYM, idx: col });
-            }
-
-            mappings.costTrend.sort((a, b) => a.month.localeCompare(b.month));
-            mappings.headcount.sort((a, b) => a.month.localeCompare(b.month));
-            mappings.purchase.sort((a, b) => a.month.localeCompare(b.month));
-            mappings.supportInflow.sort((a, b) => a.month.localeCompare(b.month));
-            mappings.supportMed.sort((a, b) => a.month.localeCompare(b.month));
-
-            summaryRows = []; parsedData = []; farmSizeSummaryRows = [];
-            for (let i = leafHeaderIdx + 1; i < rows.length; i++) {
-                const r = rows[i];
-                if (!r || r.length < 5) continue;
-                
-                const farmName = String(r[mappings.farmName] || '').trim();
-                const farmCode = String(r[mappings.farmCode] || '').trim();
-                const deptName = String(r[mappings.dept] || '').trim();
-                const col0Val = String(r[0] || '').trim();
-                
-                if (!farmName && !deptName && !col0Val) continue;
-
-                const isSizeRow = (
-                    col0Val.includes('미만') || col0Val.includes('이상') || col0Val.includes('1,000') || col0Val.includes('3,000') || col0Val.includes('5,000') ||
-                    farmName.includes('미만') || farmName.includes('이상') || farmName.includes('1,000') || farmName.includes('3,000') || farmName.includes('5,000')
-                ) && !farmName.includes('농장') && !farmName.includes('축산') && !farmName.includes('법인');
-
-                if (isSizeRow) {
-                    const sizeLabel = getFarmSizeCategory(col0Val || farmName);
-                    let countCandidate = cleanNum(r[mappings.breedingSize]) || cleanNum(r[mappings.farmSize]);
-                    if (countCandidate > 1000) countCandidate = cleanNum(r[mappings.farmSize]);
-
-                    farmSizeSummaryRows.push({
-                        label: sizeLabel,
-                        count: countCandidate || 0,
-                        medicineCost: cleanNum(r[mappings.medicineCost]),
-                        totalHead: cleanNum(r[mappings.headcountTotal]),
-                        totalPurchase: cleanNum(r[mappings.purchaseTotal]),
-                        ratios: mappings.ratios.map(idx => cleanNum(r[idx])),
-                        costTrendVals: mappings.costTrend.map(m => cleanNum(r[m.idx])),
-                        headcountVals: mappings.headcount.map(m => cleanNum(r[m.idx])),
-                        purchaseVals: mappings.purchase.map(m => cleanNum(r[m.idx])),
-                        supportInflowVals: mappings.supportInflow.map(m => cleanNum(r[m.idx])),
-                        supportMedVals: mappings.supportMed.map(m => cleanNum(r[m.idx])),
-                        supportMedRatio: (mappings.supportMedRatio !== -1) ? cleanNum(r[mappings.supportMedRatio]) : 0
-                    });
-                    summaryRows.push(r);
-} else if (farmName.includes('한마을') || deptName.includes('한마을') || col0Val.includes('한마을')) {
-                    const parsedMed = cleanNum(r[mappings.medicineCost]);
-                    if (parsedMed > 0) buSummaryData.medicineCost = parsedMed;
-                    
-                    let rateVal = cleanNum(r[mappings.avgRearingRate]);
-                    if (rateVal > 0) {
-                        buSummaryData.avgRearingRate = (rateVal <= 1.0) ? (rateVal * 100) : rateVal;
-                    }
-
-                    const parsedHead = cleanNum(r[mappings.headcountTotal]);
-                    if (parsedHead > 0) buSummaryData.totalHead = parsedHead;
-
-                    const parsedPur = cleanNum(r[mappings.purchaseTotal]);
-                    if (parsedPur > 0) buSummaryData.totalPurchase = parsedPur;
-
-                    const countCandidate = cleanNum(r[mappings.farmCode]) || cleanNum(r[mappings.breedingSize]) || cleanNum(r[0]) || cleanNum(r[mappings.farmSize]);
-                    if (countCandidate > 0 && countCandidate < 1000) buSummaryData.farmCount = countCandidate;
-                    else buSummaryData.farmCount = 97;
-
-                    if (mappings.costTrend && mappings.costTrend.length > 0) {
-                        buSummaryData.costTrendVals = mappings.costTrend.map(m => cleanNum(r[m.idx]));
-                    }
-                    if (mappings.ratios && mappings.ratios.length > 0) {
-                        buSummaryData.ratios = mappings.ratios.map(idx => cleanNum(r[idx]));
-                    }
-                    // 💡 [핵심] 한마을BU 전체의 월별 입식 두수 및 매입액 배열 수집
-                    if (mappings.headcount && mappings.headcount.length > 0) {
-                        buSummaryData.headcountVals = mappings.headcount.map(m => cleanNum(r[m.idx]));
-                    }
-                    if (mappings.purchase && mappings.purchase.length > 0) {
-                        buSummaryData.purchaseVals = mappings.purchase.map(m => cleanNum(r[m.idx]));
-                    }
-
-                    summaryRows.push(r);
-                }
-                 else if (farmName.includes('합계') || farmName.includes('평균') || farmName.includes('소계') || 
-                    farmName.includes('전체') || deptName.includes('합계') || deptName.includes('평균') ||
-                    farmName.includes('사업부') || farmName.includes('사업팀') || farmName.includes('BU') || farmName.includes('팀')) {
-                    summaryRows.push(r);
-                }
-                 else if (farmName) {
-                    parsedData.push({
-                        dept: deptName, region: String(r[mappings.region] || '').trim(), farmCode, farmName, manager: String(r[mappings.manager] || '').trim(),
-                        farmSize: getFarmSizeCategory(r[mappings.farmSize]), breedingSize: cleanNum(r[mappings.breedingSize]), rearingGrade: String(r[mappings.rearingGrade] || '').trim(),
-                        avgRearingRate: cleanNum(r[mappings.avgRearingRate]), medicineCost: cleanNum(r[mappings.medicineCost]), shipmentCost: cleanNum(r[mappings.shipmentCost]),
-                        gradeCategory: '', vsMedian: r[mappings.vsMedian],
-                        ratios: mappings.ratios.map(idx => cleanNum(r[idx])),
-                        costTrendVals: mappings.costTrend.map(m => cleanNum(r[m.idx])),
-                        headcountVals: mappings.headcount.map(m => cleanNum(r[m.idx])),
-                        purchaseVals: mappings.purchase.map(m => cleanNum(r[m.idx])),
-                        supportInflowVals: mappings.supportInflow.map(m => cleanNum(r[m.idx])),
-                        supportMedVals: mappings.supportMed.map(m => cleanNum(r[m.idx])),
-                        headcountTotal: cleanNum(r[mappings.headcountTotal]), purchaseTotal: cleanNum(r[mappings.purchaseTotal]),  
-                        supportInflowTotal: cleanNum(r[mappings.supportInflowTotal]), supportMedTotal: cleanNum(r[mappings.supportMedTotal]), 
-                        supportMedRatio: (mappings.supportMedRatio !== -1) ? cleanNum(r[mappings.supportMedRatio]) : 0 
-                    });
-                }
-            }
-
-            parsedData.forEach(item => { item.gradeCategory = calculateGrade(item.medicineCost, item.purchaseTotal, item.headcountTotal); });
-
-detectLastValidMonths();
-            
-            // 🎯 초기 기본 기간을 전체(2025_11월 ~ 최신월)로 동적 세팅
-            const maxIdx = getRealValidMaxMonthIdx();
-            if (mappings.costTrend && mappings.costTrend.length > 0) {
-                selectedStartYM = mappings.costTrend[0].month;
-                selectedEndYM = mappings.costTrend[maxIdx] ? mappings.costTrend[maxIdx].month : mappings.costTrend[mappings.costTrend.length - 1].month;
-            }
-            
-            updateMonthPickerInputs();
-            renderTabs();
-            populateRegions();
-            populateRearingGrades();
-            applyFilters();
+    let leafHeaderIdx = -1;
+    for (let i = 0; i < Math.min(rows.length, 12); i++) {
+        if (rows[i] && Array.isArray(rows[i])) {
+            const rowJoined = rows[i].map(c => cleanStr(c)).join(',');
+            if (rowJoined.includes('농장코드') || rowJoined.includes('농장명')) { leafHeaderIdx = i; break; }
         }
+    }
+    if (leafHeaderIdx === -1) leafHeaderIdx = 4;
+
+    const headerRow = rows[leafHeaderIdx] || [];
+    const numCols = headerRow.length;
+
+    let groupRowIdx = -1;
+    for (let i = 0; i < leafHeaderIdx; i++) {
+        if (rows[i] && Array.isArray(rows[i])) {
+            const rowJoined = rows[i].map(c => cleanStr(c)).join(',');
+            if (rowJoined.includes('입식두당') && rowJoined.includes('입식두수') && rowJoined.includes('약품매입액')) { groupRowIdx = i; break; }
+        }
+    }
+    if (groupRowIdx === -1) groupRowIdx = Math.max(0, leafHeaderIdx - 2);
+
+    let groupNames = [];
+    let currentGroupName = "";
+    for (let col = 0; col < numCols; col++) {
+        let cellVal = cleanStr(rows[groupRowIdx] ? rows[groupRowIdx][col] : "");
+        if (cellVal) currentGroupName = cellVal;
+        groupNames[col] = currentGroupName;
+    }
+
+    let yearRowIdx = Math.max(0, leafHeaderIdx - 1);
+    let yearNames = [];
+    let currentYear = "";
+    for (let col = 0; col < numCols; col++) {
+        let cellVal = cleanStr(rows[yearRowIdx] ? rows[yearRowIdx][col] : "");
+        if (cellVal && (cellVal.includes('년') || cellVal.includes('202'))) {
+            const yearDigits = cellVal.replace(/[^0-9]/g, '');
+            if (yearDigits.length >= 2) currentYear = yearDigits.slice(-2);
+        }
+        yearNames[col] = currentYear;
+    }
+
+    for (let col = 0; col < numCols; col++) {
+        const cellVal = cleanStr(headerRow[col]);
+        if (!cellVal) continue;
+
+        if (cellVal.includes('담당부서') || cellVal.includes('부서')) mappings.dept = col;
+        else if (cellVal.includes('지역')) mappings.region = col;
+        else if (cellVal.includes('농장코드') || cellVal.includes('코드')) mappings.farmCode = col;
+        else if (cellVal.includes('농장명') || cellVal.includes('이름')) mappings.farmName = col;
+        else if (cellVal.includes('담당CM') || cellVal.includes('CM')) mappings.manager = col;
+        else if (cellVal.includes('사육규모')) mappings.breedingSize = col;
+        else if (cellVal.includes('농장규모') || cellVal.includes('규모')) mappings.farmSize = col;
+        else if (cellVal.includes('육성율등급') || cellVal.includes('육성률등급')) mappings.rearingGrade = col;
+        else if (cellVal.includes('평균육성률') || cellVal.includes('평균육성율') || cellVal.includes('육성률') || cellVal.includes('육성율')) mappings.avgRearingRate = col;
+        else if (cellVal.includes('입식두당약품비') || (cellVal.includes('입식두당') && cellVal.includes('약품비'))) mappings.medicineCost = col;
+        else if (cellVal.includes('출하두당약품비') || (cellVal.includes('출하두당') && cellVal.includes('약품비'))) mappings.shipmentCost = col;
+        else if (cellVal.includes('등급분류') || cellVal.includes('등급')) mappings.gradeCategory = col;
+        else if (cellVal.includes('중앙값대비') || cellVal.includes('중앙값')) mappings.vsMedian = col;
+        else if (cellVal.includes('백신')) mappings.ratios[0] = col;
+        else if (cellVal.includes('항균') || cellVal.includes('항생제')) mappings.ratios[1] = col;
+        else if (cellVal.includes('치료제')) mappings.ratios[2] = col;
+        else if (cellVal.includes('영양제')) mappings.ratios[3] = col;
+        else if (cellVal.includes('기타비율') || cellVal.includes('기타외품') || cellVal === '기타') mappings.ratios[4] = col;
+    }
+
+    mappings.costTrend = []; mappings.headcount = []; mappings.purchase = []; mappings.supportInflow = []; mappings.supportMed = [];
+
+    for (let col = 0; col < numCols; col++) {
+        const groupName = groupNames[col] || "";
+        const headerVal = cleanStr(headerRow[col]);
+        if (!headerVal) continue;
+
+        if (headerVal.includes('누계') || headerVal.includes('합계') || headerVal.includes('평균') || headerVal.includes('비율')) {
+            if (groupName.includes('입식두수')) mappings.headcountTotal = col;
+            else if (groupName.includes('약품매입액') && !groupName.includes('지원')) mappings.purchaseTotal = col;
+            else if (groupName.includes('입식지원')) mappings.supportInflowTotal = col;
+            else if (groupName.includes('지원약품') && !groupName.includes('입식지원')) {
+                if (headerVal.includes('비율')) mappings.supportMedRatio = col;
+                else mappings.supportMedTotal = col;
+            }
+            continue;
+        }
+
+        const formattedYM = getYearMonthString(yearNames[col] || "", headerVal);
+
+        if (groupName.includes('입식두당') && groupName.includes('약품비')) mappings.costTrend.push({ month: formattedYM, idx: col });
+        else if (groupName.includes('입식두수')) mappings.headcount.push({ month: formattedYM, idx: col });
+        else if (groupName.includes('약품매입액') && !groupName.includes('지원')) mappings.purchase.push({ month: formattedYM, idx: col });
+        else if (groupName.includes('입식지원')) mappings.supportInflow.push({ month: formattedYM, idx: col });
+        else if (groupName.includes('지원약품') && !groupName.includes('입식지원')) mappings.supportMed.push({ month: formattedYM, idx: col });
+    }
+
+    mappings.costTrend.sort((a, b) => a.month.localeCompare(b.month));
+    mappings.headcount.sort((a, b) => a.month.localeCompare(b.month));
+    mappings.purchase.sort((a, b) => a.month.localeCompare(b.month));
+    mappings.supportInflow.sort((a, b) => a.month.localeCompare(b.month));
+    mappings.supportMed.sort((a, b) => a.month.localeCompare(b.month));
+
+    summaryRows = []; parsedData = []; farmSizeSummaryRows = [];
+    for (let i = leafHeaderIdx + 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || r.length < 5) continue;
+        
+        const farmName = String(r[mappings.farmName] || '').trim();
+        const farmCode = String(r[mappings.farmCode] || '').trim();
+        const deptName = String(r[mappings.dept] || '').trim();
+        const col0Val = String(r[0] || '').trim();
+        const col1Val = String(r[1] || '').trim();
+        
+        if (!farmName && !deptName && !col0Val && !col1Val) continue;
+
+        const checkStr = `${col0Val} ${col1Val} ${farmName}`;
+        const isSizeRow = (
+            checkStr.includes('미만') || checkStr.includes('이상') || 
+            checkStr.includes('1,000') || checkStr.includes('3,000') || checkStr.includes('5,000')
+        ) && !farmName.includes('농장') && !farmName.includes('축산') && !farmName.includes('법인') && !farmName.includes('한마을');
+
+        if (isSizeRow) {
+            const sizeLabel = getFarmSizeCategory(farmName || col0Val || col1Val);
+            let countCandidate = cleanNum(r[mappings.breedingSize]) || cleanNum(r[mappings.farmSize]);
+
+            farmSizeSummaryRows.push({
+                label: sizeLabel,
+                count: countCandidate || 0,
+                medicineCost: cleanNum(r[mappings.medicineCost]),
+                totalHead: cleanNum(r[mappings.headcountTotal]),
+                totalPurchase: cleanNum(r[mappings.purchaseTotal]),
+                ratios: mappings.ratios.map(idx => cleanNum(r[idx])),
+                costTrendVals: mappings.costTrend.map(m => cleanNum(r[m.idx])),
+                headcountVals: mappings.headcount.map(m => cleanNum(r[m.idx])),
+                purchaseVals: mappings.purchase.map(m => cleanNum(r[m.idx])),
+                supportInflowVals: mappings.supportInflow.map(m => cleanNum(r[m.idx])),
+                supportMedVals: mappings.supportMed.map(m => cleanNum(r[m.idx])),
+                supportMedRatio: (mappings.supportMedRatio !== -1) ? cleanNum(r[mappings.supportMedRatio]) : 0
+            });
+            summaryRows.push(r);
+        } else if (farmName.includes('한마을') || deptName.includes('한마을') || col0Val.includes('한마을') || col1Val.includes('한마을')) {
+            const parsedMed = cleanNum(r[mappings.medicineCost]);
+            if (parsedMed > 0) buSummaryData.medicineCost = parsedMed;
+            
+            let rateVal = cleanNum(r[mappings.avgRearingRate]);
+            if (rateVal > 0) {
+                buSummaryData.avgRearingRate = (rateVal <= 1.0) ? (rateVal * 100) : rateVal;
+            }
+
+            const parsedHead = cleanNum(r[mappings.headcountTotal]);
+            if (parsedHead > 0) buSummaryData.totalHead = parsedHead;
+
+            const parsedPur = cleanNum(r[mappings.purchaseTotal]);
+            if (parsedPur > 0) buSummaryData.totalPurchase = parsedPur;
+
+            const countCandidate = cleanNum(r[mappings.farmCode]) || cleanNum(r[mappings.breedingSize]) || cleanNum(r[0]) || cleanNum(r[mappings.farmSize]);
+            if (countCandidate > 0 && countCandidate < 1000) buSummaryData.farmCount = countCandidate;
+            else buSummaryData.farmCount = 97;
+
+            // 💡 [핵심 보정] 한마을BU 전체 요약 객체에도 지원약품 및 입식지원 배열을 누락 없이 파싱
+            if (mappings.costTrend && mappings.costTrend.length > 0) {
+                buSummaryData.costTrendVals = mappings.costTrend.map(m => cleanNum(r[m.idx]));
+            }
+            if (mappings.ratios && mappings.ratios.length > 0) {
+                buSummaryData.ratios = mappings.ratios.map(idx => cleanNum(r[idx]));
+            }
+            if (mappings.headcount && mappings.headcount.length > 0) {
+                buSummaryData.headcountVals = mappings.headcount.map(m => cleanNum(r[m.idx]));
+            }
+            if (mappings.purchase && mappings.purchase.length > 0) {
+                buSummaryData.purchaseVals = mappings.purchase.map(m => cleanNum(r[m.idx]));
+            }
+            if (mappings.supportMed && mappings.supportMed.length > 0) {
+                buSummaryData.supportMedVals = mappings.supportMed.map(m => cleanNum(r[m.idx]));
+            }
+            if (mappings.supportInflow && mappings.supportInflow.length > 0) {
+                buSummaryData.supportInflowVals = mappings.supportInflow.map(m => cleanNum(r[m.idx]));
+            }
+            if (mappings.supportMedRatio !== -1) {
+                buSummaryData.supportMedRatio = cleanNum(r[mappings.supportMedRatio]);
+            }
+
+            summaryRows.push(r);
+        } else if (farmName.includes('합계') || farmName.includes('평균') || farmName.includes('소계') || 
+            farmName.includes('전체') || deptName.includes('합계') || deptName.includes('평균') ||
+            farmName.includes('사업부') || farmName.includes('사업팀') || farmName.includes('BU') || farmName.includes('팀')) {
+            summaryRows.push(r);
+        } else if (farmName) {
+            parsedData.push({
+                dept: deptName, region: String(r[mappings.region] || '').trim(), farmCode, farmName, manager: String(r[mappings.manager] || '').trim(),
+                farmSize: getFarmSizeCategory(r[mappings.farmSize]), breedingSize: cleanNum(r[mappings.breedingSize]), rearingGrade: String(r[mappings.rearingGrade] || '').trim(),
+                avgRearingRate: cleanNum(r[mappings.avgRearingRate]), medicineCost: cleanNum(r[mappings.medicineCost]), shipmentCost: cleanNum(r[mappings.shipmentCost]),
+                gradeCategory: '', vsMedian: r[mappings.vsMedian],
+                ratios: mappings.ratios.map(idx => cleanNum(r[idx])),
+                costTrendVals: mappings.costTrend.map(m => cleanNum(r[m.idx])),
+                headcountVals: mappings.headcount.map(m => cleanNum(r[m.idx])),
+                purchaseVals: mappings.purchase.map(m => cleanNum(r[m.idx])),
+                supportInflowVals: mappings.supportInflow.map(m => cleanNum(r[m.idx])),
+                supportMedVals: mappings.supportMed.map(m => cleanNum(r[m.idx])),
+                headcountTotal: cleanNum(r[mappings.headcountTotal]), purchaseTotal: cleanNum(r[mappings.purchaseTotal]),  
+                supportInflowTotal: cleanNum(r[mappings.supportInflowTotal]), supportMedTotal: cleanNum(r[mappings.supportMedTotal]), 
+                supportMedRatio: (mappings.supportMedRatio !== -1) ? cleanNum(r[mappings.supportMedRatio]) : 0 
+            });
+        }
+    }
+
+    parsedData.forEach(item => { item.gradeCategory = calculateGrade(item.medicineCost, item.purchaseTotal, item.headcountTotal); });
+
+    detectLastValidMonths();
+    
+    const maxIdx = getRealValidMaxMonthIdx();
+    if (mappings.costTrend && mappings.costTrend.length > 0) {
+        selectedStartYM = mappings.costTrend[0].month;
+        selectedEndYM = mappings.costTrend[maxIdx] ? mappings.costTrend[maxIdx].month : mappings.costTrend[mappings.costTrend.length - 1].month;
+    }
+    
+    updateMonthPickerInputs();
+    renderTabs();
+    populateRegions();
+    populateRearingGrades();
+    applyFilters();
+}
 
         function updateTelemetryPanel(timeStr) {
             if (document.getElementById('telemetry-total-rows')) document.getElementById('telemetry-total-rows').textContent = rawReceivedRows.length;
@@ -2902,263 +2911,245 @@ detectLastValidMonths();
         }
 
         function renderFarmSizeModalContent() {
-            try {
-                const filterContainer = document.getElementById('modal-size-filter-buttons');
-                if (!filterContainer) return;
+    try {
+        const filterContainer = document.getElementById('modal-size-filter-buttons');
+        if (!filterContainer) return;
 
-                const categories = ['1,000 미만', '1,000-3,000', '3,000-5,000', '5,000 이상'];
-                
-                let filterBtnHtml = `
-                    <button onclick="selectModalSizeFilter('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedModalSizeCategory === 'ALL' ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
-                        전체 규모 보기
-                    </button>
-                `;
-                categories.forEach(cat => {
-                    const isActive = selectedModalSizeCategory === cat;
-                    filterBtnHtml += `
-                        <button onclick="selectModalSizeFilter('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${isActive ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
-                            ${cat}
-                        </button>
-                    `;
-                });
-                filterContainer.innerHTML = filterBtnHtml;
+        const categories = ['1,000 미만', '1,000-3,000', '3,000-5,000', '5,000 이상'];
+        
+        let filterBtnHtml = `
+            <button onclick="selectModalSizeFilter('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedModalSizeCategory === 'ALL' ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                전체 규모 보기
+            </button>
+        `;
+        categories.forEach(cat => {
+            const isActive = selectedModalSizeCategory === cat;
+            filterBtnHtml += `
+                <button onclick="selectModalSizeFilter('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${isActive ? 'bg-emerald-600 text-white shadow' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                    ${cat}
+                </button>
+            `;
+        });
+        filterContainer.innerHTML = filterBtnHtml;
 
-                // 🎯 1. 현재 선택된 기간 필터 슬라이싱 구간(Start ~ End) 구하기
-                const allIsoMonths = mappings.costTrend.map(m => toIsoMonthStr(m.month));
-                const isoStartVal = toIsoMonthStr(selectedStartYM);
-                const isoEndVal = toIsoMonthStr(selectedEndYM);
+        // 🎯 1. 기간 슬라이싱 인덱스 구하기
+        const allIsoMonths = mappings.costTrend.map(m => toIsoMonthStr(m.month));
+        const isoStartVal = toIsoMonthStr(selectedStartYM);
+        const isoEndVal = toIsoMonthStr(selectedEndYM);
 
-                let startIdx = allIsoMonths.findIndex(m => m === isoStartVal);
-                let endIdx = allIsoMonths.findIndex(m => m === isoEndVal);
-                if (startIdx === -1) startIdx = 0;
-                if (endIdx === -1 || endIdx < startIdx) endIdx = getRealValidMaxMonthIdx();
+        let startIdx = allIsoMonths.findIndex(m => m === isoStartVal);
+        let endIdx = allIsoMonths.findIndex(m => m === isoEndVal);
+        if (startIdx === -1) startIdx = 0;
+        if (endIdx === -1 || endIdx < startIdx) endIdx = getRealValidMaxMonthIdx();
 
-                let targetFarms = [];
-                let isAllScope = (selectedModalSizeCategory === 'ALL');
+        // 🎯 2. 백엔드 수신 요약 객체(buSummaryData / farmSizeSummaryRows) 직접 바인딩
+        let isAllScope = (selectedModalSizeCategory === 'ALL');
+        let targetSummaryObj = null;
 
-                if (isAllScope) {
-                    targetFarms = parsedData;
-                } else {
-                    targetFarms = parsedData.filter(d => d.farmSize === selectedModalSizeCategory);
+        if (isAllScope) {
+            targetSummaryObj = buSummaryData;
+        } else {
+            const cleanTargetCat = cleanStr(selectedModalSizeCategory).replace(/[^0-9가-힣a-zA-Z]/g, '');
+            targetSummaryObj = farmSizeSummaryRows.find(r => {
+                if (!r || !r.label) return false;
+                const cleanRowLabel = cleanStr(r.label).replace(/[^0-9가-힣a-zA-Z]/g, '');
+                return cleanRowLabel === cleanTargetCat || cleanRowLabel.includes(cleanTargetCat) || cleanTargetCat.includes(cleanRowLabel);
+            });
+        }
+
+        // 🎯 3. 백엔드 수신 월별 배열값 안전 연산
+        let totalHead = 0;
+        let totalPur = 0;
+
+        if (targetSummaryObj) {
+            if (Array.isArray(targetSummaryObj.purchaseVals) && Array.isArray(targetSummaryObj.headcountVals)) {
+                for (let i = startIdx; i <= endIdx; i++) {
+                    totalPur += cleanNum(targetSummaryObj.purchaseVals[i]);
+                    totalHead += cleanNum(targetSummaryObj.headcountVals[i]);
                 }
-
-                // 🎯 2. 선택 규모 농가들의 '선택 기간' 입식두수 및 약품 매입액 실시간 합산
-                let totalHead = 0;
-                let totalPur = 0;
-
-                targetFarms.forEach(f => {
-                    if (f.purchaseVals && f.headcountVals) {
-                        for (let i = startIdx; i <= endIdx; i++) {
-                            totalPur += (f.purchaseVals[i] || 0);
-                            totalHead += (f.headcountVals[i] || 0);
-                        }
-                    }
-                });
-
-                let avgCost = totalHead > 0 ? Math.round(totalPur / totalHead) : 0;
-
-                if (document.getElementById('size-kpi-total-head')) document.getElementById('size-kpi-total-head').textContent = Math.round(totalHead).toLocaleString() + ' 두';
-                if (document.getElementById('size-kpi-total-pur')) document.getElementById('size-kpi-total-pur').textContent = formatWon(totalPur);
-                if (document.getElementById('size-kpi-avg-cost')) document.getElementById('size-kpi-avg-cost').textContent = formatWon(avgCost);
-
-                // 🎯 3. 선택 기간 내 월별 추이 데이터 집계
-                const displayMonths = mappings.costTrend.map(m => m.month).slice(startIdx, endIdx + 1);
-                let costTrendArr = new Array(displayMonths.length).fill(0);
-
-                let periodPurSums = new Array(displayMonths.length).fill(0);
-                let periodHeadSums = new Array(displayMonths.length).fill(0);
-
-                targetFarms.forEach(f => {
-                    for (let i = startIdx; i <= endIdx; i++) {
-                        const relIdx = i - startIdx;
-                        periodPurSums[relIdx] += (f.purchaseVals[i] || 0);
-                        periodHeadSums[relIdx] += (f.headcountVals[i] || 0);
-                    }
-                });
-
-                // 선택 기간 내 6개월 누계 이동 가중평균
-                costTrendArr = periodPurSums.map((pur, idx) => periodHeadSums[idx] > 0 ? Math.round(pur / periodHeadSums[idx]) : 0);
-
-                if (activeCharts['modalSizeCostLine']) {
-                    activeCharts['modalSizeCostLine'].data.labels = displayMonths;
-                    activeCharts['modalSizeCostLine'].data.datasets[0].data = costTrendArr;
-                    activeCharts['modalSizeCostLine'].update();
-                } else {
-                    const canvas = document.getElementById('chart-modal-size-cost-line');
-                    if (canvas) {
-                        activeCharts['modalSizeCostLine'] = new Chart(canvas.getContext('2d'), {
-                            type: 'line',
-                            data: {
-                                labels: displayMonths,
-                                datasets: [{
-                                    label: '평균 입식두당 약품비',
-                                    data: costTrendArr,
-                                    borderColor: '#F51932',
-                                    backgroundColor: 'rgba(245, 25, 50, 0.08)',
-                                    fill: true,
-                                    tension: 0.25,
-                                    borderWidth: 2.5,
-                                    pointBackgroundColor: '#F51932'
-                                }]
-                            },
-                            options: {
-                                responsive: true, maintainAspectRatio: false,
-                                plugins: { legend: { display: false }, datalabels: { display: false } },
-                                scales: {
-                                    y: { beginAtZero: true, grace: '15%', ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 8 } } },
-                                    x: { ticks: { font: { size: 7.5, weight: 'bold' } } }
-                                }
-                            }
-                        });
-                    }
-                }
-
-                // 🎯 4. 선택 기간 내 지원약품 비율 및 성분 비중 연산
-                let totalSupPur = 0;
-                targetFarms.forEach(f => {
-                    if (f.supportMedVals) {
-                        for (let i = startIdx; i <= endIdx; i++) {
-                            totalSupPur += (f.supportMedVals[i] || 0);
-                        }
-                    }
-                });
-
-                let supportRatioVal = totalPur > 0 ? (totalSupPur / totalPur) * 100 : 0;
-                let selfPaidRatioVal = Math.max(0, 100 - supportRatioVal);
-
-                if (activeCharts['modalSizeSupportPie']) {
-                    activeCharts['modalSizeSupportPie'].data.datasets[0].data = [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))];
-                    activeCharts['modalSizeSupportPie'].update();
-                } else {
-                    const canvas = document.getElementById('chart-modal-size-support-pie');
-                    if (canvas) {
-                        activeCharts['modalSizeSupportPie'] = new Chart(canvas.getContext('2d'), {
-                            type: 'doughnut',
-                            data: {
-                                labels: ['지원 약품 비율', '입식 지원 비율'],
-                                datasets: [{
-                                    data: [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))],
-                                    backgroundColor: ['#F51932', '#10b981'],
-                                    borderWidth: 2, borderColor: '#ffffff'
-                                }]
-                            },
-                            options: {
-                                responsive: true, maintainAspectRatio: false,
-                                plugins: {
-                                    datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' },
-                                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
-                                }
-                            }
-                        });
-                    }
-                }
-
-                let normTypeRatios = [0, 0, 0, 0, 0];
-                if (targetFarms.length > 0) {
-                    let typeSums = [0, 0, 0, 0, 0];
-                    targetFarms.forEach(f => {
-                        if (f.ratios) {
-                            f.ratios.forEach((rv, idx) => { typeSums[idx] += (rv <= 1.0 ? rv * 100 : rv); });
-                        }
-                    });
-                    const typeDiv = targetFarms.length || 1;
-                    let rTemp = typeSums.map(v => v / typeDiv);
-                    const sumT = rTemp.reduce((a, b) => a + b, 0) || 1;
-                    normTypeRatios = rTemp.map(v => parseFloat(((v / sumT) * 100).toFixed(1)));
-                }
-
-                if (activeCharts['modalSizeTypePie']) {
-                    activeCharts['modalSizeTypePie'].data.datasets[0].data = normTypeRatios;
-                    activeCharts['modalSizeTypePie'].update();
-                } else {
-                    const canvas = document.getElementById('chart-modal-size-type-pie');
-                    if (canvas) {
-                        activeCharts['modalSizeTypePie'] = new Chart(canvas.getContext('2d'), {
-                            type: 'doughnut',
-                            data: {
-                                labels: ratioLabels,
-                                datasets: [{ data: normTypeRatios, backgroundColor: ratioColors, borderWidth: 2, borderColor: '#ffffff' }]
-                            },
-                            options: {
-                                responsive: true, maintainAspectRatio: false,
-                                plugins: {
-                                    datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 9 }, formatter: (v) => v > 2 ? `${v}%` : '' },
-                                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
-                                }
-                            }
-                        });
-                    }
-                }
-
-                // 🎯 5. 하단 타임라인 차트 및 데이터 표 선택 기간 슬라이싱 반영
-                let dtHeadArr = new Array(displayMonths.length).fill(0);
-                let dtPurArr = new Array(displayMonths.length).fill(0);
-                let dtSupArr = new Array(displayMonths.length).fill(0);
-                let dtInflowArr = new Array(displayMonths.length).fill(0);
-
-                targetFarms.forEach(f => {
-                    for (let i = startIdx; i <= endIdx; i++) {
-                        const relIdx = i - startIdx;
-                        if (f.headcountVals) dtHeadArr[relIdx] += (f.headcountVals[i] || 0);
-                        if (f.purchaseVals) dtPurArr[relIdx] += (f.purchaseVals[i] || 0);
-                        if (f.supportMedVals) dtSupArr[relIdx] += (f.supportMedVals[i] || 0);
-                        if (f.supportInflowVals) dtInflowArr[relIdx] += (f.supportInflowVals[i] || 0);
-                    }
-                });
-
-                if (document.getElementById('modal-dt-total-head')) document.getElementById('modal-dt-total-head').textContent = `선택기간 누계: ${totalHead.toLocaleString()} 두`;
-                if (document.getElementById('modal-dt-total-pur')) document.getElementById('modal-dt-total-pur').textContent = `선택기간 누계: ${formatWon(totalPur)}`;
-                if (document.getElementById('modal-dt-total-sup')) document.getElementById('modal-dt-total-sup').textContent = `선택기간 누계: ${formatWon(totalSupPur)}`;
-
-                drawTimelineChart('chart-modal-dt-head', displayMonths, dtHeadArr, '#3b82f6', ' 두');
-                drawTimelineChart('chart-modal-dt-pur', displayMonths, dtPurArr, '#10b981', ' 원');
-                drawTimelineChart('chart-modal-dt-sup', displayMonths, dtSupArr, '#8b5cf6', ' 원');
-
-                const theadGroupA = document.getElementById('modal-thead-group-a');
-                const tbodyGroupA = document.getElementById('modal-tbody-group-a');
-
-                if(theadGroupA && tbodyGroupA) {
-                    let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                    displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
-                    theadGroupA.innerHTML = headerHtml;
-
-                    tbodyGroupA.innerHTML = `
-                        <tr class="hover:bg-slate-50 border-b border-slate-150">
-                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
-                            ${costTrendArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
-                        </tr>
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
-                            ${dtSupArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                        </tr>`;
-                }
-
-                const theadGroupB = document.getElementById('modal-thead-group-b');
-                const tbodyGroupB = document.getElementById('modal-tbody-group-b');
-
-                if(theadGroupB && tbodyGroupB) {
-                    let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                    displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
-                    theadGroupB.innerHTML = headerHtml;
-
-                    tbodyGroupB.innerHTML = `
-                        <tr class="hover:bg-slate-50 border-b border-slate-150">
-                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
-                            ${dtHeadArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
-                        </tr>
-                        <tr class="hover:bg-slate-50 border-b border-slate-150">
-                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
-                            ${dtPurArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                        </tr>
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
-                            ${dtInflowArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                        </tr>`;
-                }
-            } catch (err) {
-                console.error("농장 규모별 모달 렌더링 에러 방어:", err);
+            }
+            if (totalHead === 0) {
+                totalHead = cleanNum(targetSummaryObj.totalHead) || cleanNum(targetSummaryObj.count);
+                totalPur = cleanNum(targetSummaryObj.totalPurchase);
             }
         }
+
+        let avgCost = totalHead > 0 ? Math.round(totalPur / totalHead) : (targetSummaryObj ? cleanNum(targetSummaryObj.medicineCost) : 0);
+
+        if (document.getElementById('size-kpi-total-head')) document.getElementById('size-kpi-total-head').textContent = Math.round(totalHead).toLocaleString() + ' 두';
+        if (document.getElementById('size-kpi-total-pur')) document.getElementById('size-kpi-total-pur').textContent = formatWon(totalPur);
+        if (document.getElementById('size-kpi-avg-cost')) document.getElementById('size-kpi-avg-cost').textContent = formatWon(avgCost);
+
+        // 🎯 4. 메인 차트용 데이터 배열 원본 바인딩 (재계산 대신 시트 원본 배열 사용)
+        const displayMonths = mappings.costTrend.map(m => m.month).slice(startIdx, endIdx + 1);
+        let costTrendArr = new Array(displayMonths.length).fill(0);
+        let dtPurArr = new Array(displayMonths.length).fill(0);
+        let dtHeadArr = new Array(displayMonths.length).fill(0);
+        let dtSupArr = new Array(displayMonths.length).fill(0);
+        let dtInflowArr = new Array(displayMonths.length).fill(0);
+
+        if (targetSummaryObj) {
+            if (targetSummaryObj.costTrendVals) costTrendArr = targetSummaryObj.costTrendVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.purchaseVals) dtPurArr = targetSummaryObj.purchaseVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.headcountVals) dtHeadArr = targetSummaryObj.headcountVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.supportMedVals) dtSupArr = targetSummaryObj.supportMedVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.supportInflowVals) dtInflowArr = targetSummaryObj.supportInflowVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+        }
+
+        // 🎯 5. 상단 꺾은선 차트 (입식두당 약품비 추이)
+        if (activeCharts['modalSizeCostLine']) {
+            activeCharts['modalSizeCostLine'].data.labels = displayMonths;
+            activeCharts['modalSizeCostLine'].data.datasets[0].data = costTrendArr;
+            activeCharts['modalSizeCostLine'].update();
+        } else {
+            const canvas = document.getElementById('chart-modal-size-cost-line');
+            if (canvas) {
+                activeCharts['modalSizeCostLine'] = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: displayMonths,
+                        datasets: [{
+                            label: '평균 입식두당 약품비',
+                            data: costTrendArr,
+                            borderColor: '#F51932',
+                            backgroundColor: 'rgba(245, 25, 50, 0.08)',
+                            fill: true,
+                            tension: 0.25,
+                            borderWidth: 2.5,
+                            pointBackgroundColor: '#F51932'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, datalabels: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grace: '15%', ticks: { callback: v => Math.round(v).toLocaleString() + ' 원', font: { size: 8 } } },
+                            x: { ticks: { font: { size: 7.5, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 🎯 6. 상단 도넛 차트 (지원 약품 비율)
+        let totalSupPur = dtSupArr.reduce((a, b) => a + b, 0);
+        let supportRatioVal = totalPur > 0 ? (totalSupPur / totalPur) * 100 : (targetSummaryObj ? cleanNum(targetSummaryObj.supportMedRatio) : 0);
+        if (supportRatioVal <= 1.0 && supportRatioVal > 0) supportRatioVal *= 100;
+        let selfPaidRatioVal = Math.max(0, 100 - supportRatioVal);
+
+        if (activeCharts['modalSizeSupportPie']) {
+            activeCharts['modalSizeSupportPie'].data.datasets[0].data = [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))];
+            activeCharts['modalSizeSupportPie'].update();
+        } else {
+            const canvas = document.getElementById('chart-modal-size-support-pie');
+            if (canvas) {
+                activeCharts['modalSizeSupportPie'] = new Chart(canvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['지원 약품 비율', '입식 지원 비율'],
+                        datasets: [{
+                            data: [parseFloat(supportRatioVal.toFixed(1)), parseFloat(selfPaidRatioVal.toFixed(1))],
+                            backgroundColor: ['#F51932', '#10b981'],
+                            borderWidth: 2, borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' },
+                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 🎯 7. 상단 도넛 차트 (약품 종류별 구성 비율)
+        let normTypeRatios = [0, 0, 0, 0, 0];
+        if (targetSummaryObj && targetSummaryObj.ratios) {
+            let rTemp = targetSummaryObj.ratios.map(v => cleanNum(v) <= 1.0 ? cleanNum(v) * 100 : cleanNum(v));
+            const sumT = rTemp.reduce((a, b) => a + b, 0) || 1;
+            normTypeRatios = rTemp.map(v => parseFloat(((v / sumT) * 100).toFixed(1)));
+        }
+
+        if (activeCharts['modalSizeTypePie']) {
+            activeCharts['modalSizeTypePie'].data.datasets[0].data = normTypeRatios;
+            activeCharts['modalSizeTypePie'].update();
+        } else {
+            const canvas = document.getElementById('chart-modal-size-type-pie');
+            if (canvas) {
+                activeCharts['modalSizeTypePie'] = new Chart(canvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ratioLabels,
+                        datasets: [{ data: normTypeRatios, backgroundColor: ratioColors, borderWidth: 2, borderColor: '#ffffff' }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 9 }, formatter: (v) => v > 2 ? `${v}%` : '' },
+                            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 🎯 8. 하단 트렌드 차트 3종 렌더링
+        if (document.getElementById('modal-dt-total-head')) document.getElementById('modal-dt-total-head').textContent = `선택기간 누계: ${totalHead.toLocaleString()} 두`;
+        if (document.getElementById('modal-dt-total-pur')) document.getElementById('modal-dt-total-pur').textContent = `선택기간 누계: ${formatWon(totalPur)}`;
+        if (document.getElementById('modal-dt-total-sup')) document.getElementById('modal-dt-total-sup').textContent = `선택기간 누계: ${formatWon(totalSupPur)}`;
+
+        drawTimelineChart('chart-modal-dt-head', displayMonths, dtHeadArr, '#3b82f6', ' 두');
+        drawTimelineChart('chart-modal-dt-pur', displayMonths, dtPurArr, '#10b981', ' 원');
+        drawTimelineChart('chart-modal-dt-sup', displayMonths, dtSupArr, '#8b5cf6', ' 원');
+
+        // 🎯 9. 하단 데이터 표 2종 렌더링
+        const theadGroupA = document.getElementById('modal-thead-group-a');
+        const tbodyGroupA = document.getElementById('modal-tbody-group-a');
+
+        if(theadGroupA && tbodyGroupA) {
+            let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+            displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
+            theadGroupA.innerHTML = headerHtml;
+
+            tbodyGroupA.innerHTML = `
+                <tr class="hover:bg-slate-50 border-b border-slate-150">
+                    <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
+                    ${dtSupArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                </tr>
+                <tr class="hover:bg-slate-50">
+                    <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
+                    ${dtInflowArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                </tr>`;
+        }
+
+        const theadGroupB = document.getElementById('modal-thead-group-b');
+        const tbodyGroupB = document.getElementById('modal-tbody-group-b');
+
+        if(theadGroupB && tbodyGroupB) {
+            let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+            displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
+            theadGroupB.innerHTML = headerHtml;
+
+            tbodyGroupB.innerHTML = `
+                <tr class="hover:bg-slate-50 border-b border-slate-150">
+                    <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
+                    ${dtHeadArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
+                </tr>
+                <tr class="hover:bg-slate-50 border-b border-slate-150">
+                    <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
+                    ${dtPurArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+                </tr>
+                <tr class="hover:bg-slate-50">
+                    <td class="px-3 py-2.5 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
+                    ${costTrendArr.map(v => `<td class="px-3 py-2.5 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
+                </tr>`;
+        }
+    } catch (err) {
+        console.error("농장 규모별 모달 렌더링 에러 방어:", err);
+    }
+}
 
         function changeRawPage(delta) {
             rawModalCurrentPage += delta;
@@ -3183,27 +3174,70 @@ detectLastValidMonths();
         }
 
         function renderTabs() {
-            const depts = [...new Set(parsedData.map(d => d.dept))].filter(Boolean);
-            const wrapper = document.getElementById('dept-tab-wrapper');
-            if (!wrapper) return;
+    const depts = [...new Set(parsedData.map(d => d.dept))].filter(Boolean);
+    const wrapper = document.getElementById('dept-tab-wrapper');
+    const deptMain = document.getElementById('filter-dept');
+    const deptChart = document.getElementById('chart-filter-dept');
 
-            const totalBuCount = buSummaryData.farmCount || 97;
-            let html = `
-                <button onclick="syncAndApplyFilters('dept', '')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === 'ALL' ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
-                    한마을BU (${totalBuCount})
+    // 💡 관리자 권한 판단 보정 ("관리자", "admin", "전체", "마스터" 키워드 포함 또는 2개 이상 사업부 수신 시 관리자로 인정)
+    const userRole = window.currentUser ? String(window.currentUser.role || '').toLowerCase() : '일반';
+    const isAdmin = (
+        userRole.includes('관리자') || 
+        userRole.includes('admin') || 
+        userRole.includes('전체') || 
+        userRole.includes('마스터') ||
+        depts.length > 1
+    );
+
+    let html = '';
+
+    if (isAdmin) {
+        // 1. 관리자 계정: '한마을BU' 탭을 최우선으로 포함하고 전체 사업부 드롭다운 표출
+        const totalBuCount = buSummaryData.farmCount || 97;
+        html += `
+            <button onclick="syncAndApplyFilters('dept', '')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === 'ALL' ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
+                한마을BU (${totalBuCount})
+            </button>
+        `;
+
+        depts.forEach(d => {
+            const count = parsedData.filter(item => item.dept === d).length;
+            html += `
+                <button onclick="syncAndApplyFilters('dept', '${d}')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === d ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
+                    ${d} (${count})
                 </button>
             `;
+        });
 
-            depts.forEach(d => {
-                const count = parsedData.filter(item => item.dept === d).length;
-                html += `
-                    <button onclick="syncAndApplyFilters('dept', '${d}')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === d ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
-                        ${d} (${count})
-                    </button>
-                `;
-            });
-            wrapper.innerHTML = html;
-        }
+        // 대시보드 & 차트분석 드롭다운에 '사업부 전체' 옵션 추가 및 잠금 해제
+        let optHtml = '<option value="">사업부 전체</option>';
+        depts.forEach(d => { optHtml += `<option value="${d}">${d}</option>`; });
+        if (deptMain) { deptMain.innerHTML = optHtml; deptMain.value = (activeDept === 'ALL' ? '' : activeDept); deptMain.disabled = false; }
+        if (deptChart) { deptChart.innerHTML = optHtml; deptChart.value = (activeDept === 'ALL' ? '' : activeDept); deptChart.disabled = false; }
+    } else {
+        // 2. 일반 계정: '한마을BU' 탭을 제외하고 해당 소속 사업부만 표시 및 고정
+        depts.forEach((d, idx) => {
+            const count = parsedData.filter(item => item.dept === d).length;
+            
+            if (activeDept === 'ALL' && idx === 0) {
+                activeDept = d;
+            }
+
+            html += `
+                <button onclick="syncAndApplyFilters('dept', '${d}')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === d ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
+                    ${d} (${count})
+                </button>
+            `;
+        });
+
+        let optHtml = '';
+        depts.forEach(d => { optHtml += `<option value="${d}">${d}</option>`; });
+        if (deptMain) { deptMain.innerHTML = optHtml; deptMain.value = activeDept; deptMain.disabled = true; }
+        if (deptChart) { deptChart.innerHTML = optHtml; deptChart.value = activeDept; deptChart.disabled = true; }
+    }
+
+    if (wrapper) wrapper.innerHTML = html;
+}
 
         function populateRegions() {
             const sel = document.getElementById('filter-region');
@@ -3532,208 +3566,213 @@ function updateKPIs() {
 }
 
         function showSelectedRatioAndDetailsByCode(farmCode) {
-            if (!farmCode) return;
-            const targetCodeStr = String(farmCode).trim().toLowerCase();
-            const item = parsedData.find(f => String(f.farmCode).trim().toLowerCase() === targetCodeStr || String(f.farmName).trim().toLowerCase() === targetCodeStr);
-            
-            if (item) {
-                currentSelectedFarmCode = item.farmCode;
-                if (currentMainTab !== 'dashboard') switchMainTab('dashboard');
-                showSelectedRatioAndDetails(item);
-            }
-        }
+    if (!farmCode) return;
+    const targetCodeStr = String(farmCode).trim().toLowerCase();
+    const item = parsedData.find(f => String(f.farmCode).trim().toLowerCase() === targetCodeStr || String(f.farmName).trim().toLowerCase() === targetCodeStr);
+    
+    if (item) {
+        currentSelectedFarmCode = item.farmCode;
+        if (currentMainTab !== 'dashboard') switchMainTab('dashboard');
+        
+        // 상세 데이터 바인딩
+        showSelectedRatioAndDetails(item);
 
-        function showSelectedRatioAndDetails(item) {
-            const card = document.getElementById('inline-detail-section');
-            if (!card || !item) return;
-            
-            currentSelectedFarmCode = item.farmCode;
-            card.classList.remove('hidden');
-
-            if (document.getElementById('selected-farm-title')) {
-                document.getElementById('selected-farm-title').innerHTML = `🔍 ${item.farmName} <span class="text-red-100 font-bold">&lt;상세 입식/매입 타임라인 종합 보고서&gt;</span>`;
-            }
-            document.getElementById('selected-farm-badge').textContent = `코드: ${item.farmCode} | 담당: ${item.manager} (${item.dept})`;
-
-            // 🎯 1. 현재 선택된 기간 필터 구간(Start ~ End) 인덱스 계산
-            const allIsoMonths = mappings.costTrend.map(m => toIsoMonthStr(m.month));
-            const isoStartVal = toIsoMonthStr(selectedStartYM);
-            const isoEndVal = toIsoMonthStr(selectedEndYM);
-
-            let startIdx = allIsoMonths.findIndex(m => m === isoStartVal);
-            let endIdx = allIsoMonths.findIndex(m => m === isoEndVal);
-            if (startIdx === -1) startIdx = 0;
-            if (endIdx === -1 || endIdx < startIdx) endIdx = getRealValidMaxMonthIdx();
-
-            const displayMonths = mappings.costTrend.map(m => m.month).slice(startIdx, endIdx + 1);
-
-            // 🎯 2. 선택 기간 내 약품 성분비 연산
-            let rawVals = item.ratios.map(v => v <= 1.0 ? v * 100 : v);
-            const sum = rawVals.reduce((a, b) => a + b, 0) || 1;
-            const normVals = rawVals.map(v => (v / sum) * 100);
-
-            if (activeCharts['selectedPie']) {
-                activeCharts['selectedPie'].data.datasets[0].data = normVals.map(v => parseFloat(v.toFixed(1)));
-                activeCharts['selectedPie'].update();
-            } else {
-                activeCharts['selectedPie'] = new Chart(document.getElementById('chart-selected-ratios').getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ratioLabels,
-                        datasets: [{ data: normVals.map(v => parseFloat(v.toFixed(1))), backgroundColor: ratioColors, borderWidth: 2, borderColor: '#ffffff' }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            datalabels: {
-                                display: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
-                                formatter: (value, context) => {
-                                    let indexed = context.dataset.data.map((val, idx) => ({ val, idx })).sort((a, b) => b.val - a.val);
-                                    return (indexed.slice(0, 2).map(i => i.idx).includes(context.dataIndex) && value > 0) ? `${value.toFixed(1)}%` : '';
-                                }
-                            },
-                            legend: { position: 'right', labels: { font: { size: 10, weight: 'bold' } } }
-                        }
-                    }
-                });
-            }
-
-            let barsHtml = '';
-            normVals.forEach((v, i) => {
-                barsHtml += `
-                    <div>
-                        <div class="flex justify-between text-xs font-bold mb-1">
-                            <span class="text-slate-600 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background-color: ${ratioColors[i]}"></span>${ratioLabels[i]}</span>
-                            <span class="text-sunjin-red font-black">${v.toFixed(1)}%</span>
-                        </div>
-                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-700" style="width: ${v}%; background-color: ${ratioColors[i]}"></div>
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('sel-ratio-bars').innerHTML = barsHtml;
-
-            // 🎯 3. 선택 기간 내 실제 매입액 및 지원금 합산 연산
-            let periodPurSum = 0;
-            let periodSupSum = 0;
-            let periodHeadSum = 0;
-
-            if (item.purchaseVals && item.supportMedVals && item.headcountVals) {
-                for (let i = startIdx; i <= endIdx; i++) {
-                    periodPurSum += (item.purchaseVals[i] || 0);
-                    periodSupSum += (item.supportMedVals[i] || 0);
-                    periodHeadSum += (item.headcountVals[i] || 0);
-                }
-            }
-
-            let ratioVal = periodPurSum > 0 ? (periodSupSum / periodPurSum) * 100 : 0;
-            let selfPaidVal = Math.max(0, 100 - ratioVal);
-
-            if (activeCharts['supportRatioPie']) {
-                activeCharts['supportRatioPie'].data.datasets[0].data = [parseFloat(ratioVal.toFixed(1)), parseFloat(selfPaidVal.toFixed(1))];
-                activeCharts['supportRatioPie'].update();
-            } else {
-                activeCharts['supportRatioPie'] = new Chart(document.getElementById('chart-support-ratio').getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['지원 약품 비율', '입식 지원 비율'],
-                        datasets: [{ data: [parseFloat(ratioVal.toFixed(1)), parseFloat(selfPaidVal.toFixed(1))], backgroundColor: ['#F51932', '#10b981'], borderWidth: 2, borderColor: '#ffffff' }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' },
-                            legend: { display: false }
-                        }
-                    }
-                });
-            }
-
-            document.getElementById('support-ratio-stats').innerHTML = `
-                <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm text-center">
-                    <p class="text-xs font-semibold text-slate-500 uppercase">선택 기간 지원 약품 비율</p>
-                    <h3 class="text-3xl font-black text-sunjin-red mt-1">${ratioVal.toFixed(1)}%</h3>
-                    <div class="mt-4 space-y-2 text-left">
-                        <div class="flex justify-between text-xs font-bold"><span class="text-slate-600">선택기간 지원 매입액</span><span class="text-slate-900">${formatWon(periodSupSum)}</span></div>
-                        <div class="flex justify-between text-xs font-bold border-t border-slate-100 pt-2"><span class="text-slate-600">선택기간 약품 매입액</span><span class="text-slate-900">${formatWon(periodPurSum)}</span></div>
-                    </div>
-                </div>`;
-
-            // 🎯 4. 선택 기간 슬라이싱 배열 생성
-            const periodCostVals = item.costTrendVals ? item.costTrendVals.slice(startIdx, endIdx + 1) : [];
-            const periodHeadVals = item.headcountVals ? item.headcountVals.slice(startIdx, endIdx + 1) : [];
-            const periodPurVals = item.purchaseVals ? item.purchaseVals.slice(startIdx, endIdx + 1) : [];
-            const periodSupVals = item.supportMedVals ? item.supportMedVals.slice(startIdx, endIdx + 1) : [];
-            const periodInflowVals = item.supportInflowVals ? item.supportInflowVals.slice(startIdx, endIdx + 1) : [];
-
-            let periodAvgCost = periodHeadSum > 0 ? Math.round(periodPurSum / periodHeadSum) : (item.medicineCost || 0);
-            
-            // 🎯 [신설] 선택 농가의 선택 기간 핵심 KPI 카드 실시간 수치 바인딩
-            if (document.getElementById('detail-kpi-head')) document.getElementById('detail-kpi-head').textContent = periodHeadSum.toLocaleString() + ' 두';
-            if (document.getElementById('detail-kpi-pur')) document.getElementById('detail-kpi-pur').textContent = formatWon(periodPurSum);
-            if (document.getElementById('detail-kpi-cost')) document.getElementById('detail-kpi-cost').textContent = formatWon(periodAvgCost);
-
-            if (document.getElementById('dt-total-cost')) document.getElementById('dt-total-cost').textContent = `선택기간 평균: ${formatWon(periodAvgCost)}`;
-            if (document.getElementById('dt-total-head')) document.getElementById('dt-total-head').textContent = `선택기간 누계: ${periodHeadSum.toLocaleString()} 두`;
-            if (document.getElementById('dt-total-pur')) document.getElementById('dt-total-pur').textContent = `선택기간 누계: ${formatWon(periodPurSum)}`;
-            if (document.getElementById('dt-total-sup')) document.getElementById('dt-total-sup').textContent = `선택기간 누계: ${formatWon(periodSupSum)}`;
-
-            // 🎯 5. 선택 기간에 맞춰 차트 4종 및 하단 테이블 업데이트
-            drawTimelineChart('chart-dt-cost', displayMonths, periodCostVals, '#f59e0b', ' 원');
-            drawTimelineChart('chart-dt-head', displayMonths, periodHeadVals, '#3b82f6', ' 두');
-            drawTimelineChart('chart-dt-pur', displayMonths, periodPurVals, '#10b981', ' 원');
-            drawTimelineChart('chart-dt-sup', displayMonths, periodSupVals, '#8b5cf6', ' 원');
-
-            // 🎯 상단 표: 지원 약품 매입액 + 입식지원 매입액
-            const theadGroupA = document.getElementById('thead-group-a');
-            const tbodyGroupA = document.getElementById('tbody-group-a');
-
-            if(theadGroupA && tbodyGroupA) {
-                let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
-                theadGroupA.innerHTML = headerHtml;
-
-                tbodyGroupA.innerHTML = `
-                    <tr class="hover:bg-slate-50 border-b border-slate-150">
-                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
-                        ${periodSupVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                    </tr>
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
-                        ${periodInflowVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                    </tr>`;
-            }
-
-            // 🎯 하단 표: 입식두수 + 약품 매입액 + 입식두당 약품비 추이
-            const theadGroupB = document.getElementById('thead-group-b');
-            const tbodyGroupB = document.getElementById('tbody-group-b');
-
-            if(theadGroupB && tbodyGroupB) {
-                let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
-                displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
-                theadGroupB.innerHTML = headerHtml;
-
-                tbodyGroupB.innerHTML = `
-                    <tr class="hover:bg-slate-50 border-b border-slate-150">
-                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
-                        ${periodHeadVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
-                    </tr>
-                    <tr class="hover:bg-slate-50 border-b border-slate-150">
-                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
-                        ${periodPurVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
-                    </tr>
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
-                        ${periodCostVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
-                    </tr>`;
-            }
-
-            fetchFarmCommentsBadgeOnly(item.farmCode);
-
+        // 💡 농가를 직접 클릭했을 때만 상세 카드로 부드럽게 스크롤 이동
+        const card = document.getElementById('inline-detail-section');
+        if (card) {
             setTimeout(() => {
                 card.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
+    }
+}
+
+        function showSelectedRatioAndDetails(item) {
+    const card = document.getElementById('inline-detail-section');
+    if (!card || !item) return;
+    
+    currentSelectedFarmCode = item.farmCode;
+    card.classList.remove('hidden');
+
+    if (document.getElementById('selected-farm-title')) {
+        document.getElementById('selected-farm-title').innerHTML = `🔍 ${item.farmName} <span class="text-red-100 font-bold">&lt;상세 입식/매입 타임라인 종합 보고서&gt;</span>`;
+    }
+    document.getElementById('selected-farm-badge').textContent = `코드: ${item.farmCode} | 담당: ${item.manager} (${item.dept})`;
+
+    // 🎯 1. 현재 선택된 기간 필터 구간(Start ~ End) 인덱스 계산
+    const allIsoMonths = mappings.costTrend.map(m => toIsoMonthStr(m.month));
+    const isoStartVal = toIsoMonthStr(selectedStartYM);
+    const isoEndVal = toIsoMonthStr(selectedEndYM);
+
+    let startIdx = allIsoMonths.findIndex(m => m === isoStartVal);
+    let endIdx = allIsoMonths.findIndex(m => m === isoEndVal);
+    if (startIdx === -1) startIdx = 0;
+    if (endIdx === -1 || endIdx < startIdx) endIdx = getRealValidMaxMonthIdx();
+
+    const displayMonths = mappings.costTrend.map(m => m.month).slice(startIdx, endIdx + 1);
+
+    // 🎯 2. 선택 기간 내 약품 성분비 연산
+    let rawVals = item.ratios.map(v => v <= 1.0 ? v * 100 : v);
+    const sum = rawVals.reduce((a, b) => a + b, 0) || 1;
+    const normVals = rawVals.map(v => (v / sum) * 100);
+
+    if (activeCharts['selectedPie']) {
+        activeCharts['selectedPie'].data.datasets[0].data = normVals.map(v => parseFloat(v.toFixed(1)));
+        activeCharts['selectedPie'].update();
+    } else {
+        activeCharts['selectedPie'] = new Chart(document.getElementById('chart-selected-ratios').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ratioLabels,
+                datasets: [{ data: normVals.map(v => parseFloat(v.toFixed(1))), backgroundColor: ratioColors, borderWidth: 2, borderColor: '#ffffff' }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        display: true, color: '#ffffff', font: { weight: 'bold', size: 10 },
+                        formatter: (value, context) => {
+                            let indexed = context.dataset.data.map((val, idx) => ({ val, idx })).sort((a, b) => b.val - a.val);
+                            return (indexed.slice(0, 2).map(i => i.idx).includes(context.dataIndex) && value > 0) ? `${value.toFixed(1)}%` : '';
+                        }
+                    },
+                    legend: { position: 'right', labels: { font: { size: 10, weight: 'bold' } } }
+                }
+            }
+        });
+    }
+
+    let barsHtml = '';
+    normVals.forEach((v, i) => {
+        barsHtml += `
+            <div>
+                <div class="flex justify-between text-xs font-bold mb-1">
+                    <span class="text-slate-600 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background-color: ${ratioColors[i]}"></span>${ratioLabels[i]}</span>
+                    <span class="text-sunjin-red font-black">${v.toFixed(1)}%</span>
+                </div>
+                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-700" style="width: ${v}%; background-color: ${ratioColors[i]}"></div>
+                </div>
+            </div>`;
+    });
+    document.getElementById('sel-ratio-bars').innerHTML = barsHtml;
+
+    // 🎯 3. 선택 기간 내 실제 매입액 및 지원금 합산 연산
+    let periodPurSum = 0;
+    let periodSupSum = 0;
+    let periodHeadSum = 0;
+
+    if (item.purchaseVals && item.supportMedVals && item.headcountVals) {
+        for (let i = startIdx; i <= endIdx; i++) {
+            periodPurSum += (item.purchaseVals[i] || 0);
+            periodSupSum += (item.supportMedVals[i] || 0);
+            periodHeadSum += (item.headcountVals[i] || 0);
+        }
+    }
+
+    let ratioVal = periodPurSum > 0 ? (periodSupSum / periodPurSum) * 100 : 0;
+    let selfPaidVal = Math.max(0, 100 - ratioVal);
+
+    if (activeCharts['supportRatioPie']) {
+        activeCharts['supportRatioPie'].data.datasets[0].data = [parseFloat(ratioVal.toFixed(1)), parseFloat(selfPaidVal.toFixed(1))];
+        activeCharts['supportRatioPie'].update();
+    } else {
+        activeCharts['supportRatioPie'] = new Chart(document.getElementById('chart-support-ratio').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['지원 약품 비율', '입식 지원 비율'],
+                datasets: [{ data: [parseFloat(ratioVal.toFixed(1)), parseFloat(selfPaidVal.toFixed(1))], backgroundColor: ['#F51932', '#10b981'], borderWidth: 2, borderColor: '#ffffff' }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    datalabels: { display: true, color: '#ffffff', font: { weight: 'bold', size: 10 }, formatter: (v) => v > 0 ? `${v.toFixed(1)}%` : '' },
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    document.getElementById('support-ratio-stats').innerHTML = `
+        <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm text-center">
+            <p class="text-xs font-semibold text-slate-500 uppercase">선택 기간 지원 약품 비율</p>
+            <h3 class="text-3xl font-black text-sunjin-red mt-1">${ratioVal.toFixed(1)}%</h3>
+            <div class="mt-4 space-y-2 text-left">
+                <div class="flex justify-between text-xs font-bold"><span class="text-slate-600">선택기간 지원 매입액</span><span class="text-slate-900">${formatWon(periodSupSum)}</span></div>
+                <div class="flex justify-between text-xs font-bold border-t border-slate-100 pt-2"><span class="text-slate-600">선택기간 약품 매입액</span><span class="text-slate-900">${formatWon(periodPurSum)}</span></div>
+            </div>
+        </div>`;
+
+    // 🎯 4. 선택 기간 슬라이싱 배열 생성
+    const periodCostVals = item.costTrendVals ? item.costTrendVals.slice(startIdx, endIdx + 1) : [];
+    const periodHeadVals = item.headcountVals ? item.headcountVals.slice(startIdx, endIdx + 1) : [];
+    const periodPurVals = item.purchaseVals ? item.purchaseVals.slice(startIdx, endIdx + 1) : [];
+    const periodSupVals = item.supportMedVals ? item.supportMedVals.slice(startIdx, endIdx + 1) : [];
+    const periodInflowVals = item.supportInflowVals ? item.supportInflowVals.slice(startIdx, endIdx + 1) : [];
+
+    let periodAvgCost = periodHeadSum > 0 ? Math.round(periodPurSum / periodHeadSum) : (item.medicineCost || 0);
+
+    if (document.getElementById('detail-kpi-head')) document.getElementById('detail-kpi-head').textContent = periodHeadSum.toLocaleString() + ' 두';
+    if (document.getElementById('detail-kpi-pur')) document.getElementById('detail-kpi-pur').textContent = formatWon(periodPurSum);
+    if (document.getElementById('detail-kpi-cost')) document.getElementById('detail-kpi-cost').textContent = formatWon(periodAvgCost);
+
+    if (document.getElementById('dt-total-cost')) document.getElementById('dt-total-cost').textContent = `선택기간 평균: ${formatWon(periodAvgCost)}`;
+    if (document.getElementById('dt-total-head')) document.getElementById('dt-total-head').textContent = `선택기간 누계: ${periodHeadSum.toLocaleString()} 두`;
+    if (document.getElementById('dt-total-pur')) document.getElementById('dt-total-pur').textContent = `선택기간 누계: ${formatWon(periodPurSum)}`;
+    if (document.getElementById('dt-total-sup')) document.getElementById('dt-total-sup').textContent = `선택기간 누계: ${formatWon(periodSupSum)}`;
+
+    // 🎯 5. 선택 기간에 맞춰 차트 4종 및 하단 테이블 업데이트
+    drawTimelineChart('chart-dt-cost', displayMonths, periodCostVals, '#f59e0b', ' 원');
+    drawTimelineChart('chart-dt-head', displayMonths, periodHeadVals, '#3b82f6', ' 두');
+    drawTimelineChart('chart-dt-pur', displayMonths, periodPurVals, '#10b981', ' 원');
+    drawTimelineChart('chart-dt-sup', displayMonths, periodSupVals, '#8b5cf6', ' 원');
+
+    // 🎯 상단 표: 지원 약품 매입액 + 입식지원 매입액
+    const theadGroupA = document.getElementById('thead-group-a');
+    const tbodyGroupA = document.getElementById('tbody-group-a');
+
+    if(theadGroupA && tbodyGroupA) {
+        let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+        displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
+        theadGroupA.innerHTML = headerHtml;
+
+        tbodyGroupA.innerHTML = `
+            <tr class="hover:bg-slate-50 border-b border-slate-150">
+                <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">지원 약품 매입액</td>
+                ${periodSupVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+            </tr>
+            <tr class="hover:bg-slate-50">
+                <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식지원 매입액</td>
+                ${periodInflowVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+            </tr>`;
+    }
+
+    // 🎯 하단 표: 입식두수 + 약품 매입액 + 입식두당 약품비 추이
+    const theadGroupB = document.getElementById('thead-group-b');
+    const tbodyGroupB = document.getElementById('tbody-group-b');
+
+    if(theadGroupB && tbodyGroupB) {
+        let headerHtml = `<th class="px-3 py-2.5 border-r border-slate-200 text-slate-700 bg-slate-50 font-bold text-xs">항목 카테고리</th>`;
+        displayMonths.forEach(m => { headerHtml += `<th class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs">${m}</th>`; });
+        theadGroupB.innerHTML = headerHtml;
+
+        tbodyGroupB.innerHTML = `
+            <tr class="hover:bg-slate-50 border-b border-slate-150">
+                <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두수</td>
+                ${periodHeadVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${v.toLocaleString()} 두</td>`).join('')}
+            </tr>
+            <tr class="hover:bg-slate-50 border-b border-slate-150">
+                <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">약품 매입액</td>
+                ${periodPurVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(v)}</td>`).join('')}
+            </tr>
+            <tr class="hover:bg-slate-50">
+                <td class="px-3 py-3 font-bold bg-slate-50 text-slate-800 border-r border-slate-200 text-left text-xs">입식두당 약품비 추이</td>
+                ${periodCostVals.map(v => `<td class="px-3 py-3 text-right font-black text-slate-800 text-xs">${formatWon(Math.round(v))}</td>`).join('')}
+            </tr>`;
+    }
+
+    fetchFarmCommentsBadgeOnly(item.farmCode);
+}
 
         function fetchFarmCommentsBadgeOnly(farmCode) {
             if (!farmCode) return;
@@ -4878,7 +4917,18 @@ function initSettlementDeptDropdown() {
 
 function filterFarmsByDept(prefix) {
     const selDept = document.getElementById('sel-dept');
+    const userRole = window.currentUser ? window.currentUser.role : '일반';
+    const isAdmin = (userRole === '관리자' || userRole.toLowerCase().includes('admin'));
+    const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
+
     let dept = selDept ? selDept.value : '';
+    
+    // 일반 계정 권한 보정
+    if (!isAdmin && !dept && userDept) {
+        dept = userDept;
+        if (selDept) selDept.value = userDept;
+    }
+
     let farms = Object.keys(settlementFarmStats);
     if (dept) farms = farms.filter(f => settlementFarmStats[f].dept === dept);
     farms.sort();
@@ -4953,6 +5003,22 @@ function resetTab1() {
 
     const compareFarm = document.getElementById('sel-compare-farm');
     if (compareFarm) compareFarm.value = '';
+
+    // 일반 계정인 경우 사업부 드롭다운을 권한 사업부로 계속 유지
+    const userRole = window.currentUser ? window.currentUser.role : '일반';
+    const isAdmin = (userRole === '관리자' || userRole.toLowerCase().includes('admin'));
+    const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
+
+    const selDept = document.getElementById('sel-dept');
+    if (selDept) {
+        if (!isAdmin && userDept) {
+            selDept.value = userDept;
+            selDept.disabled = true;
+        } else if (isAdmin) {
+            selDept.value = '';
+            selDept.disabled = false;
+        }
+    }
 
     // 🎯 상황판 숨기고 '농장을 선택해 주세요' 안내창 다시 표시
     const diagEmpty = document.getElementById('diag-empty');
