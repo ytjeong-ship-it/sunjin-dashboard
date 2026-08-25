@@ -2484,31 +2484,24 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             if (data.error) throw new Error(data.error);
             if (!Array.isArray(data) || data.length < 5) throw new Error('수신된 데이터 포맷이 올바르지 않거나 권한이 없습니다.');
 
-            if (data.userInfo) {
-                window.currentUser = {
-                    email: currentUserEmail,
-                    dept: data.userInfo.dept || data.userInfo.department || "",
-                    role: data.userInfo.role || "일반"
-                };
-            } else {
-                window.currentUser = {
-                    email: currentUserEmail,
-                    dept: sessionStorage.getItem('user_dept') || "",
-                    role: sessionStorage.getItem('user_role') || "일반"
-                };
-            }
+            let fetchedSettlement = Array.isArray(resData) ? resData : (resData.rows || []);
+            let userInfo = resData.userInfo || data.userInfo || {};
+            
+            // 🎯 [1단계: 사용자 권한(Role) 및 부서(Dept) 수신 데이터 세션에 즉시 저장]
+            if (userInfo.role) sessionStorage.setItem('user_role', userInfo.role);
+            if (userInfo.dept) sessionStorage.setItem('user_dept', userInfo.dept);
+
+            window.currentUser = {
+                email: currentUserEmail,
+                dept: userInfo.dept || sessionStorage.getItem('user_dept') || "",
+                role: userInfo.role || sessionStorage.getItem('user_role') || "일반"
+            };
 
             rawReceivedRows = data;
             if (errorAlert) errorAlert.classList.add('hidden');
             if (loginErrorMsg) loginErrorMsg.classList.add('hidden');
 
             parseLEADExcel(data);
-
-            let fetchedSettlement = Array.isArray(resData) ? resData : (resData.rows || []);
-            let userInfo = resData.userInfo || {};
-            
-            if (userInfo.dept) sessionStorage.setItem('user_dept', userInfo.dept);
-            if (userInfo.role) sessionStorage.setItem('user_role', userInfo.role);
 
             settlementRawData = fetchedSettlement;
 
@@ -2539,36 +2532,35 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             generateSettlementFarmStats();
 
-            // 🎯 C. 정산 탭 드롭다운 구성 (부서명 및 권한 종합 보정)
+            // 🎯 [2단계: 접근 권한(Role)을 최우선 판단 후 부서(Dept) 매핑]
             const selDept = document.getElementById('sel-dept');
             if (selDept) {
                 selDept.innerHTML = '';
                 const allDepts = [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort();
                 
-                const userRole = window.currentUser ? String(window.currentUser.role || '').toLowerCase() : '일반';
-                const userDept = window.currentUser ? String(window.currentUser.dept || '') : (sessionStorage.getItem('user_dept') || "");
-
-                // 💡 핵심: 정산 데이터 상의 실제 4개 사업부 목록에 사용자의 부서가 안 들어가 있다면 본사/관리자 계정으로 판정
-                const isFieldDept = allDepts.includes(userDept);
-                const isAdmin = (
-                    userRole.includes('관리자') || 
-                    userRole.includes('admin') || 
-                    userRole.includes('전체') || 
-                    userRole.includes('마스터') ||
-                    !isFieldDept
-                );
+                const userRole = String(window.currentUser.role || '').toLowerCase();
+                const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
 
                 if (isAdmin) {
-                    // 관리자/본사 계정: 모든 사업부 선택 가능하도록 드롭다운 오픈
+                    // [권한: 관리자] 모든 부서 선택 허용
                     selDept.add(new Option('전체 사업부', ''));
                     allDepts.forEach(d => selDept.add(new Option(d, d)));
                     selDept.value = '';
                     selDept.disabled = false;
                 } else {
-                    // 현장 사업부 일반 사용자: 해당 사업부로 고정
-                    selDept.add(new Option(userDept, userDept, true, true));
-                    selDept.value = userDept;
-                    selDept.disabled = true;
+                    // [권한: 일반 사용자] 본인 소속 부서로 강제 매핑 및 잠금
+                    const userDeptRaw = String(window.currentUser.dept || '');
+                    const myDepts = userDeptRaw.split(/[,/]/).map(d => d.trim()).filter(Boolean);
+                    const userTargetDept = myDepts.length > 0 ? myDepts[0] : (allDepts.length > 0 ? allDepts[0] : '');
+
+                    if (userTargetDept) {
+                        selDept.add(new Option(userTargetDept, userTargetDept));
+                        selDept.value = userTargetDept;
+                        selDept.disabled = true;
+                    } else {
+                        allDepts.forEach(d => selDept.add(new Option(d, d)));
+                        selDept.disabled = false;
+                    }
                 }
             }
 
@@ -3179,20 +3171,18 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     const deptMain = document.getElementById('filter-dept');
     const deptChart = document.getElementById('chart-filter-dept');
 
-    // 💡 관리자 권한 판단 보정 ("관리자", "admin", "전체", "마스터" 키워드 포함 또는 2개 이상 사업부 수신 시 관리자로 인정)
+    // 🎯 [1단계: 접근 권한(Role) 최우선 판별]
     const userRole = window.currentUser ? String(window.currentUser.role || '').toLowerCase() : '일반';
-    const isAdmin = (
-        userRole.includes('관리자') || 
-        userRole.includes('admin') || 
-        userRole.includes('전체') || 
-        userRole.includes('마스터') ||
-        depts.length > 1
-    );
+    const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
+
+    const userDeptRaw = window.currentUser ? String(window.currentUser.dept || '') : (sessionStorage.getItem('user_dept') || "");
+    const myDepts = userDeptRaw.split(/[,/]/).map(d => d.trim()).filter(Boolean);
 
     let html = '';
 
+    // 🎯 [2단계: 권한 결과에 따라 부서 탭 매핑 및 구성]
     if (isAdmin) {
-        // 1. 관리자 계정: '한마을BU' 탭을 최우선으로 포함하고 전체 사업부 드롭다운 표출
+        // [관리자 권한]: 전체 한마을BU 및 사업부별 탭을 모두 제공
         const totalBuCount = buSummaryData.farmCount || 97;
         html += `
             <button onclick="syncAndApplyFilters('dept', '')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === 'ALL' ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
@@ -3209,14 +3199,15 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             `;
         });
 
-        // 대시보드 & 차트분석 드롭다운에 '사업부 전체' 옵션 추가 및 잠금 해제
         let optHtml = '<option value="">사업부 전체</option>';
         depts.forEach(d => { optHtml += `<option value="${d}">${d}</option>`; });
         if (deptMain) { deptMain.innerHTML = optHtml; deptMain.value = (activeDept === 'ALL' ? '' : activeDept); deptMain.disabled = false; }
         if (deptChart) { deptChart.innerHTML = optHtml; deptChart.value = (activeDept === 'ALL' ? '' : activeDept); deptChart.disabled = false; }
     } else {
-        // 2. 일반 계정: '한마을BU' 탭을 제외하고 해당 소속 사업부만 표시 및 고정
-        depts.forEach((d, idx) => {
+        // [일반 사용자 권한]: 본인 소속 부서 전용 탭으로 한정 매핑
+        const availableDepts = myDepts.length > 0 ? depts.filter(d => myDepts.includes(d)) : depts;
+
+        availableDepts.forEach((d, idx) => {
             const count = parsedData.filter(item => item.dept === d).length;
             
             if (activeDept === 'ALL' && idx === 0) {
@@ -3231,9 +3222,9 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         });
 
         let optHtml = '';
-        depts.forEach(d => { optHtml += `<option value="${d}">${d}</option>`; });
-        if (deptMain) { deptMain.innerHTML = optHtml; deptMain.value = activeDept; deptMain.disabled = true; }
-        if (deptChart) { deptChart.innerHTML = optHtml; deptChart.value = activeDept; deptChart.disabled = true; }
+        availableDepts.forEach(d => { optHtml += `<option value="${d}">${d}</option>`; });
+        if (deptMain) { deptMain.innerHTML = optHtml; deptMain.value = activeDept; deptMain.disabled = (availableDepts.length <= 1); }
+        if (deptChart) { deptChart.innerHTML = optHtml; deptChart.value = activeDept; deptChart.disabled = (availableDepts.length <= 1); }
     }
 
     if (wrapper) wrapper.innerHTML = html;
@@ -4814,29 +4805,21 @@ function fetchSettlementData() {
         .then(resData => {
             if (resData.error) throw new Error(resData.error);
 
-            // 🎯 백엔드(앱스크립트)에서 필터링해서 넘어온 데이터 및 유저 정보 수신
             let fetchedSettlement = Array.isArray(resData) ? resData : (resData.rows || []);
             let userInfo = resData.userInfo || {};
             
-            let userRole = userInfo.role || "일반";
-            let userDept = userInfo.dept || "";
+            let userRole = userInfo.role || (window.currentUser ? window.currentUser.role : "일반");
+            let userDept = userInfo.dept || (window.currentUser ? window.currentUser.dept : "");
 
-            // 🎯 [핵심 보정] 백엔드에서 받은 최신 유저 부서/권한 정보를 세션 및 전역 변수에 덮어쓰기 (기존 호남사업부 잔여값 제거)
-            if (userDept) {
-                sessionStorage.setItem('user_dept', userDept);
-                if (typeof window.currentUser !== 'undefined' && window.currentUser) {
-                    window.currentUser.dept = userDept;
-                }
-            }
-            if (userRole) {
-                sessionStorage.setItem('user_role', userRole);
-                if (typeof window.currentUser !== 'undefined' && window.currentUser) {
-                    window.currentUser.role = userRole;
-                }
-            }
+            if (userDept) sessionStorage.setItem('user_dept', userDept);
+            if (userRole) sessionStorage.setItem('user_role', userRole);
 
-            // 프론트엔드 2차 필터링 검증
-            if (userRole !== '관리자' && userDept) {
+            // 🎯 [1단계: 권한(Role) 선 검증]
+            const cleanRole = String(userRole).toLowerCase();
+            const isAdmin = cleanRole.includes('관리자') || cleanRole.includes('admin') || cleanRole.includes('전체') || cleanRole.includes('마스터');
+
+            // 🎯 [2단계: 관리자가 아닐 때만 부서(Dept) 필터링 적용]
+            if (!isAdmin && userDept) {
                 const cleanUserDept = String(userDept).replace(/\s+/g, '').trim();
                 fetchedSettlement = fetchedSettlement.filter(r => {
                     const rowDept = String(r["사업부"] || r["사업 부"] || r["dept"] || '').replace(/\s+/g, '').trim();
@@ -4874,32 +4857,28 @@ function fetchSettlementData() {
 
             generateSettlementFarmStats();
 
-            // 🎯 드롭다운 UI 제어
             const selDept = document.getElementById('sel-dept');
             if (selDept) {
                 selDept.innerHTML = '';
-                const allDepts = [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort();
+                const defaultDepts = ['F사업팀', '중부사업부', '호남사업부', '영남사업팀'];
+                const dynamicDepts = (typeof settlementFarmDeptMap !== 'undefined' && settlementFarmDeptMap) 
+                    ? [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort()
+                    : [];
+                const allDepts = dynamicDepts.length > 0 ? dynamicDepts : defaultDepts;
 
-                if (userRole === '관리자') {
-                    // D열이 관리자인 경우: 전체 사업부 선택 가능
+                if (isAdmin) {
                     selDept.add(new Option('전체 사업부', ''));
                     allDepts.forEach(d => selDept.add(new Option(d, d)));
                     selDept.value = '';
                     selDept.disabled = false;
                 } else {
-                    // D열이 일반인 경우: C열 소속 부서명(예: F사업팀)으로 고정 및 상자 잠금
-                    if (userDept) {
-                        selDept.add(new Option(userDept, userDept, true, true));
-                        selDept.value = userDept;
-                        selDept.disabled = true; // 🔒 비활성화
-                    } else {
-                        selDept.add(new Option('전체 사업부', ''));
-                        allDepts.forEach(d => selDept.add(new Option(d, d)));
-                        selDept.disabled = false;
-                    }
+                    const targetDept = userDept || '중부사업부';
+                    selDept.add(new Option(targetDept, targetDept));
+                    selDept.value = targetDept;
+                    selDept.disabled = true;
                 }
             }
-
+            
             filterFarmsByDept('diag');
         })
         .catch(err => {
@@ -4917,16 +4896,23 @@ function initSettlementDeptDropdown() {
 
 function filterFarmsByDept(prefix) {
     const selDept = document.getElementById('sel-dept');
-    const userRole = window.currentUser ? window.currentUser.role : '일반';
-    const isAdmin = (userRole === '관리자' || userRole.toLowerCase().includes('admin'));
-    const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
+
+    // 🎯 [1단계: 권한(Role) 선 확인]
+    const userRole = window.currentUser ? String(window.currentUser.role || '').toLowerCase() : (sessionStorage.getItem('user_role') || "일반").toLowerCase();
+    const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
 
     let dept = selDept ? selDept.value : '';
     
-    // 일반 계정 권한 보정
-    if (!isAdmin && !dept && userDept) {
-        dept = userDept;
-        if (selDept) selDept.value = userDept;
+    // 🎯 [2단계: 관리자가 아닐 때 본인 소속 부서로 강제 매핑 및 잠금]
+    if (!isAdmin) {
+        const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
+        if (userDept) {
+            dept = userDept;
+            if (selDept) {
+                selDept.value = userDept;
+                selDept.disabled = true;
+            }
+        }
     }
 
     let farms = Object.keys(settlementFarmStats);
@@ -4994,7 +4980,6 @@ function resetTab1() {
     const searchResults = document.getElementById('search-results-diag');
     if (searchResults) searchResults.classList.add('hidden');
 
-    // 🎯 농장 선택 해제 및 상황판 뷰 감추기
     const selFarm = document.getElementById('sel-farm');
     if (selFarm) selFarm.value = '';
 
@@ -5004,23 +4989,25 @@ function resetTab1() {
     const compareFarm = document.getElementById('sel-compare-farm');
     if (compareFarm) compareFarm.value = '';
 
-    // 일반 계정인 경우 사업부 드롭다운을 권한 사업부로 계속 유지
-    const userRole = window.currentUser ? window.currentUser.role : '일반';
-    const isAdmin = (userRole === '관리자' || userRole.toLowerCase().includes('admin'));
-    const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
+    // 🎯 [1단계: 권한(Role) 선 판별]
+    const userRole = window.currentUser ? String(window.currentUser.role || '').toLowerCase() : (sessionStorage.getItem('user_role') || "일반").toLowerCase();
+    const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
 
+    // 🎯 [2단계: 권한 조건에 맞춘 부서 드롭다운 리셋]
     const selDept = document.getElementById('sel-dept');
     if (selDept) {
-        if (!isAdmin && userDept) {
-            selDept.value = userDept;
-            selDept.disabled = true;
-        } else if (isAdmin) {
+        if (isAdmin) {
             selDept.value = '';
             selDept.disabled = false;
+        } else {
+            const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
+            if (userDept) {
+                selDept.value = userDept;
+                selDept.disabled = true;
+            }
         }
     }
 
-    // 🎯 상황판 숨기고 '농장을 선택해 주세요' 안내창 다시 표시
     const diagEmpty = document.getElementById('diag-empty');
     const diagData = document.getElementById('diag-data');
     if (diagEmpty) diagEmpty.classList.remove('hidden');
@@ -5028,6 +5015,7 @@ function resetTab1() {
 
     filterFarmsByDept('diag');
 }
+// 1. 농가 선택 시 최신 연도(2026년 방향) 우선 선택
 function onFarmChange() {
     const farm = document.getElementById('sel-farm').value;
     if (!farm || !settlementFarmStats[farm]) {
@@ -5041,7 +5029,9 @@ function onFarmChange() {
 
     const farmStat = settlementFarmStats[farm];
     const farmRows = farmStat.rows;
-    const years = [...new Set(farmRows.map(r => r["출하 년도"]).filter(y => y > 0))].sort((a,b) => b-a);
+
+    // 🎯 가장 최근 연도 우선 정렬 (내림차순: 2026년 > 2025년 > ...)
+    const years = [...new Set(farmRows.map(r => parseSettlementNum(r["출하 년도"])).filter(y => y > 0))].sort((a, b) => b - a);
 
     const dashYearSel = document.getElementById('sel-dash-year');
     dashYearSel.innerHTML = '';
@@ -5050,41 +5040,61 @@ function onFarmChange() {
         dashYearSel.add(new Option(`${y}년`, y));
     });
 
+    // 🎯 가장 최신 연도(0번 인덱스) 자동 지정
+    if (years.length > 0) {
+        dashYearSel.value = years[0];
+    }
+
     onDashYearChange();
     renderMonthlyCostChart3Years(farmStat.monthlyData);
     renderMonthlyTrendChart3Years(farmStat.monthlyData);
 }
 
+// 2. 연도 선택 시 최신 월(12월 방향) 우선 선택
 function onDashYearChange() {
     const farm = document.getElementById('sel-farm').value;
     const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
     if (!farm || !settlementFarmStats[farm]) return;
 
-    const farmRows = settlementFarmStats[farm].rows.filter(r => r["출하 년도"] === year);
-    const months = [...new Set(farmRows.map(r => r["출하 월"]))].sort((a,b) => a-b);
+    const farmRows = settlementFarmStats[farm].rows.filter(r => parseSettlementNum(r["출하 년도"]) === year);
+    
+    // 🎯 가장 최근 월 우선 정렬 (내림차순: 12월 > 11월 > ...)
+    const months = [...new Set(farmRows.map(r => parseSettlementNum(r["출하 월"])))].filter(m => m > 0).sort((a, b) => b - a);
 
     const dashMonthSel = document.getElementById('sel-dash-month');
     dashMonthSel.innerHTML = '';
     months.forEach(m => dashMonthSel.add(new Option(`${m}월`, m)));
 
+    // 🎯 가장 최신 월(0번 인덱스) 자동 지정
+    if (months.length > 0) {
+        dashMonthSel.value = months[0];
+    }
+
     onDashMonthChange();
 }
 
+// 3. 월 선택 시 최신 정산건(가장 높은 번호) 우선 선택
 function onDashMonthChange() {
     const farm = document.getElementById('sel-farm').value;
     const year = parseSettlementNum(document.getElementById('sel-dash-year').value);
     const month = parseSettlementNum(document.getElementById('sel-dash-month').value);
     if (!farm || !settlementFarmStats[farm]) return;
 
-    const matches = settlementFarmStats[farm].rows.filter(r => r["출하 년도"] === year && r["출하 월"] === month);
+    const matches = settlementFarmStats[farm].rows.filter(r => parseSettlementNum(r["출하 년도"]) === year && parseSettlementNum(r["출하 월"]) === month);
 
     const dashBatchSel = document.getElementById('sel-dash-batch');
     dashBatchSel.innerHTML = '';
 
+    // 드롭다운 목록 생성
     matches.forEach((r, idx) => {
         const cost = parseSettlementCost(r["출하 두당 사육비"]);
-        dashBatchSel.add(new Option(`정산 #${idx+1} (${cost.toLocaleString()}원)`, idx));
+        dashBatchSel.add(new Option(`정산 #${idx + 1} (${cost.toLocaleString()}원)`, idx));
     });
+
+    // 🎯 가장 최근 정산건(가장 높은 숫자의 정산건: matches.length - 1) 자동 지정
+    if (matches.length > 0) {
+        dashBatchSel.value = matches.length - 1;
+    }
 
     renderDashboardPanel();
 }
