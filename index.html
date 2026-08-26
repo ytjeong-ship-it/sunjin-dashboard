@@ -2786,6 +2786,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             });
             summaryRows.push(r);
         } else if (farmName.includes('한마을') || deptName.includes('한마을') || col0Val.includes('한마을') || col1Val.includes('한마을')) {
+            // 🎯 108행 한마을BU 원본 요약행 수치 전체 바인딩
             const parsedMed = cleanNum(r[mappings.medicineCost]);
             if (parsedMed > 0) buSummaryData.medicineCost = parsedMed;
             
@@ -2799,6 +2800,15 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             const parsedPur = cleanNum(r[mappings.purchaseTotal]);
             if (parsedPur > 0) buSummaryData.totalPurchase = parsedPur;
+
+            // 🎯 시트 108행 원본의 월별 추이 데이터 배열 완벽 보존
+            buSummaryData.ratios = mappings.ratios.map(idx => cleanNum(r[idx]));
+            buSummaryData.costTrendVals = mappings.costTrend.map(m => cleanNum(r[m.idx]));
+            buSummaryData.headcountVals = mappings.headcount.map(m => cleanNum(r[m.idx]));
+            buSummaryData.purchaseVals = mappings.purchase.map(m => cleanNum(r[m.idx]));
+            buSummaryData.supportInflowVals = mappings.supportInflow.map(m => cleanNum(r[m.idx]));
+            buSummaryData.supportMedVals = mappings.supportMed.map(m => cleanNum(r[m.idx]));
+            buSummaryData.supportMedRatio = (mappings.supportMedRatio !== -1) ? cleanNum(r[mappings.supportMedRatio]) : 0;
 
             summaryRows.push(r);
         } else if (farmName.includes('합계') || farmName.includes('평균') || farmName.includes('소계') || 
@@ -2824,7 +2834,6 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         }
     }
 
-    // 🎯 [핵심] 하드코딩된 예외 수치를 제거하고 실제 수신/파싱된 농가 수(98개)를 그대로 동기화
     buSummaryData.farmCount = parsedData.length;
 
     parsedData.forEach(item => { item.gradeCategory = calculateGrade(item.medicineCost, item.purchaseTotal, item.headcountTotal); });
@@ -3004,13 +3013,17 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         if (startIdx === -1) startIdx = 0;
         if (endIdx === -1 || endIdx < startIdx) endIdx = getRealValidMaxMonthIdx();
 
-        // 🎯 2. 백엔드 수신 요약 객체(buSummaryData / farmSizeSummaryRows) 직접 바인딩
+        const displayMonths = mappings.costTrend.map(m => m.month).slice(startIdx, endIdx + 1);
+
+        // 🎯 2. [핵심] 원본 시트 요약 객체 1:1 다이렉트 매핑
         let isAllScope = (selectedModalSizeCategory === 'ALL');
         let targetSummaryObj = null;
 
         if (isAllScope) {
+            // 전체 규모 보기 = 엑셀 108행(buSummaryData) 원본 그대로 사용
             targetSummaryObj = buSummaryData;
         } else {
+            // 규모별 보기 = 엑셀 116~119행(farmSizeSummaryRows) 원본 그대로 사용
             const cleanTargetCat = cleanStr(selectedModalSizeCategory).replace(/[^0-9가-힣a-zA-Z]/g, '');
             targetSummaryObj = farmSizeSummaryRows.find(r => {
                 if (!r || !r.label) return false;
@@ -3019,21 +3032,35 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             });
         }
 
-        // 🎯 3. 백엔드 수신 월별 배열값 안전 연산
-        let totalHead = 0;
-        let totalPur = 0;
+        // 🎯 3. 원본 요약 객체에서 가져온 월별 배열값 가져오기
+        let costTrendArr = new Array(displayMonths.length).fill(0);
+        let dtPurArr = new Array(displayMonths.length).fill(0);
+        let dtHeadArr = new Array(displayMonths.length).fill(0);
+        let dtSupArr = new Array(displayMonths.length).fill(0);
+        let dtInflowArr = new Array(displayMonths.length).fill(0);
+        let normTypeRatios = [0, 0, 0, 0, 0];
 
         if (targetSummaryObj) {
-            if (Array.isArray(targetSummaryObj.purchaseVals) && Array.isArray(targetSummaryObj.headcountVals)) {
-                for (let i = startIdx; i <= endIdx; i++) {
-                    totalPur += cleanNum(targetSummaryObj.purchaseVals[i]);
-                    totalHead += cleanNum(targetSummaryObj.headcountVals[i]);
-                }
+            if (targetSummaryObj.costTrendVals) costTrendArr = targetSummaryObj.costTrendVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.purchaseVals) dtPurArr = targetSummaryObj.purchaseVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.headcountVals) dtHeadArr = targetSummaryObj.headcountVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.supportMedVals) dtSupArr = targetSummaryObj.supportMedVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.supportInflowVals) dtInflowArr = targetSummaryObj.supportInflowVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+
+            if (targetSummaryObj.ratios) {
+                let rTemp = targetSummaryObj.ratios.map(v => cleanNum(v) <= 1.0 ? cleanNum(v) * 100 : cleanNum(v));
+                const sumT = rTemp.reduce((a, b) => a + b, 0) || 1;
+                normTypeRatios = rTemp.map(v => parseFloat(((v / sumT) * 100).toFixed(1)));
             }
-            if (totalHead === 0) {
-                totalHead = cleanNum(targetSummaryObj.totalHead) || cleanNum(targetSummaryObj.count);
-                totalPur = cleanNum(targetSummaryObj.totalPurchase);
-            }
+        }
+
+        // 🎯 4. 원본 누계 수치 표출
+        let totalHead = dtHeadArr.reduce((a, b) => a + b, 0);
+        let totalPur = dtPurArr.reduce((a, b) => a + b, 0);
+
+        if (totalHead === 0 && targetSummaryObj) {
+            totalHead = cleanNum(targetSummaryObj.totalHead) || cleanNum(targetSummaryObj.count);
+            totalPur = cleanNum(targetSummaryObj.totalPurchase);
         }
 
         let avgCost = totalHead > 0 ? Math.round(totalPur / totalHead) : (targetSummaryObj ? cleanNum(targetSummaryObj.medicineCost) : 0);
@@ -3042,23 +3069,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         if (document.getElementById('size-kpi-total-pur')) document.getElementById('size-kpi-total-pur').textContent = formatWon(totalPur);
         if (document.getElementById('size-kpi-avg-cost')) document.getElementById('size-kpi-avg-cost').textContent = formatWon(avgCost);
 
-        // 🎯 4. 메인 차트용 데이터 배열 원본 바인딩 (재계산 대신 시트 원본 배열 사용)
-        const displayMonths = mappings.costTrend.map(m => m.month).slice(startIdx, endIdx + 1);
-        let costTrendArr = new Array(displayMonths.length).fill(0);
-        let dtPurArr = new Array(displayMonths.length).fill(0);
-        let dtHeadArr = new Array(displayMonths.length).fill(0);
-        let dtSupArr = new Array(displayMonths.length).fill(0);
-        let dtInflowArr = new Array(displayMonths.length).fill(0);
-
-        if (targetSummaryObj) {
-            if (targetSummaryObj.costTrendVals) costTrendArr = targetSummaryObj.costTrendVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
-            if (targetSummaryObj.purchaseVals) dtPurArr = targetSummaryObj.purchaseVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
-            if (targetSummaryObj.headcountVals) dtHeadArr = targetSummaryObj.headcountVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
-            if (targetSummaryObj.supportMedVals) dtSupArr = targetSummaryObj.supportMedVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
-            if (targetSummaryObj.supportInflowVals) dtInflowArr = targetSummaryObj.supportInflowVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
-        }
-
-        // 🎯 5. 상단 꺾은선 차트 (입식두당 약품비 추이)
+        // 🎯 5. 상단 꺾은선 차트 (입식두당 약품비 추이 원본)
         if (activeCharts['modalSizeCostLine']) {
             activeCharts['modalSizeCostLine'].data.labels = displayMonths;
             activeCharts['modalSizeCostLine'].data.datasets[0].data = costTrendArr;
@@ -3093,7 +3104,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             }
         }
 
-        // 🎯 6. 상단 도넛 차트 (지원 약품 비율)
+        // 🎯 6. 상단 도넛 차트 (지원 약품 비율 원본)
         let totalSupPur = dtSupArr.reduce((a, b) => a + b, 0);
         let supportRatioVal = totalPur > 0 ? (totalSupPur / totalPur) * 100 : (targetSummaryObj ? cleanNum(targetSummaryObj.supportMedRatio) : 0);
         if (supportRatioVal <= 1.0 && supportRatioVal > 0) supportRatioVal *= 100;
@@ -3126,14 +3137,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             }
         }
 
-        // 🎯 7. 상단 도넛 차트 (약품 종류별 구성 비율)
-        let normTypeRatios = [0, 0, 0, 0, 0];
-        if (targetSummaryObj && targetSummaryObj.ratios) {
-            let rTemp = targetSummaryObj.ratios.map(v => cleanNum(v) <= 1.0 ? cleanNum(v) * 100 : cleanNum(v));
-            const sumT = rTemp.reduce((a, b) => a + b, 0) || 1;
-            normTypeRatios = rTemp.map(v => parseFloat(((v / sumT) * 100).toFixed(1)));
-        }
-
+        // 🎯 7. 상단 도넛 차트 (약품 종류별 구성 비율 원본)
         if (activeCharts['modalSizeTypePie']) {
             activeCharts['modalSizeTypePie'].data.datasets[0].data = normTypeRatios;
             activeCharts['modalSizeTypePie'].update();
