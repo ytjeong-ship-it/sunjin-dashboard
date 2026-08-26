@@ -970,7 +970,7 @@ html {
             </div>
         </div>
 
-        <!-- 팝업 모달 1: DATA VALIDATION & PIPELINE STATUS 모달 -->
+        <!-- 팝업 모달 1: DATA VALIDATION & PIPELINE STATUS 모달 (LEAD + 정산 통합) -->
         <div id="telemetry-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
             <div class="bg-[#0B132A] rounded-2xl shadow-2xl max-w-2xl w-full p-6 border border-slate-800 text-white fade-in-section">
                 <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
@@ -984,17 +984,36 @@ html {
                 </div>
                 
                 <div class="font-mono text-xs text-slate-300 space-y-4 bg-[#050B1A] p-5 rounded-xl border border-slate-800/80">
-                    <p class="text-emerald-400 font-bold text-sm" id="telemetry-log-status">[SUCCESS] Google Apps Script 백엔드 데이터 수신 성공!</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-t border-b border-slate-800 py-3">
-                        <div>• 수신된 데이터 총 수: <span id="telemetry-total-rows" class="text-white font-bold">0</span> 건</div>
-                        <div>• 식별 농장 개소 수: <span id="telemetry-farms-count" class="text-white font-bold">0</span> 개</div>
-                        <div>• 백엔드 통신 지연시간: <span id="telemetry-latency" class="text-emerald-400 font-bold">0 ms</span></div>
-                        <div>• 약품비 0원 농가 개수: <span id="telemetry-zero-farms" class="text-rose-400 font-bold">0</span> 개</div>
+                    <p class="text-emerald-400 font-bold text-sm" id="telemetry-log-status">[SUCCESS] Google Apps Script 백엔드 파이프라인 동기화 완료!</p>
+                    
+                    <!-- 📊 1. LEAD 대시보드 파이프라인 현황 -->
+                    <div>
+                        <p class="text-xs font-bold text-sunjin-orange mb-1.5 flex items-center gap-1">
+                            📊 LEAD 대시보드 데이터 수신 현황
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+                            <div>• 수신 데이터 건수: <span id="telemetry-total-rows" class="text-white font-bold">0</span> 건</div>
+                            <div>• 식별 농장 개소 수: <span id="telemetry-farms-count" class="text-white font-bold">0</span> 개</div>
+                            <div>• 약품비 0원 농가: <span id="telemetry-zero-farms" class="text-rose-400 font-bold">0</span> 개</div>
+                            <div>• Target 108행 약품비: <span id="telemetry-bu-cost" class="text-amber-300 font-bold">-- 원</span></div>
+                        </div>
                     </div>
-                    <div class="text-xs text-slate-400 space-y-1.5">
-                        <div>Target 108행 약품비: <span id="telemetry-bu-cost" class="text-amber-300 font-bold">-- 원</span></div>
-                        <div>Target 108행 평균육성률: <span id="telemetry-bu-rate" class="text-amber-300 font-bold">-- %</span></div>
-                        <div id="telemetry-sync-time" class="text-slate-500 pt-1">동기화 시각: --</div>
+
+                    <!-- 📑 2. 정산 성적 분석 파이프라인 현황 -->
+                    <div>
+                        <p class="text-xs font-bold text-emerald-400 mb-1.5 flex items-center gap-1">
+                            📑 정산 성적 분석 데이터 수신 현황
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+                            <div>• 정산 데이터 건수: <span id="telemetry-settle-rows" class="text-white font-bold">0</span> 건</div>
+                            <div>• 정산 등록 농가 수: <span id="telemetry-settle-farms" class="text-white font-bold">0</span> 개</div>
+                        </div>
+                    </div>
+
+                    <!-- ⚡ 3. 통신 지연시간 및 시각 -->
+                    <div class="text-xs text-slate-400 pt-2 border-t border-slate-800 flex justify-between items-center">
+                        <div>• 백엔드 통신 지연시간: <span id="telemetry-latency" class="text-emerald-400 font-bold">0 ms</span></div>
+                        <div id="telemetry-sync-time" class="text-slate-500">동기화 시각: --</div>
                     </div>
                 </div>
 
@@ -1013,8 +1032,8 @@ html {
                     <div class="flex items-center space-x-2.5">
                         <div class="p-2 bg-red-50 text-sunjin-red rounded-xl"><i data-lucide="database" class="w-5 h-5"></i></div>
                         <div>
-                            <h3 class="text-base font-black text-slate-800">Google Apps Script 실시간 수신 데이터 뷰어 (전체 열 & 페이지네이션)</h3>
-                            <p class="text-xs text-slate-500 mt-0.5">스프레드시트에서 수신된 전체 컬럼 스펙트럼 데이터를 확인할 수 있습니다.</p>
+                            <h3 class="text-base font-black text-slate-800">실시간 수신 데이터 검증 뷰어</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">스프레드시트에서 수신된 대시보드(LEAD) 및 정산 원본 데이터를 분리 검증할 수 있습니다.</p>
                         </div>
                     </div>
                     <button onclick="closeRawDataModal()" class="text-slate-400 hover:text-slate-600 transition">
@@ -1023,6 +1042,9 @@ html {
                 </div>
 
                 <div class="flex-1 overflow-auto p-4">
+                    <!-- 🎯 동적 탭 컨테이너 -->
+                    <div id="raw-modal-tab-container"></div>
+
                     <table class="w-full text-[11px] text-left border-collapse whitespace-nowrap">
                         <thead id="raw-modal-thead" class="sticky top-0 bg-slate-800 text-white font-bold z-10">
                         </thead>
@@ -1839,67 +1861,83 @@ let currentSortField = 'medicineCost';
         }
 
         function handleCustomLogin(e) {
-            e.preventDefault();
-            const emailInput = document.getElementById('login-input-email');
-            const passwordInput = document.getElementById('login-input-password');
-            const errorMsg = document.getElementById('login-error-msg');
-            const loginBtn = document.getElementById('btn-login-submit');
-            const loginBtnText = document.getElementById('btn-login-text');
+    e.preventDefault();
+    const emailInput = document.getElementById('login-input-email');
+    const passwordInput = document.getElementById('login-input-password');
+    const errorMsg = document.getElementById('login-error-msg');
+    const loginBtn = document.getElementById('btn-login-submit');
+    const loginBtnText = document.getElementById('btn-login-text');
+    
+    // 🎯 비밀번호 재설정 버튼 요소 가져오기
+    const resetBtn = document.querySelector('button[onclick="openResetModal()"]');
 
-            const emailVal = emailInput ? emailInput.value.trim() : '';
-            const passwordVal = passwordInput ? passwordInput.value.trim() : '';
+    const emailVal = emailInput ? emailInput.value.trim() : '';
+    const passwordVal = passwordInput ? passwordInput.value.trim() : '';
 
-            if (!emailVal || !passwordVal) {
-                if (errorMsg) {
-                    errorMsg.textContent = "이메일과 비밀번호를 모두 입력해 주세요.";
-                    errorMsg.classList.remove('hidden');
-                }
-                return;
-            }
-
-            currentUserEmail = emailVal;
-            currentUserPassword = passwordVal;
-
-            sessionStorage.setItem('user_email', currentUserEmail);
-            sessionStorage.setItem('user_password', currentUserPassword);
-
-            if (errorMsg) errorMsg.classList.add('hidden');
-
-            if (emailInput) emailInput.disabled = true;
-            if (passwordInput) passwordInput.disabled = true;
-            if (loginBtn) loginBtn.disabled = true;
-
-            if (loginBtnText) {
-                loginBtnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm"></i> 로그인 처리 중...`;
-            }
-
-            fetchGoogleSheetData(true, true);
+    if (!emailVal || !passwordVal) {
+        if (errorMsg) {
+            errorMsg.textContent = "이메일과 비밀번호를 모두 입력해 주세요.";
+            errorMsg.classList.remove('hidden');
         }
+        return;
+    }
+
+    currentUserEmail = emailVal;
+    currentUserPassword = passwordVal;
+
+    sessionStorage.setItem('user_email', currentUserEmail);
+    sessionStorage.setItem('user_password', currentUserPassword);
+
+    if (errorMsg) errorMsg.classList.add('hidden');
+
+    // 🔒 로그인 진행 중 모든 입력창 및 버튼 잠금
+    if (emailInput) emailInput.disabled = true;
+    if (passwordInput) passwordInput.disabled = true;
+    if (loginBtn) loginBtn.disabled = true;
+
+    // 🎯 로그인 진행 중 '비밀번호를 잊으셨나요?' 버튼 클릭 완전 차단
+    if (resetBtn) {
+        resetBtn.disabled = true;
+        resetBtn.classList.add('pointer-events-none', 'opacity-40', 'no-underline');
+    }
+
+    if (loginBtnText) {
+        loginBtnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm"></i> 로그인 처리 중...`;
+    }
+
+    fetchGoogleSheetData(true, true);
+}
 
         function restoreLoginButtonState() {
-            const emailInput = document.getElementById('login-input-email');
-            const passwordInput = document.getElementById('login-input-password');
-            const loginBtn = document.getElementById('btn-login-submit');
-            const loginBtnText = document.getElementById('btn-login-text');
+    const emailInput = document.getElementById('login-input-email');
+    const passwordInput = document.getElementById('login-input-password');
+    const loginBtn = document.getElementById('btn-login-submit');
+    const loginBtnText = document.getElementById('btn-login-text');
+    
+    // 🎯 비밀번호 재설정 버튼 복원
+    const resetBtn = document.querySelector('button[onclick="openResetModal()"]');
 
-            if (emailInput) emailInput.disabled = false;
-            if (passwordInput) passwordInput.disabled = false;
-            if (loginBtn) loginBtn.disabled = false;
+    if (emailInput) emailInput.disabled = false;
+    if (passwordInput) passwordInput.disabled = false;
+    if (loginBtn) loginBtn.disabled = false;
 
-            if (loginBtnText) {
-                loginBtnText.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i>로그인 및 데이터 조회`;
-            }
-            lucide.createIcons();
-        }
+    // 🎯 '비밀번호를 잊으셨나요?' 버튼 잠금 해제 및 스타일 원복
+    if (resetBtn) {
+        resetBtn.disabled = false;
+        resetBtn.classList.remove('pointer-events-none', 'opacity-40', 'no-underline');
+    }
+
+    if (loginBtnText) {
+        loginBtnText.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i>로그인 및 데이터 조회`;
+    }
+    lucide.createIcons();
+}
 
 function handleLogout() {
-    // 🎯 1. 세션 저장소의 모든 유저 정보 삭제
-    sessionStorage.removeItem('user_email');
-    sessionStorage.removeItem('user_password');
-    sessionStorage.removeItem('user_dept');
-    sessionStorage.removeItem('user_role');
+    // 🎯 1. 브라우저 세션 저장소 완전 삭제 (이전 권한 잔재 원천 차단)
+    sessionStorage.clear();
     
-    // 🎯 2. 전역 메모리 변수 및 정산 데이터 완전 초기화
+    // 🎯 2. 전역 메모리 변수 및 유저 객체 완전 리셋
     currentUserEmail = "";
     currentUserPassword = "";
     window.currentUser = null;
@@ -1912,7 +1950,7 @@ function handleLogout() {
     settlementFarmStats = {};
     settlementFarmDeptMap = {};
 
-    // 🎯 3. 종합 대시보드(상세 카드 포함), 차트 분석, 월별 정산 탭 전체를 기초 상태로 완벽 리셋
+    // 🎯 3. UI 및 대시보드 상태 초기 복원
     resetWholePageToInitialState();
 
     const userEmailEl = document.getElementById('current-user-email');
@@ -1920,7 +1958,7 @@ function handleLogout() {
 
     restoreLoginButtonState();
     showLoginModal();
-    showNotification('🔒 로그아웃되었습니다.', 'info');
+    showNotification('🔒 로그아웃되었습니다. 이전 세션이 안전하게 제거되었습니다.', 'info');
 }
         function toggleVerifDropdown() {
             const menu = document.getElementById('verif-dropdown-menu');
@@ -1939,13 +1977,23 @@ function handleLogout() {
             if (modal) modal.classList.add('hidden');
         }
 
-        function openRawDataModal() {
-            const menu = document.getElementById('verif-dropdown-menu');
-            if (menu) menu.classList.add('hidden');
-            rawModalCurrentPage = 1;
-            renderRawModalTable();
-            document.getElementById('raw-data-modal').classList.remove('hidden');
-        }
+        // 🎯 데이터 검증 모달 전역 탭 상태 변수 (1942라인 위쪽에 선언)
+let rawModalCurrentTab = 'lead';
+
+function openRawDataModal() {
+    const menu = document.getElementById('verif-dropdown-menu');
+    if (menu) menu.classList.add('hidden');
+    rawModalCurrentTab = 'lead';
+    rawModalCurrentPage = 1;
+    renderRawModalTable();
+    document.getElementById('raw-data-modal').classList.remove('hidden');
+}
+
+function switchRawModalTab(tab) {
+    rawModalCurrentTab = tab;
+    rawModalCurrentPage = 1;
+    renderRawModalTable();
+}
 
         function closeRawDataModal() {
             document.getElementById('raw-data-modal').classList.add('hidden');
@@ -2326,13 +2374,11 @@ function switchMainTab(tab) {
 }
 
       function resetWholePageToInitialState() {
-    // 🎯 1. 전역 선택 상태 및 필터 변수 초기화
     activeDept = 'ALL';
     currentSortField = 'medicineCost';
     currentSortAsc = false;
     currentSelectedFarmCode = "";
 
-    // 🎯 2. [추가] 기간 필터 변수 및 버튼/달력 UI 완전 초기화 ('all' 모드 복원)
     activePeriodMode = 'all';
     const maxIndex = getRealValidMaxMonthIdx();
     if (mappings && Array.isArray(mappings.costTrend) && mappings.costTrend.length > 0) {
@@ -2352,7 +2398,6 @@ function switchMainTab(tab) {
 
     updateMonthPickerInputs();
 
-    // 🎯 3. 대시보드 & 차트분석 필터/검색창 리셋
     syncAndApplyFilters('search', '');
     syncAndApplyFilters('dept', '');
     syncAndApplyFilters('region', '');
@@ -2360,20 +2405,37 @@ function switchMainTab(tab) {
     syncAndApplyFilters('rearingGrade', '');
     syncAndApplyFilters('costGrade', '');
 
-    // 🎯 4. [종합 대시보드] 상세 입식/매입 타임라인 카드 완전 숨김
     const inlineCard = document.getElementById('inline-detail-section');
     if (inlineCard) inlineCard.classList.add('hidden');
 
-    // 🎯 5. [정산 성적 분석] 상황판 숨김 & 안내 메시지창 표시
-    resetTab1();
+    // 🎯 정산 성적 드롭다운 덮어쓰기를 방지하고 필터만 동기화
+    const searchDiag = document.getElementById('search-farm-diag');
+    if (searchDiag) searchDiag.value = '';
+    
+    const searchResults = document.getElementById('search-results-diag');
+    if (searchResults) searchResults.classList.add('hidden');
 
-    // 🎯 6. UI 드롭다운 및 테이블 재렌더링
+    const selFarm = document.getElementById('sel-farm');
+    if (selFarm) selFarm.value = '';
+
+    const clickPanel = document.getElementById('scatter-click-panel');
+    if (clickPanel) clickPanel.classList.add('hidden');
+
+    const compareFarm = document.getElementById('sel-compare-farm');
+    if (compareFarm) compareFarm.value = '';
+
+    const diagEmpty = document.getElementById('diag-empty');
+    const diagData = document.getElementById('diag-data');
+    if (diagEmpty) diagEmpty.classList.remove('hidden');
+    if (diagData) diagData.classList.add('hidden');
+
+    filterFarmsByDept('diag');
+
     renderTabs();
     populateRegions();
     populateRearingGrades();
     applyFilters();
 
-    // 🎯 7. 첫 화면인 '종합 대시보드'로 이동 및 상단 스크롤
     switchMainTab('dashboard');
     window.scrollTo({ top: 0, behavior: 'instant' });
 }
@@ -2487,14 +2549,22 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             let fetchedSettlement = Array.isArray(resData) ? resData : (resData.rows || []);
             let userInfo = resData.userInfo || data.userInfo || {};
             
-            // 🎯 [1단계: 사용자 권한(Role) 및 부서(Dept) 수신 데이터 세션에 즉시 저장]
-            if (userInfo.role) sessionStorage.setItem('user_role', userInfo.role);
-            if (userInfo.dept) sessionStorage.setItem('user_dept', userInfo.dept);
+            // 🎯 [핵심 방어] 로그인 시점마다 이전 세션 권한을 지우고 현재 수신된 권한만 정확히 바인딩
+            if (isLoginAttempt) {
+                sessionStorage.removeItem('user_role');
+                sessionStorage.removeItem('user_dept');
+            }
+
+            let userRole = userInfo.role || "일반";
+            let userDept = userInfo.dept || "";
+
+            sessionStorage.setItem('user_role', userRole);
+            sessionStorage.setItem('user_dept', userDept);
 
             window.currentUser = {
                 email: currentUserEmail,
-                dept: userInfo.dept || sessionStorage.getItem('user_dept') || "",
-                role: userInfo.role || sessionStorage.getItem('user_role') || "일반"
+                dept: userDept,
+                role: userRole
             };
 
             rawReceivedRows = data;
@@ -2532,42 +2602,9 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             generateSettlementFarmStats();
 
-            // 🎯 [2단계: 접근 권한(Role)을 최우선 판단 후 부서(Dept) 매핑]
-            const selDept = document.getElementById('sel-dept');
-            if (selDept) {
-                selDept.innerHTML = '';
-                const allDepts = [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort();
-                
-                const userRole = String(window.currentUser.role || '').toLowerCase();
-                const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
-
-                if (isAdmin) {
-                    // [권한: 관리자] 모든 부서 선택 허용
-                    selDept.add(new Option('전체 사업부', ''));
-                    allDepts.forEach(d => selDept.add(new Option(d, d)));
-                    selDept.value = '';
-                    selDept.disabled = false;
-                } else {
-                    // [권한: 일반 사용자] 본인 소속 부서로 강제 매핑 및 잠금
-                    const userDeptRaw = String(window.currentUser.dept || '');
-                    const myDepts = userDeptRaw.split(/[,/]/).map(d => d.trim()).filter(Boolean);
-                    const userTargetDept = myDepts.length > 0 ? myDepts[0] : (allDepts.length > 0 ? allDepts[0] : '');
-
-                    if (userTargetDept) {
-                        selDept.add(new Option(userTargetDept, userTargetDept));
-                        selDept.value = userTargetDept;
-                        selDept.disabled = true;
-                    } else {
-                        allDepts.forEach(d => selDept.add(new Option(d, d)));
-                        selDept.disabled = false;
-                    }
-                }
-            }
-
-            filterFarmsByDept('diag');
+            fetchSettlementData();
 
             hideLoginModal();
-            resetWholePageToInitialState();
             checkAndShowNotice();
 
             if (isLoginAttempt || isManual) {
@@ -2763,33 +2800,6 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             const parsedPur = cleanNum(r[mappings.purchaseTotal]);
             if (parsedPur > 0) buSummaryData.totalPurchase = parsedPur;
 
-            const countCandidate = cleanNum(r[mappings.farmCode]) || cleanNum(r[mappings.breedingSize]) || cleanNum(r[0]) || cleanNum(r[mappings.farmSize]);
-            if (countCandidate > 0 && countCandidate < 1000) buSummaryData.farmCount = countCandidate;
-            else buSummaryData.farmCount = 97;
-
-            // 💡 [핵심 보정] 한마을BU 전체 요약 객체에도 지원약품 및 입식지원 배열을 누락 없이 파싱
-            if (mappings.costTrend && mappings.costTrend.length > 0) {
-                buSummaryData.costTrendVals = mappings.costTrend.map(m => cleanNum(r[m.idx]));
-            }
-            if (mappings.ratios && mappings.ratios.length > 0) {
-                buSummaryData.ratios = mappings.ratios.map(idx => cleanNum(r[idx]));
-            }
-            if (mappings.headcount && mappings.headcount.length > 0) {
-                buSummaryData.headcountVals = mappings.headcount.map(m => cleanNum(r[m.idx]));
-            }
-            if (mappings.purchase && mappings.purchase.length > 0) {
-                buSummaryData.purchaseVals = mappings.purchase.map(m => cleanNum(r[m.idx]));
-            }
-            if (mappings.supportMed && mappings.supportMed.length > 0) {
-                buSummaryData.supportMedVals = mappings.supportMed.map(m => cleanNum(r[m.idx]));
-            }
-            if (mappings.supportInflow && mappings.supportInflow.length > 0) {
-                buSummaryData.supportInflowVals = mappings.supportInflow.map(m => cleanNum(r[m.idx]));
-            }
-            if (mappings.supportMedRatio !== -1) {
-                buSummaryData.supportMedRatio = cleanNum(r[mappings.supportMedRatio]);
-            }
-
             summaryRows.push(r);
         } else if (farmName.includes('합계') || farmName.includes('평균') || farmName.includes('소계') || 
             farmName.includes('전체') || deptName.includes('합계') || deptName.includes('평균') ||
@@ -2814,6 +2824,9 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         }
     }
 
+    // 🎯 [핵심] 하드코딩된 예외 수치를 제거하고 실제 수신/파싱된 농가 수(98개)를 그대로 동기화
+    buSummaryData.farmCount = parsedData.length;
+
     parsedData.forEach(item => { item.gradeCategory = calculateGrade(item.medicineCost, item.purchaseTotal, item.headcountTotal); });
 
     detectLastValidMonths();
@@ -2832,70 +2845,127 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 }
 
         function updateTelemetryPanel(timeStr) {
-            if (document.getElementById('telemetry-total-rows')) document.getElementById('telemetry-total-rows').textContent = rawReceivedRows.length;
-            if (document.getElementById('telemetry-farms-count')) document.getElementById('telemetry-farms-count').textContent = parsedData.length;
-            if (document.getElementById('telemetry-latency')) document.getElementById('telemetry-latency').textContent = `${lastFetchLatencyMs} ms`;
-            
-            const zeroFarms = parsedData.filter(d => d.medicineCost === 0);
-            if (document.getElementById('telemetry-zero-farms')) document.getElementById('telemetry-zero-farms').textContent = zeroFarms.length;
-            
-            if (document.getElementById('telemetry-bu-cost')) document.getElementById('telemetry-bu-cost').textContent = formatWon(buSummaryData.medicineCost);
-            if (document.getElementById('telemetry-bu-rate')) document.getElementById('telemetry-bu-rate').textContent = `${buSummaryData.avgRearingRate.toFixed(1)}%`;
-            if (document.getElementById('telemetry-sync-time')) document.getElementById('telemetry-sync-time').textContent = `동기화 시각: ${timeStr}`;
-        }
+    // 1. LEAD 대시보드 지표 업데이트
+    if (document.getElementById('telemetry-total-rows')) document.getElementById('telemetry-total-rows').textContent = rawReceivedRows ? rawReceivedRows.length : 0;
+    if (document.getElementById('telemetry-farms-count')) document.getElementById('telemetry-farms-count').textContent = parsedData ? parsedData.length : 0;
+    if (document.getElementById('telemetry-latency')) document.getElementById('telemetry-latency').textContent = `${lastFetchLatencyMs} ms`;
+    
+    const zeroFarms = parsedData ? parsedData.filter(d => d.medicineCost === 0) : [];
+    if (document.getElementById('telemetry-zero-farms')) document.getElementById('telemetry-zero-farms').textContent = zeroFarms.length;
+    
+    if (document.getElementById('telemetry-bu-cost')) document.getElementById('telemetry-bu-cost').textContent = formatWon(buSummaryData.medicineCost);
+    
+    // 2. 정산 성적 분석 지표 업데이트
+    const settleRowsCount = settlementRawData ? settlementRawData.length : 0;
+    const settleFarmsCount = settlementFarmStats ? Object.keys(settlementFarmStats).length : 0;
+
+    if (document.getElementById('telemetry-settle-rows')) document.getElementById('telemetry-settle-rows').textContent = `${settleRowsCount} 건`;
+    if (document.getElementById('telemetry-settle-farms')) document.getElementById('telemetry-settle-farms').textContent = `${settleFarmsCount} 개`;
+
+    // 3. 동기화 시각
+    if (document.getElementById('telemetry-sync-time')) document.getElementById('telemetry-sync-time').textContent = `동기화 시각: ${timeStr}`;
+}
 
         function renderRawModalTable() {
-            const thead = document.getElementById('raw-modal-thead');
-            const tbody = document.getElementById('raw-modal-tbody');
-            if (!tbody || !thead) return;
+    const thead = document.getElementById('raw-modal-thead');
+    const tbody = document.getElementById('raw-modal-tbody');
+    const tabContainer = document.getElementById('raw-modal-tab-container');
+    if (!tbody || !thead) return;
 
-            if (!rawReceivedRows || rawReceivedRows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="py-4 text-center text-slate-400">수신된 데이터가 없습니다.</td></tr>';
-                return;
-            }
+    // 🎯 1. 모달 상단 탭 버튼 동적 구성
+    if (tabContainer) {
+        tabContainer.innerHTML = `
+            <div class="flex items-center space-x-2 border-b border-slate-200 mb-3 pb-2">
+                <button onclick="switchRawModalTab('lead')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${rawModalCurrentTab === 'lead' ? 'bg-sunjin-red text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                    📊 LEAD 대시보드 데이터 (${rawReceivedRows ? rawReceivedRows.length : 0}건)
+                </button>
+                <button onclick="switchRawModalTab('settlement')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${rawModalCurrentTab === 'settlement' ? 'bg-sunjin-red text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                    📑 정산 성적 데이터 (${settlementRawData ? settlementRawData.length : 0}건)
+                </button>
+            </div>
+        `;
+    }
 
-            let headerRowIdx = 4;
-            if (rawReceivedRows.length <= headerRowIdx) headerRowIdx = 0;
-            const headerCells = rawReceivedRows[headerRowIdx] || rawReceivedRows[0] || [];
-            
-            let headHtml = '<tr><th class="py-2.5 px-3 text-center border-r border-slate-700 bg-slate-900 sticky left-0 z-20">Row #</th>';
-            headerCells.forEach((colName, cIdx) => {
-                const label = cleanStr(colName) || `Col ${cIdx + 1}`;
-                headHtml += `<th class="py-2.5 px-3 text-center border-r border-slate-700 whitespace-nowrap min-w-[90px]">${label}</th>`;
-            });
-            headHtml += '</tr>';
-            thead.innerHTML = headHtml;
+    // 🎯 2. 선택된 탭에 따른 데이터 소스 지정
+    let targetRows = (rawModalCurrentTab === 'lead') ? rawReceivedRows : settlementRawData;
 
-            const totalRows = rawReceivedRows.length;
-            const totalPages = Math.ceil(totalRows / rawModalPageSize) || 1;
-            if (rawModalCurrentPage > totalPages) rawModalCurrentPage = totalPages;
-            if (rawModalCurrentPage < 1) rawModalCurrentPage = 1;
+    if (!targetRows || targetRows.length === 0) {
+        thead.innerHTML = '';
+        tbody.innerHTML = '<tr><td colspan="10" class="py-8 text-center text-slate-400 font-bold">수신된 데이터가 없거나 권한이 없습니다.</td></tr>';
+        if (document.getElementById('raw-modal-count')) document.getElementById('raw-modal-count').textContent = '총 0 건 수신됨';
+        if (document.getElementById('raw-page-info')) document.getElementById('raw-page-info').textContent = 'Page 1 / 1';
+        return;
+    }
 
-            const startIdx = (rawModalCurrentPage - 1) * rawModalPageSize;
-            const endIdx = Math.min(startIdx + rawModalPageSize, totalRows);
-            const pageData = rawReceivedRows.slice(startIdx, endIdx);
+    // 🎯 3. 데이터 구조에 따른 헤더 및 바디 파싱
+    let headerCells = [];
+    let pageData = [];
+    const totalRows = targetRows.length;
+    const totalPages = Math.ceil(totalRows / rawModalPageSize) || 1;
 
-            document.getElementById('raw-modal-count').textContent = `총 ${totalRows} 건 레코드 중 ${startIdx + 1} - ${endIdx} 표시 중`;
-            document.getElementById('raw-page-info').textContent = `Page ${rawModalCurrentPage} / ${totalPages}`;
-            document.getElementById('btn-prev-page').disabled = (rawModalCurrentPage <= 1);
-            document.getElementById('btn-next-page').disabled = (rawModalCurrentPage >= totalPages);
+    if (rawModalCurrentPage > totalPages) rawModalCurrentPage = totalPages;
+    if (rawModalCurrentPage < 1) rawModalCurrentPage = 1;
 
-            let bodyHtml = '';
-            pageData.forEach((r, idx) => {
-                const actualRowNumber = startIdx + idx + 1;
-                bodyHtml += `<tr class="hover:bg-slate-50 border-b border-slate-100">`;
-                bodyHtml += `<td class="py-2 px-3 text-center text-slate-400 font-bold bg-slate-50 sticky left-0 z-10 border-r border-slate-200">${actualRowNumber}</td>`;
-                
-                headerCells.forEach((_, cIdx) => {
-                    const cellVal = r[cIdx] !== undefined && r[cIdx] !== null ? String(r[cIdx]).trim() : '';
-                    bodyHtml += `<td class="py-2 px-3 border-r border-slate-100 text-slate-700 whitespace-nowrap text-left">${cellVal || '-'}</td>`;
-                });
-                
-                bodyHtml += `</tr>`;
-            });
-            tbody.innerHTML = bodyHtml;
-            lucide.createIcons();
+    const startIdx = (rawModalCurrentPage - 1) * rawModalPageSize;
+    const endIdx = Math.min(startIdx + rawModalPageSize, totalRows);
+
+    if (rawModalCurrentTab === 'lead') {
+        // LEAD 탭: 2차원 배열 형태
+        let headerRowIdx = 4;
+        if (targetRows.length <= headerRowIdx) headerRowIdx = 0;
+        headerCells = targetRows[headerRowIdx] || targetRows[0] || [];
+        pageData = targetRows.slice(startIdx, endIdx);
+    } else {
+        // 정산 데이터 탭: JSON 객체 배열 형태
+        if (targetRows.length > 0) {
+            headerCells = Object.keys(targetRows[0]).filter(k => !k.startsWith('_'));
         }
+        pageData = targetRows.slice(startIdx, endIdx);
+    }
+
+    // 🎯 4. 헤더 HTML 생성
+    let headHtml = '<tr><th class="py-2.5 px-3 text-center border-r border-slate-700 bg-slate-900 sticky left-0 z-20">Row #</th>';
+    headerCells.forEach((colName, cIdx) => {
+        const label = cleanStr(colName) || `Col ${cIdx + 1}`;
+        headHtml += `<th class="py-2.5 px-3 text-center border-r border-slate-700 whitespace-nowrap min-w-[90px]">${label}</th>`;
+    });
+    headHtml += '</tr>';
+    thead.innerHTML = headHtml;
+
+    // 페이지 정보 갱신
+    if (document.getElementById('raw-modal-count')) {
+        document.getElementById('raw-modal-count').textContent = `[${rawModalCurrentTab === 'lead' ? 'LEAD' : '정산'}] 총 ${totalRows} 건 레코드 중 ${startIdx + 1} - ${endIdx} 표시 중`;
+    }
+    if (document.getElementById('raw-page-info')) {
+        document.getElementById('raw-page-info').textContent = `Page ${rawModalCurrentPage} / ${totalPages}`;
+    }
+    if (document.getElementById('btn-prev-page')) document.getElementById('btn-prev-page').disabled = (rawModalCurrentPage <= 1);
+    if (document.getElementById('btn-next-page')) document.getElementById('btn-next-page').disabled = (rawModalCurrentPage >= totalPages);
+
+    // 🎯 5. 테이블 바디 HTML 생성
+    let bodyHtml = '';
+    pageData.forEach((r, idx) => {
+        const actualRowNumber = startIdx + idx + 1;
+        bodyHtml += `<tr class="hover:bg-slate-50 border-b border-slate-100">`;
+        bodyHtml += `<td class="py-2 px-3 text-center text-slate-400 font-bold bg-slate-50 sticky left-0 z-10 border-r border-slate-200">${actualRowNumber}</td>`;
+
+        if (rawModalCurrentTab === 'lead') {
+            headerCells.forEach((_, cIdx) => {
+                const cellVal = r[cIdx] !== undefined && r[cIdx] !== null ? String(r[cIdx]).trim() : '';
+                bodyHtml += `<td class="py-2 px-3 border-r border-slate-100 text-slate-700 whitespace-nowrap text-left">${cellVal || '-'}</td>`;
+            });
+        } else {
+            headerCells.forEach((keyName) => {
+                const cellVal = r[keyName] !== undefined && r[keyName] !== null ? String(r[keyName]).trim() : '';
+                bodyHtml += `<td class="py-2 px-3 border-r border-slate-100 text-slate-700 whitespace-nowrap text-left">${cellVal || '-'}</td>`;
+            });
+        }
+
+        bodyHtml += `</tr>`;
+    });
+    tbody.innerHTML = bodyHtml;
+    lucide.createIcons();
+}
 
         function selectModalSizeFilter(category) {
             selectedModalSizeCategory = category;
@@ -4791,103 +4861,57 @@ function generateSettlementFarmStats() {
 function fetchSettlementData() {
     if (!currentUserEmail || !currentUserPassword) return;
 
-    const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+    let userRole = (window.currentUser ? window.currentUser.role : "") || (sessionStorage.getItem('user_role') || "일반");
+    let userDept = (window.currentUser ? window.currentUser.dept : "") || (sessionStorage.getItem('user_dept') || "");
 
-    const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
-    urlObj.searchParams.set('action', 'getSettlementData');
-    urlObj.searchParams.set('email', currentUserEmail);
-    urlObj.searchParams.set('password', currentUserPassword);
-    urlObj.searchParams.set('t', new Date().getTime());
+    const cleanRole = String(userRole).toLowerCase();
+    const isAdmin = cleanRole.includes('관리자') || cleanRole.includes('admin') || cleanRole.includes('전체') || cleanRole.includes('마스터');
 
-    fetch(urlObj.toString())
-        .then(res => res.json())
-        .then(resData => {
-            if (resData.error) throw new Error(resData.error);
+    const myDepts = String(userDept)
+        .split(/[,/]/)
+        .map(d => d.replace(/\s+/g, '').trim())
+        .filter(Boolean);
 
-            let fetchedSettlement = Array.isArray(resData) ? resData : (resData.rows || []);
-            let userInfo = resData.userInfo || {};
-            
-            let userRole = userInfo.role || (window.currentUser ? window.currentUser.role : "일반");
-            let userDept = userInfo.dept || (window.currentUser ? window.currentUser.dept : "");
+    // 🎯 정산 사업부 드롭다운 단권화 생성
+    const selDept = document.getElementById('sel-dept');
+    if (selDept) {
+        selDept.innerHTML = '';
+        
+        // 원천 정산 데이터에서 실존하는 모든 사업부 추출
+        const rawDepts = [...new Set(settlementRawData.map(r => String(r["사업부"] || '').replace(/\s+/g, '').trim()))].filter(d => d && d !== "기타").sort();
+        const defaultDepts = ['F사업팀', '중부사업부', '호남사업부', '영남사업팀'];
+        const allDepts = rawDepts.length > 0 ? rawDepts : defaultDepts;
 
-            if (userDept) sessionStorage.setItem('user_dept', userDept);
-            if (userRole) sessionStorage.setItem('user_role', userRole);
-
-            // 🎯 [1단계: 권한(Role) 선 검증]
-            const cleanRole = String(userRole).toLowerCase();
-            const isAdmin = cleanRole.includes('관리자') || cleanRole.includes('admin') || cleanRole.includes('전체') || cleanRole.includes('마스터');
-
-            // 🎯 [2단계: 관리자가 아닐 때만 부서(Dept) 필터링 적용]
-            if (!isAdmin && userDept) {
-                const cleanUserDept = String(userDept).replace(/\s+/g, '').trim();
-                fetchedSettlement = fetchedSettlement.filter(r => {
-                    const rowDept = String(r["사업부"] || r["사업 부"] || r["dept"] || '').replace(/\s+/g, '').trim();
-                    return rowDept === cleanUserDept;
-                });
-            }
-
-            settlementRawData = fetchedSettlement;
-
-            settlementRawData.forEach((r, idx) => {
-                r._origIndex = idx;
-                
-                const getVal = (keyName) => {
-                    if (r[keyName] !== undefined && r[keyName] !== null && r[keyName] !== '') return r[keyName];
-                    const foundKey = Object.keys(r).find(k => k.trim().replace(/\s+/g, '') === keyName.trim().replace(/\s+/g, ''));
-                    return foundKey ? r[foundKey] : 0;
-                };
-
-                r["농장명"] = String(getVal("농장명") || getVal("농장 명") || '').trim();
-                r["사업부"] = String(getVal("사업부") || getVal("사업 부") || '').trim();
-                r["출하 년도"] = parseSettlementNum(getVal("출하 년도") || getVal("출하년도"));
-                r["출하 월"] = parseSettlementNum(getVal("출하 월") || getVal("출하월"));
-                r["출하두수"] = parseSettlementNum(getVal("출하두수"));
-                r["기간증체량"] = parseSettlementNum(getVal("기간증체량"));
-                r["기간육성율"] = parseSettlementNum(getVal("기간육성율"));
-                r["일당증체량"] = parseSettlementNum(getVal("일당증체량"));
-                r["지급율(%)"] = parseSettlementNum(getVal("지급율(%)") || getVal("지급율"));
-                r["1등급이상출현율(%)"] = parseSettlementNum(getVal("1등급이상출현율(%)"));
-                r["등외등급출현율(%)"] = parseSettlementNum(getVal("등외등급출현율(%)"));
-                r["사료요구율"] = parseSettlementNum(getVal("사료요구율"));
-                r["출하 두당 사육비"] = parseSettlementCost(getVal("출하 두당 사육비") || getVal("출하두당사육비"));
-                r["전입평체"] = parseSettlementNum(getVal("전입평체"));
-                r["사육일수"] = parseSettlementNum(getVal("평균사육일수") || getVal("평균 사육일수") || getVal("사육일수"));
+        if (isAdmin) {
+            selDept.add(new Option('전체 사업부', ''));
+            allDepts.forEach(d => selDept.add(new Option(d, d)));
+            selDept.value = '';
+            selDept.disabled = false;
+        } else {
+            // 유저 유효 부서 매칭
+            const matchedDepts = allDepts.filter(d => {
+                return myDepts.some(md => md.includes(d) || d.includes(md));
             });
 
-            generateSettlementFarmStats();
-
-            const selDept = document.getElementById('sel-dept');
-            if (selDept) {
-                selDept.innerHTML = '';
-                const defaultDepts = ['F사업팀', '중부사업부', '호남사업부', '영남사업팀'];
-                const dynamicDepts = (typeof settlementFarmDeptMap !== 'undefined' && settlementFarmDeptMap) 
-                    ? [...new Set(Object.values(settlementFarmDeptMap))].filter(d => d && d !== "기타").sort()
-                    : [];
-                const allDepts = dynamicDepts.length > 0 ? dynamicDepts : defaultDepts;
-
-                if (isAdmin) {
-                    selDept.add(new Option('전체 사업부', ''));
-                    allDepts.forEach(d => selDept.add(new Option(d, d)));
-                    selDept.value = '';
-                    selDept.disabled = false;
-                } else {
-                    const targetDept = userDept || '중부사업부';
-                    selDept.add(new Option(targetDept, targetDept));
-                    selDept.value = targetDept;
-                    selDept.disabled = true;
-                }
+            if (matchedDepts.length > 1) {
+                selDept.add(new Option('내 사업부 전체', ''));
+                matchedDepts.forEach(d => selDept.add(new Option(d, d)));
+                selDept.value = '';
+                selDept.disabled = false; // 2개 이상 선택 가능
+            } else if (matchedDepts.length === 1) {
+                selDept.add(new Option(matchedDepts[0], matchedDepts[0]));
+                selDept.value = matchedDepts[0];
+                selDept.disabled = true;
+            } else {
+                selDept.add(new Option('전체 사업부', ''));
+                allDepts.forEach(d => selDept.add(new Option(d, d)));
+                selDept.value = '';
+                selDept.disabled = false;
             }
-            
-            filterFarmsByDept('diag');
-        })
-        .catch(err => {
-            console.error('Settlement fetch error:', err);
-            showNotification(`❌ 차트 데이터 처리 오류: ${err.message}`, 'error');
-        })
-        .finally(() => {
-            if (loadingOverlay) loadingOverlay.classList.add('hidden');
-        });
+        }
+    }
+    
+    filterFarmsByDept('diag');
 }
 
 function initSettlementDeptDropdown() {
@@ -4897,26 +4921,33 @@ function initSettlementDeptDropdown() {
 function filterFarmsByDept(prefix) {
     const selDept = document.getElementById('sel-dept');
 
-    // 🎯 [1단계: 권한(Role) 선 확인]
     const userRole = window.currentUser ? String(window.currentUser.role || '').toLowerCase() : (sessionStorage.getItem('user_role') || "일반").toLowerCase();
     const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
 
-    let dept = selDept ? selDept.value : '';
-    
-    // 🎯 [2단계: 관리자가 아닐 때 본인 소속 부서로 강제 매핑 및 잠금]
-    if (!isAdmin) {
+    let selectedDeptVal = selDept ? selDept.value.trim() : '';
+    let farms = Object.keys(settlementFarmStats || {});
+
+    if (selectedDeptVal) {
+        farms = farms.filter(f => {
+            const farmDept = settlementFarmStats[f] ? String(settlementFarmStats[f].dept || '').replace(/\s+/g, '').trim() : '';
+            const cleanSelected = selectedDeptVal.replace(/\s+/g, '').trim();
+            return farmDept === cleanSelected || farmDept.includes(cleanSelected) || cleanSelected.includes(farmDept);
+        });
+    } else if (!isAdmin) {
         const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
-        if (userDept) {
-            dept = userDept;
-            if (selDept) {
-                selDept.value = userDept;
-                selDept.disabled = true;
-            }
+        const myDepts = String(userDept)
+            .split(/[,/]/)
+            .map(d => d.replace(/\s+/g, '').trim())
+            .filter(Boolean);
+
+        if (myDepts.length > 0) {
+            farms = farms.filter(f => {
+                const farmDept = settlementFarmStats[f] ? String(settlementFarmStats[f].dept || '').replace(/\s+/g, '').trim() : '';
+                return myDepts.some(md => md.includes(farmDept) || farmDept.includes(md));
+            });
         }
     }
 
-    let farms = Object.keys(settlementFarmStats);
-    if (dept) farms = farms.filter(f => settlementFarmStats[f].dept === dept);
     farms.sort();
     populateSettlementFarmDropdowns(farms);
 }
@@ -4989,22 +5020,23 @@ function resetTab1() {
     const compareFarm = document.getElementById('sel-compare-farm');
     if (compareFarm) compareFarm.value = '';
 
-    // 🎯 [1단계: 권한(Role) 선 판별]
     const userRole = window.currentUser ? String(window.currentUser.role || '').toLowerCase() : (sessionStorage.getItem('user_role') || "일반").toLowerCase();
     const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
 
-    // 🎯 [2단계: 권한 조건에 맞춘 부서 드롭다운 리셋]
+    const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
+    const myDepts = String(userDept)
+        .split(/[,/]/)
+        .map(d => d.replace(/\s+/g, '').trim())
+        .filter(Boolean);
+
     const selDept = document.getElementById('sel-dept');
     if (selDept) {
-        if (isAdmin) {
+        if (isAdmin || myDepts.length > 1) {
             selDept.value = '';
             selDept.disabled = false;
-        } else {
-            const userDept = window.currentUser ? window.currentUser.dept : (sessionStorage.getItem('user_dept') || "");
-            if (userDept) {
-                selDept.value = userDept;
-                selDept.disabled = true;
-            }
+        } else if (myDepts.length === 1) {
+            selDept.value = selDept.options.length > 0 ? selDept.options[0].value : myDepts[0];
+            selDept.disabled = true;
         }
     }
 
