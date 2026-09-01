@@ -3041,7 +3041,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         let normTypeRatios = [0, 0, 0, 0, 0];
 
         if (targetSummaryObj) {
-            if (targetSummaryObj.costTrendVals) costTrendArr = targetSummaryObj.costTrendVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
+            if (targetSummaryObj.costTrendVals) costTrendArr = targetSummaryObj.costTrendVals.slice(startIdx, endIdx + 1).map(v => Math.round(cleanNum(v)));
             if (targetSummaryObj.purchaseVals) dtPurArr = targetSummaryObj.purchaseVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
             if (targetSummaryObj.headcountVals) dtHeadArr = targetSummaryObj.headcountVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
             if (targetSummaryObj.supportMedVals) dtSupArr = targetSummaryObj.supportMedVals.slice(startIdx, endIdx + 1).map(v => cleanNum(v));
