@@ -3312,24 +3312,28 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 }
 
         function populateRegions() {
-            const sel = document.getElementById('filter-region');
-            const selChart = document.getElementById('chart-filter-region');
-            if (!sel) return;
+    const sel = document.getElementById('filter-region');
+    const selChart = document.getElementById('chart-filter-region');
+    if (!sel) return;
 
-            const prevValue = sel.value; 
-            const targetFarms = activeDept === 'ALL' ? parsedData : parsedData.filter(d => d.dept === activeDept);
-            const regions = [...new Set(targetFarms.map(d => d.region))].filter(Boolean).sort();
-            
-            let optionsHtml = '<option value="">지역 전체</option>';
-            regions.forEach(r => { optionsHtml += `<option value="${r}">${r}</option>`; });
-            
-            sel.innerHTML = optionsHtml;
-            if (selChart) selChart.innerHTML = optionsHtml;
+    const prevValue = sel.value; 
+    // 🎯 '사업부 전체(ALL)' 조회 시 유전자사업부 농가의 지역(GGP, GP 등)은 드롭다운 목록에서 제외
+    const targetFarms = activeDept === 'ALL' 
+        ? parsedData.filter(d => d.dept !== '유전자사업부') 
+        : parsedData.filter(d => d.dept === activeDept);
+        
+    const regions = [...new Set(targetFarms.map(d => d.region))].filter(Boolean).sort();
+    
+    let optionsHtml = '<option value="">지역 전체</option>';
+    regions.forEach(r => { optionsHtml += `<option value="${r}">${r}</option>`; });
+    
+    sel.innerHTML = optionsHtml;
+    if (selChart) selChart.innerHTML = optionsHtml;
 
-            const activeVal = regions.includes(prevValue) ? prevValue : "";
-            sel.value = activeVal;
-            if (selChart) selChart.value = activeVal;
-        }
+    const activeVal = regions.includes(prevValue) ? prevValue : "";
+    sel.value = activeVal;
+    if (selChart) selChart.value = activeVal;
+}
 
         function populateRearingGrades() {
             const sel = document.getElementById('filter-rearing-grade');
