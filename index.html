@@ -5439,9 +5439,9 @@ function renderScatterChart(targetYear, targetSelectedRow) {
                 {
                     label: `${dept} 타 농가`,
                     data: pointsOther,
-                    backgroundColor: 'rgba(193, 199, 208, 0.4)', 
+                    backgroundColor: 'rgba(100, 116, 139, 0.65)', 
                     borderColor: 'rgba(255, 255, 255, 0.6)',
-                    borderWidth: 0.8,
+                    borderWidth: 1,
                     pointRadius: 4.5,
                     pointHoverRadius: 7
                 },
@@ -5816,9 +5816,7 @@ function selectTrendMetric(key) {
         renderMonthlyTrendChart3Years(settlementFarmStats[farm].monthlyData);
     }
 }
-// ========================================================
-// 🎯 [여기에 아래 3번 코드를 그대로 붙여넣으세요]
-// ========================================================
+
 window.addEventListener('beforeunload', function () {
     const savedLoginTime = sessionStorage.getItem('pageLoginTime');
     const savedSessionId = sessionStorage.getItem('currentSessionId');
