@@ -456,7 +456,7 @@ html {
         <!-- ================= 탭 1: MAIN DASHBOARD VIEW ================= -->
         <div id="dashboard-view" class="flex flex-col gap-6">
 
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-4 print-col-2 print-break-avoid">
+            <div class="sticky top-[108px] z-30 bg-slate-100 py-2 transition-all duration-200 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-4 print-col-2 print-break-avoid">
 <!-- 🎯 1번 카드 (옆 카드들과 높이 및 비율 완벽 수평 정렬) -->
                 <div class="lg:col-span-4 bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition duration-300">
                     <div class="flex items-center justify-between mb-1.5">
@@ -725,11 +725,11 @@ html {
                         <h3 id="selected-farm-title" class="text-lg font-black mt-1.5 italic"></h3>
                     </div>
                     <div class="flex items-center gap-2 no-print">
-                        <button onclick="openCommentDrawer()" class="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 shadow-sm">
-                            <i data-lucide="message-square" class="w-4 h-4"></i>
-                            <span>의견 소통</span>
-                            <span id="detail-comment-badge" class="bg-white text-sunjin-red px-1.5 py-0.5 rounded-full text-[10px] font-black">0</span>
-                        </button>
+                        <button onclick="openCommentDrawer()" class="px-4 py-2 bg-white hover:bg-slate-50 text-sunjin-red rounded-xl text-xs font-black transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 border border-red-100">
+                            <i data-lucide="message-square" class="w-4 h-4 text-sunjin-red fill-red-100"></i>
+                             <span class="tracking-tight">농장 의견</span>
+                                <span id="detail-comment-badge" class="bg-sunjin-red text-white px-2 py-0.5 rounded-full text-[10px] font-black shadow-inner">0</span>
+                            </button>
                         <button onclick="document.getElementById('inline-detail-section').classList.add('hidden');" class="text-red-200 hover:text-white transition">
                             <i data-lucide="x-circle" class="w-6 h-6"></i>
                         </button>
@@ -879,54 +879,57 @@ html {
 
         <!-- ================= 탭 2: ADVANCED CHART ANALYSIS VIEW ================= -->
         <div id="chart-analysis-view" class="hidden flex flex-col gap-6 fade-in-section">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3 no-print">
-                <div class="flex flex-wrap items-center gap-2 flex-1 w-full">
-                    <div class="relative w-full sm:w-52">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
-                            <i data-lucide="search" class="w-3.5 h-3.5"></i>
-                        </span>
-                        <input id="chart-search-input" type="text" placeholder="농장코드/농장명..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-sunjin-red transition" oninput="syncAndApplyFilters('search', this.value)">
+            <!-- 🎯 스크롤 시 빨간 선 위 틀 고정을 위한 sticky 적용 -->
+            <div class="sticky top-[108px] z-30 bg-slate-100 py-2 transition-all duration-200">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3 no-print">
+                    <div class="flex flex-wrap items-center gap-2 flex-1 w-full">
+                        <div class="relative w-full sm:w-52">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                            </span>
+                            <input id="chart-search-input" type="text" placeholder="농장코드/농장명..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-sunjin-red transition" oninput="syncAndApplyFilters('search', this.value)">
+                        </div>
+
+                        <select id="chart-filter-dept" onchange="syncAndApplyFilters('dept', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                            <option value="">사업부 전체</option>
+                            <option value="F사업팀">F사업팀</option>
+                            <option value="중부사업부">중부사업부</option>
+                            <option value="호남사업부">호남사업부</option>
+                            <option value="영남사업팀">영남사업팀</option>
+                        </select>
+                        
+                        <select id="chart-filter-region" onchange="syncAndApplyFilters('region', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                            <option value="">지역 전체</option>
+                        </select>
+
+                        <select id="chart-filter-size" onchange="syncAndApplyFilters('size', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                            <option value="">규모 전체</option>
+                            <option value="1,000 미만">1,000 미만</option>
+                            <option value="1,000-3,000">1,000-3,000</option>
+                            <option value="3,000-5,000">3,000-5,000</option>
+                            <option value="5,000 이상">5,000 이상</option>
+                        </select>
+
+                        <select id="chart-filter-rearing-grade" onchange="syncAndApplyFilters('rearingGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                            <option value="">육성율 등급 전체</option>
+                        </select>
+
+                        <select id="chart-filter-cost-grade" onchange="syncAndApplyFilters('costGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
+                            <option value="">약품비 등급 전체</option>
+                            <option value="A">A등급 (2,000원 미만)</option>
+                            <option value="B">B등급 (4,000원 미만)</option>
+                            <option value="C">C등급 (6,000원 미만)</option>
+                            <option value="D">D등급 (8,000원 미만)</option>
+                            <option value="D-">D-등급 (8,000원 이상)</option>
+                        </select>
+
+                        <button onclick="resetFilters()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer no-print">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>초기화
+                        </button>
                     </div>
-
-                    <select id="chart-filter-dept" onchange="syncAndApplyFilters('dept', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                        <option value="">사업부 전체</option>
-                        <option value="F사업팀">F사업팀</option>
-                        <option value="중부사업부">중부사업부</option>
-                        <option value="호남사업부">호남사업부</option>
-                        <option value="영남사업팀">영남사업팀</option>
-                    </select>
-                    
-                    <select id="chart-filter-region" onchange="syncAndApplyFilters('region', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                        <option value="">지역 전체</option>
-                    </select>
-
-                    <select id="chart-filter-size" onchange="syncAndApplyFilters('size', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                        <option value="">규모 전체</option>
-                        <option value="1,000 미만">1,000 미만</option>
-                        <option value="1,000-3,000">1,000-3,000</option>
-                        <option value="3,000-5,000">3,000-5,000</option>
-                        <option value="5,000 이상">5,000 이상</option>
-                    </select>
-
-                    <select id="chart-filter-rearing-grade" onchange="syncAndApplyFilters('rearingGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                        <option value="">육성율 등급 전체</option>
-                    </select>
-
-                    <select id="chart-filter-cost-grade" onchange="syncAndApplyFilters('costGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                        <option value="">약품비 등급 전체</option>
-                        <option value="A">A등급 (2,000원 미만)</option>
-                        <option value="B">B등급 (4,000원 미만)</option>
-                        <option value="C">C등급 (6,000원 미만)</option>
-                        <option value="D">D등급 (8,000원 미만)</option>
-                        <option value="D2">D2등급 (8,000원 이상)</option>
-                    </select>
-
-                    <button onclick="resetFilters()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer no-print">
-                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>초기화
-                    </button>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <span id="chart-data-count-tag" class="text-xs bg-red-50 text-sunjin-red px-3 py-1.5 rounded-full font-bold"></span>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span id="chart-data-count-tag" class="text-xs bg-red-50 text-sunjin-red px-3 py-1.5 rounded-full font-bold"></span>
+                    </div>
                 </div>
             </div>
 
@@ -1629,7 +1632,7 @@ html {
             easing: 'easeOutQuart'
         };
 
-        const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyjSFdDoLjf4A_LpEYprWvCQ_g5tjBcHFUpyYj6aTExGao2KHFrTE8tED2JZNcMCNMN/exec";
+        const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyyhSORLHGXRV0njgWJSOzNlavkyKFElQTaq1JPT42VRaQMxGD6dR2TRq9uS_PrhGH0/exec";
         const AUTO_REFRESH_INTERVAL = 3600000;
 
 let pageLoginTime = null;
@@ -1683,6 +1686,8 @@ let currentSessionId = null;
 
 let currentSortField = 'medicineCost'; 
         let currentSortAsc = false;
+
+        let openReplyWrapperIds = new Set();
 
         // 🎯 기간 필터 전역 변수
         let activePeriodMode = 'all'; // 'all', '3m', '6m', 'custom'
@@ -2115,87 +2120,218 @@ function switchRawModalTab(tab) {
         }
 
         function fetchFarmComments(farmCode, isSilent = false) {
-            const container = document.getElementById('comments-list-container');
-            if (!container || !farmCode) return;
+    const container = document.getElementById('comments-list-container');
+    if (!container || !farmCode) return;
 
-            if (!isSilent) {
-                container.innerHTML = '<div class="py-8 text-center text-xs text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> 의견을 불러오는 중입니다...</div>';
+    // 🎯 1. 로딩 중 UI 제어 (입력창 및 등록 버튼 비활성화 처리)
+    const contentInput = document.getElementById('comment-input-content');
+    const submitBtn = document.getElementById('btn-submit-comment');
+    if (contentInput) contentInput.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
+
+    // 🎯 2. 기존 목록 내 버튼들 비활성화
+    const existingActionBtns = container.querySelectorAll('button');
+    existingActionBtns.forEach(btn => btn.disabled = true);
+
+    // 🎯 3. 백그라운드 갱신이 아닐 때만 하단에 로딩 인디케이터 바 생성
+    let loaderEl = document.getElementById('comments-fetching-loader');
+    if (!isSilent && !loaderEl) {
+        loaderEl = document.createElement('div');
+        loaderEl.id = 'comments-fetching-loader';
+        loaderEl.className = 'py-3 text-center text-[11px] text-slate-500 font-bold bg-white/80 backdrop-blur-xs rounded-xl border border-slate-200 shadow-xs my-2 transition-all';
+        loaderEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5 text-sunjin-red"></i> 최신 의견을 불러오는 중입니다...';
+        container.appendChild(loaderEl);
+        loaderEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+    urlObj.searchParams.set('action', 'getComments');
+    urlObj.searchParams.set('farmCode', farmCode);
+    urlObj.searchParams.set('email', currentUserEmail);
+    urlObj.searchParams.set('password', currentUserPassword);
+    urlObj.searchParams.set('t', new Date().getTime());
+
+    fetch(urlObj.toString())
+        .then(res => res.json())
+        .then(comments => {
+            const badge = document.getElementById('detail-comment-badge');
+            if (badge) badge.textContent = Array.isArray(comments) ? comments.length : 0;
+
+            if (!Array.isArray(comments) || comments.length === 0) {
+                container.innerHTML = '<div class="py-12 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200/60 p-6">등록된 의견이 없습니다.<br>첫 번째 의견을 작성해 보세요!</div>';
+                return;
             }
 
-            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
-            urlObj.searchParams.set('action', 'getComments');
-            urlObj.searchParams.set('farmCode', farmCode);
-            urlObj.searchParams.set('email', currentUserEmail);
-            urlObj.searchParams.set('password', currentUserPassword);
-            urlObj.searchParams.set('t', new Date().getTime());
+            // 🎯 원글 및 답글 분리
+            const parentComments = comments.filter(c => !c.parentId || c.parentId === "");
+            const replyComments = comments.filter(c => c.parentId && c.parentId !== "");
 
-            fetch(urlObj.toString())
-                .then(res => res.json())
-                .then(comments => {
-                    const badge = document.getElementById('detail-comment-badge');
-                    if (badge) badge.textContent = Array.isArray(comments) ? comments.length : 0;
+            let html = '';
+            parentComments.forEach(p => {
+                const isOwner = (p.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
+                const childReplies = replyComments.filter(r => r.parentId === p.commentId);
+                const isDeleted = p.isDeleted || p.content === "작성자에 의해 삭제된 의견입니다.";
 
-                    if (!Array.isArray(comments) || comments.length === 0) {
-                        container.innerHTML = '<div class="py-12 text-center text-xs text-slate-400 font-bold bg-white rounded-2xl border border-slate-200/60 p-6">등록된 의견이 없습니다.<br>첫 번째 의견을 작성해 보세요!</div>';
-                        return;
-                    }
+                // 🎯 이전 상태(openReplyWrapperIds) 기반 열림/화살표 유지 연산
+                const isOpen = openReplyWrapperIds.has(String(p.commentId));
+                const wrapperClass = isOpen ? 'pt-2 space-y-2.5 pl-3 border-l-2 border-blue-200' : 'hidden pt-2 space-y-2.5 pl-3 border-l-2 border-blue-200';
+                const arrowTransform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
 
-                    let html = '';
-                    comments.forEach(c => {
-                        const isOwner = (c.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
-                        
-                        const actionButtons = isOwner ? `
-                            <div class="flex items-center space-x-1.5 text-[10px]">
-                                <button onclick="enableCommentEditMode('${c.commentId}')" class="text-slate-400 hover:text-blue-600 font-bold transition">수정</button>
-                                <span class="text-slate-300">|</span>
-                                <button onclick="deleteFarmComment('${c.commentId}')" class="text-slate-400 hover:text-sunjin-red font-bold transition">삭제</button>
-                            </div>
-                        ` : '';
+                // 🎯 삭제된 원글인 경우 수정/삭제 버튼 숨김
+                const actionButtons = (isOwner && !isDeleted) ? `
+                    <div class="flex items-center space-x-1.5 text-[10px]">
+                        <button onclick="enableCommentEditMode('${p.commentId}')" class="text-slate-400 hover:text-blue-600 font-bold transition">수정</button>
+                        <span class="text-slate-300">|</span>
+                        <button onclick="deleteFarmComment('${p.commentId}')" class="text-slate-400 hover:text-sunjin-red font-bold transition">삭제</button>
+                    </div>
+                ` : '';
 
-                        html += `
-                            <div id="comment-card-${c.commentId}" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2 fade-in-section">
-                                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="w-6 h-6 rounded-full bg-red-100 text-sunjin-red flex items-center justify-center text-[10px] font-black">
-                                            ${(c.userName || '담')[0]}
-                                        </div>
-                                        <div>
-                                            <span class="text-xs font-black text-slate-800">${c.userName || '담당자'}</span>
-                                            <span class="text-[10px] text-slate-400 ml-1">(${c.email})</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-[10px] font-semibold text-slate-400">${c.dateTime}</span>
-                                        ${actionButtons}
-                                    </div>
+                // 🎯 삭제 상태 시 회색 안내 박스 표출
+                const contentHtml = isDeleted 
+                    ? `<p class="text-xs font-semibold text-slate-400 italic bg-slate-50 p-2 rounded-lg border border-slate-100"><i class="fa-regular fa-trash-can mr-1"></i> 작성자에 의해 삭제된 의견입니다.</p>`
+                    : `<p id="comment-text-${p.commentId}" class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap pl-1">${p.content}</p>`;
+
+                html += `
+                    <div id="comment-card-${p.commentId}" class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-2 fade-in-section">
+                        <!-- 원글 헤더 및 본문 -->
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-6 h-6 rounded-full ${isDeleted ? 'bg-slate-100 text-slate-400' : 'bg-red-100 text-sunjin-red'} flex items-center justify-center text-[10px] font-black">
+                                    ${isDeleted ? '-' : (p.userName || '담')[0]}
                                 </div>
-                                <p id="comment-text-${c.commentId}" class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap pl-1">${c.content}</p>
-                                
-                                <div id="comment-edit-box-${c.commentId}" class="hidden pt-1 space-y-2">
-                                    <textarea id="comment-edit-input-${c.commentId}" rows="2" class="w-full p-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-sunjin-red resize-none font-medium disabled:bg-slate-100 disabled:text-slate-400">${c.content}</textarea>
-                                    <div class="flex justify-end gap-1.5">
-                                        <button onclick="cancelCommentEditMode('${c.commentId}')" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold transition">취소</button>
-                                        <button onclick="saveUpdatedComment('${c.commentId}')" id="btn-save-comment-${c.commentId}" class="px-2.5 py-1 bg-sunjin-red hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition">저장</button>
-                                    </div>
+                                <div>
+                                    <span class="text-xs font-black ${isDeleted ? 'text-slate-400' : 'text-slate-800'}">${isDeleted ? '알림' : (p.userName || '담당자')}</span>
+                                    ${!isDeleted ? `<span class="text-[10px] text-slate-400 ml-1">(${p.email})</span>` : ''}
                                 </div>
                             </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                    lucide.createIcons();
-                })
-                .catch(err => {
-                    console.error('Comment fetch error:', err);
-                    if (!isSilent) {
-                        container.innerHTML = '<div class="py-6 text-center text-xs text-red-500 font-bold">의견 수신에 실패했습니다.</div>';
-                    }
-                });
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] font-semibold text-slate-400">${p.dateTime}</span>
+                                ${actionButtons}
+                            </div>
+                        </div>
+
+                        <!-- 🎯 본문 영역 -->
+                        ${contentHtml}
+
+                        <!-- 원글 수정 박스 -->
+                        ${!isDeleted ? `
+                            <div id="comment-edit-box-${p.commentId}" class="hidden pt-1 space-y-2">
+                                <textarea id="comment-edit-input-${p.commentId}" rows="2" class="w-full p-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-sunjin-red resize-none font-medium">${p.content}</textarea>
+                                <div class="flex justify-end gap-1.5">
+                                    <button onclick="cancelCommentEditMode('${p.commentId}')" class="px-2.5 py-1 bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold">취소</button>
+                                    <button onclick="saveUpdatedComment('${p.commentId}')" class="px-2.5 py-1 bg-sunjin-red text-white rounded-lg text-[10px] font-bold">저장</button>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- 답글 보기/달기 토글 버튼 (화살표 회전 상태 유지) -->
+                        <div class="flex justify-end border-t border-slate-100 pt-1.5 mt-2">
+                            <button id="reply-btn-${p.commentId}" onclick="toggleReplyWrapper('${p.commentId}')" class="text-[10px] font-extrabold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition">
+                                <i data-lucide="message-circle" class="w-3 h-3"></i> 
+                                <span>답글 보기/달기 (${childReplies.length})</span>
+                                <i id="reply-arrow-${p.commentId}" data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200" style="transform: ${arrowTransform};"></i>
+                            </button>
+                        </div>
+
+                        <!-- 통합 답글 래퍼 (하위 대댓글 보존) -->
+                        <div id="reply-wrapper-${p.commentId}" class="${wrapperClass}">
+                            ${childReplies.length > 0 ? `
+                                <div class="space-y-2">
+                                    ${childReplies.map(r => {
+                                        const isReplyOwner = (r.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
+                                        const replyActions = isReplyOwner ? `
+                                            <div class="flex items-center space-x-1 text-[10px]">
+                                                <button onclick="enableReplyEditMode('${r.commentId}')" class="text-slate-400 hover:text-blue-600 font-bold transition">수정</button>
+                                                <span class="text-slate-300">|</span>
+                                                <button onclick="deleteFarmComment('${r.commentId}')" class="text-slate-400 hover:text-sunjin-red font-bold transition">삭제</button>
+                                            </div>
+                                        ` : '';
+
+                                        return `
+                                            <div id="reply-card-${r.commentId}" class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs space-y-1">
+                                                <div class="flex items-center justify-between text-[10px] text-slate-500 font-bold border-b border-slate-100 pb-1">
+                                                    <span>↳ ${r.userName} <span class="text-slate-400">(${r.email})</span></span>
+                                                    <div class="flex items-center gap-2">
+                                                        <span>${r.dateTime}</span>
+                                                        ${replyActions}
+                                                    </div>
+                                                </div>
+                                                <p id="reply-text-${r.commentId}" class="text-slate-700 whitespace-pre-wrap pl-1 leading-relaxed">${r.content}</p>
+                                                
+                                                <div id="reply-edit-box-${r.commentId}" class="hidden pt-1 space-y-2">
+                                                    <textarea id="reply-edit-input-${r.commentId}" rows="2" class="w-full p-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-blue-600 resize-none font-medium bg-white">${r.content}</textarea>
+                                                    <div class="flex justify-end gap-1.5">
+                                                        <button onclick="cancelReplyEditMode('${r.commentId}')" class="px-2 py-0.5 bg-slate-200 text-slate-700 rounded text-[10px] font-bold">취소</button>
+                                                        <button onclick="saveUpdatedReply('${r.commentId}')" class="px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] font-bold">저장</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            ` : ''}
+
+                            <!-- 신규 답글 작성 폼 -->
+                            <div class="space-y-2 pt-1">
+                                <textarea id="reply-input-${p.commentId}" rows="2" placeholder="답변을 입력하세요..." class="w-full p-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:border-blue-600 resize-none font-medium bg-white shadow-xs"></textarea>
+                                <div class="flex justify-end gap-1.5">
+                                    <button onclick="toggleReplyWrapper('${p.commentId}')" class="px-2.5 py-1 bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold">접기</button>
+                                    <button id="btn-submit-reply-${p.commentId}" onclick="submitFarmComment('${p.commentId}')" class="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-bold shadow-xs">답글 등록</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            lucide.createIcons();
+        })
+        .catch(err => {
+            console.error('Comment fetch error:', err);
+            if (!isSilent) {
+                showNotification('❌ 최신 의견 수신 실패', 'error');
+            }
+        })
+        .finally(() => {
+            if (contentInput) contentInput.disabled = false;
+            if (submitBtn) submitBtn.disabled = false;
+
+            const loaderEl = document.getElementById('comments-fetching-loader');
+            if (loaderEl) loaderEl.remove();
+        });
+}
+
+// 🎯 답글 입력 상자 열기/닫기 토글 함수
+                function toggleReplyWrapper(commentId) {
+    const wrapper = document.getElementById(`reply-wrapper-${commentId}`);
+    const arrowIcon = document.getElementById(`reply-arrow-${commentId}`);
+
+    if (wrapper) {
+        const isHidden = wrapper.classList.contains('hidden');
+        wrapper.classList.toggle('hidden');
+
+        if (isHidden) {
+            openReplyWrapperIds.add(String(commentId)); // 🎯 열림 상태 기억
+        } else {
+            openReplyWrapperIds.delete(String(commentId)); // 🎯 닫힘 상태 기억
         }
 
-        function submitFarmComment() {
-            const contentInput = document.getElementById('comment-input-content');
-            const btnSubmit = document.getElementById('btn-submit-comment');
-            const btnText = document.getElementById('btn-submit-comment-text');
+        if (arrowIcon) {
+            arrowIcon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+    }
+}
+
+        function submitFarmComment(parentId = "") {
+            const contentInput = parentId 
+                ? document.getElementById(`reply-input-${parentId}`) 
+                : document.getElementById('comment-input-content');
+            
+            const btnSubmit = parentId
+                ? document.getElementById(`btn-submit-reply-${parentId}`)
+                : document.getElementById('btn-submit-comment');
+
             const content = contentInput ? contentInput.value.trim() : '';
 
             if (!content) {
@@ -2209,8 +2345,15 @@ function switchRawModalTab(tab) {
             }
 
             if (contentInput) contentInput.disabled = true;
-            if (btnSubmit) btnSubmit.disabled = true;
-            if (btnText) btnText.textContent = "등록 중...";
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerText = '등록 중...';
+            }
+
+            // 🎯 [핵심] 답글 등록 시 해당 대댓글 창이 닫히지 않고 펼쳐진 상태로 유지되도록 전역 Set에 추가
+            if (parentId) {
+                openReplyWrapperIds.add(String(parentId));
+            }
 
             const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
             urlObj.searchParams.set('action', 'addComment');
@@ -2218,23 +2361,28 @@ function switchRawModalTab(tab) {
             urlObj.searchParams.set('email', currentUserEmail);
             urlObj.searchParams.set('password', currentUserPassword);
             urlObj.searchParams.set('content', content);
+            urlObj.searchParams.set('parentId', parentId);
             urlObj.searchParams.set('t', new Date().getTime());
 
             fetch(urlObj.toString())
                 .then(res => res.json())
                 .then(res => {
                     if (res.error) throw new Error(res.error);
-                    showNotification('✅ 의견이 등록되었습니다.', 'success');
+                    showNotification('✅ 등록되었습니다.', 'success');
                     if (contentInput) contentInput.value = '';
-                    fetchFarmComments(currentSelectedFarmCode);
+                    
+                    // 🎯 isSilent = true 로 호출하여 깜빡임 및 로딩 스피너 없이 최신 목록 갱신
+                    fetchFarmComments(currentSelectedFarmCode, true);
                 })
                 .catch(err => {
                     showNotification(`❌ 등록 실패: ${err.message}`, 'error');
                 })
                 .finally(() => {
                     if (contentInput) contentInput.disabled = false;
-                    if (btnSubmit) btnSubmit.disabled = false;
-                    if (btnText) btnText.textContent = "등록";
+                    if (btnSubmit) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerText = parentId ? '답글 등록' : '등록';
+                    }
                 });
         }
 
@@ -2296,7 +2444,55 @@ function switchRawModalTab(tab) {
                     }
                 });
         }
+function enableReplyEditMode(replyId) {
+            const textEl = document.getElementById(`reply-text-${replyId}`);
+            const editBox = document.getElementById(`reply-edit-box-${replyId}`);
+            if (textEl && editBox) {
+                textEl.classList.add('hidden');
+                editBox.classList.remove('hidden');
+            }
+        }
 
+        function cancelReplyEditMode(replyId) {
+            const textEl = document.getElementById(`reply-text-${replyId}`);
+            const editBox = document.getElementById(`reply-edit-box-${replyId}`);
+            if (textEl && editBox) {
+                textEl.classList.remove('hidden');
+                editBox.classList.add('hidden');
+            }
+        }
+
+        function saveUpdatedReply(replyId) {
+            const inputEl = document.getElementById(`reply-edit-input-${replyId}`);
+            const newContent = inputEl ? inputEl.value.trim() : '';
+
+            if (!newContent) {
+                showNotification('⚠️ 수정할 내용을 입력해 주세요.', 'error');
+                return;
+            }
+
+            if (inputEl) inputEl.disabled = true;
+
+            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+            urlObj.searchParams.set('action', 'updateComment');
+            urlObj.searchParams.set('commentId', replyId);
+            urlObj.searchParams.set('email', currentUserEmail);
+            urlObj.searchParams.set('password', currentUserPassword);
+            urlObj.searchParams.set('content', newContent);
+            urlObj.searchParams.set('t', new Date().getTime());
+
+            fetch(urlObj.toString())
+                .then(res => res.json())
+                .then(res => {
+                    if (res.error) throw new Error(res.error);
+                    showNotification('✏️ 답글이 수정되었습니다.', 'success');
+                    fetchFarmComments(currentSelectedFarmCode);
+                })
+                .catch(err => {
+                    showNotification(`❌ 수정 실패: ${err.message}`, 'error');
+                    if (inputEl) inputEl.disabled = false;
+                });
+        }
         function deleteFarmComment(commentId) {
             if (!confirm("정말 이 의견을 삭제하시겠습니까?")) return;
 
@@ -3375,168 +3571,163 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
         }
 
         function applyFilters() {
-            const searchInput = document.getElementById('search-input');
-            const search = searchInput ? searchInput.value.toLowerCase() : '';
-            const dept = document.getElementById('filter-dept') ? document.getElementById('filter-dept').value : '';
-            const region = document.getElementById('filter-region') ? document.getElementById('filter-region').value : '';
-            const size = document.getElementById('filter-size') ? document.getElementById('filter-size').value : '';
-            const rearingGrade = document.getElementById('filter-rearing-grade') ? document.getElementById('filter-rearing-grade').value : '';
-            const costGrade = document.getElementById('filter-cost-grade') ? document.getElementById('filter-cost-grade').value : '';
+    const searchInput = document.getElementById('search-input');
+    const search = searchInput ? searchInput.value.toLowerCase() : '';
+    const dept = document.getElementById('filter-dept') ? document.getElementById('filter-dept').value : '';
+    const region = document.getElementById('filter-region') ? document.getElementById('filter-region').value : '';
+    const size = document.getElementById('filter-size') ? document.getElementById('filter-size').value : '';
+    const rearingGrade = document.getElementById('filter-rearing-grade') ? document.getElementById('filter-rearing-grade').value : '';
+    const costGrade = document.getElementById('filter-cost-grade') ? document.getElementById('filter-cost-grade').value : '';
 
-            filteredData = parsedData.filter(d => {
-    // 🎯 한마을BU 전체(ALL) 조회 시 유전자사업부 농가는 합산에서 제외
-    const isTargetDept = (activeDept === 'ALL') 
-        ? (d.dept !== '유전자사업부') 
-        : (d.dept === activeDept);
+    // 🎯 1. 드롭다운 및 검색어 조건 1차 필터링
+    filteredData = parsedData.filter(d => {
+        const isTargetDept = (activeDept === 'ALL') 
+            ? (d.dept !== '유전자사업부') 
+            : (d.dept === activeDept);
 
-    return (d.farmName.toLowerCase().includes(search) || d.farmCode.toLowerCase().includes(search)) &&
-           (dept === '' || d.dept === dept) &&
-           (region === '' || d.region === region) &&
-           (size === '' || d.farmSize === size) &&
-           (rearingGrade === '' || d.rearingGrade === rearingGrade) &&
-           (costGrade === '' || d.gradeCategory === costGrade) &&
-           isTargetDept;
-});
+        return (d.farmName.toLowerCase().includes(search) || d.farmCode.toLowerCase().includes(search)) &&
+               (dept === '' || d.dept === dept) &&
+               (region === '' || d.region === region) &&
+               (size === '' || d.farmSize === size) &&
+               (rearingGrade === '' || d.rearingGrade === rearingGrade) &&
+               (costGrade === '' || d.gradeCategory === costGrade) &&
+               isTargetDept;
+    });
 
-            if (currentSortField) {
-                if (currentSortField === 'gradeCategory') {
-                    const gradeRank = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'D-': 5 };
-                    filteredData.sort((a, b) => {
-                        let rankA = gradeRank[a.gradeCategory];
-                        let rankB = gradeRank[b.gradeCategory];
-                        if (rankA === undefined && rankB === undefined) return 0;
-                        if (rankA === undefined) return 1; 
-                        if (rankB === undefined) return -1;
-                        return currentSortAsc ? (rankA - rankB) : (rankB - rankA);
-                    });
-                } else {
-                    filteredData.sort((a, b) => {
-                        let valA = a[currentSortField];
-                        let valB = b[currentSortField];
-                        if (typeof valA === 'string' && !isNaN(parseFloat(valA.replace(/[^0-9.-]/g, '')))) valA = cleanNum(valA);
-                        if (typeof valB === 'string' && !isNaN(parseFloat(valB.replace(/[^0-9.-]/g, '')))) valB = cleanNum(valB);
-                        if (valA < valB) return currentSortAsc ? -1 : 1;
-                        if (valA > valB) return currentSortAsc ? 1 : -1;
-                        return 0;
-                    });
-                }
-            }
+    // 🎯 2. 기간 슬라이싱 인덱스 구간 구하기
+    const allMonths = mappings.costTrend.map(m => m.month);
+    const allIsoMonths = allMonths.map(m => toIsoMonthStr(m));
 
-// 🎯 1. 기간 슬라이싱 인덱스 구간 구하기 (포맷 안전 변환 적용)
-            const allMonths = mappings.costTrend.map(m => m.month);
-            const allIsoMonths = allMonths.map(m => toIsoMonthStr(m));
+    const isoStartVal = toIsoMonthStr(selectedStartYM);
+    const isoEndVal = toIsoMonthStr(selectedEndYM);
 
-            const isoStartVal = toIsoMonthStr(selectedStartYM);
-            const isoEndVal = toIsoMonthStr(selectedEndYM);
+    let startSliceIdx = allIsoMonths.findIndex(m => m === isoStartVal);
+    let endSliceIdx = allIsoMonths.findIndex(m => m === isoEndVal);
 
-            let startSliceIdx = allIsoMonths.findIndex(m => m === isoStartVal);
-            let endSliceIdx = allIsoMonths.findIndex(m => m === isoEndVal);
+    if (startSliceIdx === -1) startSliceIdx = 0;
+    if (endSliceIdx === -1 || endSliceIdx < startSliceIdx) endSliceIdx = getRealValidMaxMonthIdx();
 
-            if (startSliceIdx === -1) startSliceIdx = 0;
-            if (endSliceIdx === -1 || endSliceIdx < startSliceIdx) endSliceIdx = getRealValidMaxMonthIdx();
+    // 🎯 3. 농가별 선택 기간 수치 및 약품비/등급 실시간 재산출
+    filteredData.forEach(d => {
+        let pPeriodSum = 0;
+        let hPeriodSum = 0;
 
-            // 🎯 2. 농가별 선택 기간 수치 실시간 재산출
-            filteredData.forEach(d => {
-                let pPeriodSum = 0;
-                let hPeriodSum = 0;
-
-                for (let i = startSliceIdx; i <= endSliceIdx; i++) {
-                    pPeriodSum += (d.purchaseVals[i] || 0);
-                    hPeriodSum += (d.headcountVals[i] || 0);
-                }
-
-                d.periodHeadcountTotal = hPeriodSum;
-                d.periodPurchaseTotal = pPeriodSum;
-
-                // 선택 기간 입식두당 약품비 (가중평균)
-                d.medicineCost = hPeriodSum > 0 ? Math.round(pPeriodSum / hPeriodSum) : 0;
-
-                // 선택 기간 출하두당 약품비
-                const rearingRate = d.avgRearingRate > 1.0 ? (d.avgRearingRate / 100) : (d.avgRearingRate || 0.935);
-                d.shipmentCost = (d.medicineCost > 0 && rearingRate > 0) ? Math.round(d.medicineCost / rearingRate) : 0;
-
-                // 선택 기간 등급 및 목표대비 재산출
-                d.gradeCategory = calculateGrade(d.medicineCost, pPeriodSum, hPeriodSum);
-                d.vsMedian = d.medicineCost > 0 ? (d.medicineCost - 4700) : 0;
-            });
-
-            // 🎯 3. 상단 대시보드 요약 KPI 수치 실시간 업데이트
-            const periodFarmsWithHead = filteredData.filter(d => d.periodHeadcountTotal > 0);
-            currentKPIs.totalHead = filteredData.reduce((sum, d) => sum + (d.periodHeadcountTotal || 0), 0);
-            currentKPIs.totalPur = filteredData.reduce((sum, d) => sum + (d.periodPurchaseTotal || 0), 0);
-            currentKPIs.avgCost = currentKPIs.totalHead > 0 ? Math.round(currentKPIs.totalPur / currentKPIs.totalHead) : 0;
-
-// 🎯 4. 입식두당 약품비 추이 차트 (엑셀 수식과 100% 일치하는 6개월 누계 이동 가중평균)
-            const maxValidIdx = getRealValidMaxMonthIdx();
-            const totalMonths = maxValidIdx + 1;
-            const monthlyPurSums = new Array(totalMonths).fill(0);
-            const monthlyHeadSums = new Array(totalMonths).fill(0);
-
-            // 선택된 농가(filteredData)의 실제 월별 매입액(purchaseVals)과 입식두수(headcountVals) 누적
-            filteredData.forEach(d => {
-                for (let i = 0; i < totalMonths; i++) {
-                    monthlyPurSums[i] += (d.purchaseVals[i] || 0);
-                    monthlyHeadSums[i] += (d.headcountVals[i] || 0);
-                }
-            });
-
-            // 각 월 기준 최근 6개월(max(0, i-5) ~ i)의 (누적 매입액 ÷ 누적 두수) 가중평균 계산
-            const fullTrendData = monthlyPurSums.map((_, i) => {
-                const startIdx = Math.max(0, i - 5);
-                let windowPurSum = 0;
-                let windowHeadSum = 0;
-                for (let j = startIdx; j <= i; j++) {
-                    windowPurSum += monthlyPurSums[j];
-                    windowHeadSum += monthlyHeadSums[j];
-                }
-                return windowHeadSum > 0 ? Math.round(windowPurSum / windowHeadSum) : 0;
-            });
-
-            // 한마을BU 전체 상태일 경우 엑셀 상단 BU 요약행 수치를 우선 적용하며, 필터 선택 시 실시간 연산값 적용
-            if (activeDept === 'ALL' && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0 && !search && !region && !size && !rearingGrade && !costGrade) {
-                currentKPIs.trendData = buSummaryData.costTrendVals.slice(startSliceIdx, endSliceIdx + 1);
-            } else {
-                currentKPIs.trendData = fullTrendData.slice(startSliceIdx, endSliceIdx + 1);
-            }
-
-            currentKPIs.displayMonths = allMonths.slice(startSliceIdx, endSliceIdx + 1);
-
-             // 🎯 4번: 약품 종류별 점유 비중 (전체 filteredData 기준 매입액 가중평균)
-            let vSum = 0, aSum = 0, tSum = 0, nSum = 0, oSum = 0;
-            let totalPurSum = 0;
-
-            filteredData.forEach(d => {
-              const pur = d.purchaseTotal || 0;
-              if (pur > 0) {
-                vSum += (d.ratios[0] * pur);
-                aSum += (d.ratios[1] * pur);
-                tSum += (d.ratios[2] * pur);
-                nSum += (d.ratios[3] * pur);
-                oSum += (d.ratios[4] * pur);
-                totalPurSum += pur;
-              }
-        });
-
-        const div = totalPurSum || 1;
-        currentKPIs.ratios = [vSum/div, aSum/div, tSum/div, nSum/div, oSum/div];
-
-            updateKPIs();
-            renderTable();
-            renderCharts();
-
-            // 🎯 [핵심 추가] 상세 카드가 열려있는 상태에서 기간 필터 조작 시 실시간 수치 갱신
-            const detailCard = document.getElementById('inline-detail-section');
-            if (detailCard && !detailCard.classList.contains('hidden') && currentSelectedFarmCode) {
-                const activeFarm = parsedData.find(f => String(f.farmCode).trim().toLowerCase() === String(currentSelectedFarmCode).trim().toLowerCase());
-                if (activeFarm) {
-                    showSelectedRatioAndDetails(activeFarm);
-                }
-            }
-
-            if (currentMainTab === 'chart') {
-                renderAdvancedAnalysisCharts();
-            }
+        for (let i = startSliceIdx; i <= endSliceIdx; i++) {
+            pPeriodSum += (d.purchaseVals[i] || 0);
+            hPeriodSum += (d.headcountVals[i] || 0);
         }
+
+        d.periodHeadcountTotal = hPeriodSum;
+        d.periodPurchaseTotal = pPeriodSum;
+
+        // 선택 기간 입식두당 약품비 (가중평균)
+        d.medicineCost = hPeriodSum > 0 ? Math.round(pPeriodSum / hPeriodSum) : 0;
+
+        // 선택 기간 출하두당 약품비
+        const rearingRate = d.avgRearingRate > 1.0 ? (d.avgRearingRate / 100) : (d.avgRearingRate || 0.935);
+        d.shipmentCost = (d.medicineCost > 0 && rearingRate > 0) ? Math.round(d.medicineCost / rearingRate) : 0;
+
+        // 선택 기간 등급 및 목표대비 재산출
+        d.gradeCategory = calculateGrade(d.medicineCost, pPeriodSum, hPeriodSum);
+        d.vsMedian = d.medicineCost > 0 ? (d.medicineCost - 4700) : 0;
+    });
+
+    // 🎯 4. [핵심] 재산출된 약품비(medicineCost) 기반 내림차순 정렬 자동 적용
+    if (currentSortField) {
+        if (currentSortField === 'gradeCategory') {
+            const gradeRank = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'D-': 5 };
+            filteredData.sort((a, b) => {
+                let rankA = gradeRank[a.gradeCategory];
+                let rankB = gradeRank[b.gradeCategory];
+                if (rankA === undefined && rankB === undefined) return 0;
+                if (rankA === undefined) return 1; 
+                if (rankB === undefined) return -1;
+                return currentSortAsc ? (rankA - rankB) : (rankB - rankA);
+            });
+        } else {
+            filteredData.sort((a, b) => {
+                let valA = a[currentSortField];
+                let valB = b[currentSortField];
+                if (typeof valA === 'string' && !isNaN(parseFloat(valA.replace(/[^0-9.-]/g, '')))) valA = cleanNum(valA);
+                if (typeof valB === 'string' && !isNaN(parseFloat(valB.replace(/[^0-9.-]/g, '')))) valB = cleanNum(valB);
+                if (valA < valB) return currentSortAsc ? -1 : 1;
+                if (valA > valB) return currentSortAsc ? 1 : -1;
+                return 0;
+            });
+        }
+    }
+
+    // 🎯 5. 대시보드 요약 KPI 연산
+    const periodFarmsWithHead = filteredData.filter(d => d.periodHeadcountTotal > 0);
+    currentKPIs.totalHead = filteredData.reduce((sum, d) => sum + (d.periodHeadcountTotal || 0), 0);
+    currentKPIs.totalPur = filteredData.reduce((sum, d) => sum + (d.periodPurchaseTotal || 0), 0);
+    currentKPIs.avgCost = currentKPIs.totalHead > 0 ? Math.round(currentKPIs.totalPur / currentKPIs.totalHead) : 0;
+
+    const maxValidIdx = getRealValidMaxMonthIdx();
+    const totalMonths = maxValidIdx + 1;
+    const monthlyPurSums = new Array(totalMonths).fill(0);
+    const monthlyHeadSums = new Array(totalMonths).fill(0);
+
+    filteredData.forEach(d => {
+        for (let i = 0; i < totalMonths; i++) {
+            monthlyPurSums[i] += (d.purchaseVals[i] || 0);
+            monthlyHeadSums[i] += (d.headcountVals[i] || 0);
+        }
+    });
+
+    const fullTrendData = monthlyPurSums.map((_, i) => {
+        const startIdx = Math.max(0, i - 5);
+        let windowPurSum = 0;
+        let windowHeadSum = 0;
+        for (let j = startIdx; j <= i; j++) {
+            windowPurSum += monthlyPurSums[j];
+            windowHeadSum += monthlyHeadSums[j];
+        }
+        return windowHeadSum > 0 ? Math.round(windowPurSum / windowHeadSum) : 0;
+    });
+
+    if (activeDept === 'ALL' && buSummaryData.costTrendVals && buSummaryData.costTrendVals.length > 0 && !search && !region && !size && !rearingGrade && !costGrade) {
+        currentKPIs.trendData = buSummaryData.costTrendVals.slice(startSliceIdx, endSliceIdx + 1);
+    } else {
+        currentKPIs.trendData = fullTrendData.slice(startSliceIdx, endSliceIdx + 1);
+    }
+
+    currentKPIs.displayMonths = allMonths.slice(startSliceIdx, endSliceIdx + 1);
+
+    let vSum = 0, aSum = 0, tSum = 0, nSum = 0, oSum = 0;
+    let totalPurSum = 0;
+
+    filteredData.forEach(d => {
+        const pur = d.purchaseTotal || 0;
+        if (pur > 0) {
+            vSum += (d.ratios[0] * pur);
+            aSum += (d.ratios[1] * pur);
+            tSum += (d.ratios[2] * pur);
+            nSum += (d.ratios[3] * pur);
+            oSum += (d.ratios[4] * pur);
+            totalPurSum += pur;
+        }
+    });
+
+    const div = totalPurSum || 1;
+    currentKPIs.ratios = [vSum/div, aSum/div, tSum/div, nSum/div, oSum/div];
+
+    updateKPIs();
+    renderTable();
+    renderCharts();
+
+    const detailCard = document.getElementById('inline-detail-section');
+    if (detailCard && !detailCard.classList.contains('hidden') && currentSelectedFarmCode) {
+        const activeFarm = parsedData.find(f => String(f.farmCode).trim().toLowerCase() === String(currentSelectedFarmCode).trim().toLowerCase());
+        if (activeFarm) {
+            showSelectedRatioAndDetails(activeFarm);
+        }
+    }
+
+    if (currentMainTab === 'chart') {
+        renderAdvancedAnalysisCharts();
+    }
+}
 
 function updateKPIs() {
             const searchVal = document.getElementById('search-input')?.value.trim();
@@ -3675,11 +3866,14 @@ function updateKPIs() {
         // 상세 데이터 바인딩
         showSelectedRatioAndDetails(item);
 
-        // 💡 농가를 직접 클릭했을 때만 상세 카드로 부드럽게 스크롤 이동
+        // 🎯 [수정] 오프셋을 +220px로 변경하여 빨간색 제목 바가 1번 카드 밑으로 완전히 나오도록 조정
         const card = document.getElementById('inline-detail-section');
         if (card) {
             setTimeout(() => {
-                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const yOffset = 220; // 👈 -110에서 +220으로 변경하여 스크롤 위치 보정
+                const y = card.getBoundingClientRect().top + window.pageYOffset - yOffset;
+                
+                window.scrollTo({ top: y, behavior: 'smooth' });
             }, 100);
         }
     }
@@ -3873,22 +4067,31 @@ function updateKPIs() {
 }
 
         function fetchFarmCommentsBadgeOnly(farmCode) {
-            if (!farmCode) return;
-            const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
-            urlObj.searchParams.set('action', 'getComments');
-            urlObj.searchParams.set('farmCode', farmCode);
-            urlObj.searchParams.set('email', currentUserEmail);
-            urlObj.searchParams.set('password', currentUserPassword);
-            urlObj.searchParams.set('t', new Date().getTime());
+    if (!farmCode) return;
+    const urlObj = new URL(GOOGLE_SHEET_API_URL.trim());
+    urlObj.searchParams.set('action', 'getComments');
+    urlObj.searchParams.set('farmCode', farmCode);
+    urlObj.searchParams.set('email', currentUserEmail);
+    urlObj.searchParams.set('password', currentUserPassword);
+    urlObj.searchParams.set('t', new Date().getTime());
 
-            fetch(urlObj.toString())
-                .then(res => res.json())
-                .then(comments => {
-                    const badge = document.getElementById('detail-comment-badge');
-                    if (badge) badge.textContent = Array.isArray(comments) ? comments.length : 0;
-                })
-                .catch(() => {});
-        }
+    fetch(urlObj.toString())
+        .then(res => res.json())
+        .then(comments => {
+            const count = Array.isArray(comments) ? comments.length : 0;
+            const badge = document.getElementById('detail-comment-badge');
+            if (badge) {
+                badge.textContent = count;
+                // 🎯 의견이 1개 이상 있으면 배지 색상을 노란색 강조 및 시선 유도
+                if (count > 0) {
+                    badge.className = "bg-amber-400 text-slate-900 px-2 py-0.5 rounded-full text-[10px] font-black shadow-sm animate-pulse";
+                } else {
+                    badge.className = "bg-sunjin-red text-white px-2 py-0.5 rounded-full text-[10px] font-black shadow-inner";
+                }
+            }
+        })
+        .catch(() => {});
+}
 
 function renderCharts() {
             if (filteredData.length === 0) return;
