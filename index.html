@@ -504,7 +504,7 @@ html {
                                     <th class="py-1 px-1.5 border border-slate-200/80">B등급</th>
                                     <th class="py-1 px-1.5 border border-slate-200/80">C등급</th>
                                     <th class="py-1 px-1.5 border border-slate-200/80">D등급</th>
-                                    <th class="py-1 px-1.5 border border-slate-200/80 rounded-tr-lg">D2등급</th>
+                                    <th class="py-1 px-1.5 border border-slate-200/80 rounded-tr-lg">D-등급</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -663,7 +663,7 @@ html {
                                 <option value="B">B등급 (4,000원 미만)</option>
                                 <option value="C">C등급 (6,000원 미만)</option>
                                 <option value="D">D등급 (8,000원 미만)</option>
-                                <option value="D2">D2등급 (8,000원 이상)</option>
+                                <option value="D-">D-등급 (8,000원 이상)</option>
                             </select>
 
                             <button onclick="resetFilters()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer no-print">
@@ -1305,43 +1305,59 @@ html {
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
-                        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-3.5 rounded-xl shadow-sm flex flex-col justify-between">
-                            <span class="text-xs font-bold text-slate-300 block">선택 정산 출하두당 위탁사육비</span>
-                            <div class="my-auto py-1">
-                                <span class="text-2xl font-black text-sunjin-orange block tracking-tight" id="dash-kpi-cost">0원</span>
-                            </div>
-                            <div class="pt-2 border-t border-slate-700/60 flex justify-between items-center text-xs">
-                                <span class="text-slate-300 text-xs font-semibold" id="lbl-kpi-rank-title">선택 연도/사업부 대비 순위</span>
-                                <span class="font-black text-amber-300 text-sm" id="dash-kpi-rank">-</span>
-                            </div>
-                        </div>
+                    <!-- 기존 grid-cols-1 md:grid-cols-3 구역 교체 -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-stretch">
+    <!-- 1. 출하두당 위탁사육비 (너비 4/12) -->
+    <div class="md:col-span-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-3.5 rounded-xl shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-bold text-slate-300 block">선택 정산 출하두당 위탁사육비</span>
+        <div class="my-auto py-1">
+            <span class="text-2xl font-black text-sunjin-orange block tracking-tight" id="dash-kpi-cost">0원</span>
+        </div>
+        <div class="pt-2 border-t border-slate-700/60 flex justify-between items-center text-xs">
+            <span class="text-slate-300 text-xs font-semibold" id="lbl-kpi-rank-title">선택 연도/사업부 대비 순위</span>
+            <span class="font-black text-amber-300 text-sm" id="dash-kpi-rank">-</span>
+        </div>
+    </div>
 
-                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col justify-between">
-                            <span class="text-xs font-bold text-slate-500 block">총 사육 일수</span>
-                            <div class="my-auto py-1">
-                                <span class="text-2xl font-black text-slate-900 block tracking-tight" id="dash-kpi-days">0 일</span>
-                            </div>
-                            <div class="pt-2 border-t border-slate-200/80 flex justify-between items-center text-xs text-slate-600">
-                                <span class="font-semibold">전입~출하 기간</span>
-                                <span class="font-extrabold text-slate-800 font-mono text-xs" id="dash-kpi-days-sub">-</span>
-                            </div>
-                        </div>
+    <!-- 2. 총 사육 일수 (너비 축소: 2.5/12 -> md:col-span-3) -->
+    <div class="md:col-span-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col justify-between">
+        <span class="text-xs font-bold text-slate-500 block">총 사육 일수</span>
+        <div class="my-auto py-1">
+            <span class="text-2xl font-black text-slate-900 block tracking-tight" id="dash-kpi-days">0 일</span>
+        </div>
+        <div class="pt-2 border-t border-slate-200/80 flex justify-between items-center text-xs text-slate-600">
+            <span class="font-semibold">전입~출하 기간</span>
+            <span class="font-extrabold text-slate-800 font-mono text-xs" id="dash-kpi-days-sub">-</span>
+        </div>
+    </div>
 
-                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col justify-between">
-                            <span class="text-xs font-bold text-slate-500 block mb-1">입식 및 생육 핵심 지표</span>
-                            <div class="grid grid-cols-2 gap-3 my-auto py-1">
-                                <div>
-                                    <span class="text-xs text-slate-400 font-bold block mb-0.5">전입 평체</span>
-                                    <span class="text-3xl font-black text-slate-900 tracking-tight block" id="dash-kpi-inweight">0 kg</span>
-                                </div>
-                                <div>
-                                    <span class="text-xs text-slate-400 font-bold block mb-0.5">일당증체량(ADG)</span>
-                                    <span class="text-3xl font-black text-sunjin-red tracking-tight block" id="dash-kpi-adg">0.0 g</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <!-- 3. 입식 및 생육 핵심 지표 (너비 확장: 5/12 -> md:col-span-5) -->
+    <div class="md:col-span-5 bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col justify-between">
+        <span class="text-xs font-bold text-slate-500 block mb-1">입식 및 생육 핵심 지표</span>
+        <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 my-auto py-1 text-center">
+            <div>
+                <span class="text-[10px] text-slate-400 font-bold block mb-0.5">전입 평체</span>
+                <span class="text-base sm:text-lg font-black text-slate-900 tracking-tight block" id="dash-kpi-inweight">0 kg</span>
+            </div>
+            <div>
+                <span class="text-[10px] text-slate-400 font-bold block mb-0.5">출하 평체</span>
+                <span class="text-base sm:text-lg font-black text-slate-900 tracking-tight block" id="dash-kpi-outweight">0 kg</span>
+            </div>
+            <div>
+                <span class="text-[10px] text-slate-400 font-bold block mb-0.5">두당 1일 급여량</span>
+                <span class="text-base sm:text-lg font-black text-blue-600 tracking-tight block" id="dash-kpi-dailyfeed">0 kg</span>
+            </div>
+            <div>
+                <span class="text-[10px] text-slate-400 font-bold block mb-0.5">일당증체량</span>
+                <span class="text-base sm:text-lg font-black text-sunjin-red tracking-tight block" id="dash-kpi-adg">0 g</span>
+            </div>
+            <div>
+                <span class="text-[10px] text-slate-400 font-bold block mb-0.5">사료요구율</span>
+                <span class="text-base sm:text-lg font-black text-emerald-600 tracking-tight block" id="dash-kpi-fcr">0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
 
                     <!-- 백분위 프로필 차트 -->
                     <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
@@ -1832,7 +1848,7 @@ let currentSortField = 'medicineCost';
             'B': '#3b82f6', 
             'C': '#8b5cf6', 
             'D': '#f97316', 
-            'D2': '#F51932'
+            'D-': '#F51932'
         };
 
         function showLoginModal() {
@@ -2480,17 +2496,17 @@ function switchMainTab(tab) {
         }
 
         function calculateGrade(cost, purchaseTotal, headcountTotal) {
-            let c = parseFloat(cost);
-            let p = parseFloat(purchaseTotal);
-            let h = parseFloat(headcountTotal);
+                let c = parseFloat(cost);
+                let p = parseFloat(purchaseTotal);
+                let h = parseFloat(headcountTotal);
             if ((isNaN(p) || p <= 0) && (isNaN(h) || h <= 0)) return ''; 
 
-            let val = isNaN(c) ? 0 : c;
+             let val = isNaN(c) ? 0 : c;
             if (val < thresholds.a) return 'A';
-            if (val < thresholds.b) return 'B';
-            if (val < thresholds.c) return 'C';
+         if (val < thresholds.b) return 'B';
+         if (val < thresholds.c) return 'C';
             if (val < thresholds.d) return 'D';
-            return 'D2';
+        return 'D-';
         }
 
         function getYearMonthString(year, monthVal) {
@@ -3384,7 +3400,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             if (currentSortField) {
                 if (currentSortField === 'gradeCategory') {
-                    const gradeRank = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'D2': 5 };
+                    const gradeRank = { 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'D-': 5 };
                     filteredData.sort((a, b) => {
                         let rankA = gradeRank[a.gradeCategory];
                         let rankB = gradeRank[b.gradeCategory];
@@ -3581,12 +3597,12 @@ function updateKPIs() {
             const grade = calculateGrade(displayAvgCost, displayTotalPur, displayTotalHead);
             
             const gradeBadgeClasses = {
-                'A': 'text-emerald-700 bg-emerald-50 border-emerald-200',
-                'B': 'text-blue-700 bg-blue-50 border-blue-200',
-                'C': 'text-purple-700 bg-purple-50 border-purple-200',
-                'D': 'text-orange-700 bg-orange-50 border-orange-200',
-                'D2': 'text-rose-700 bg-rose-50 border-rose-200'
-            };
+                 'A': 'text-emerald-700 bg-emerald-50 border-emerald-200',
+                 'B': 'text-blue-700 bg-blue-50 border-blue-200',
+                 'C': 'text-purple-700 bg-purple-50 border-purple-200',
+                 'D': 'text-orange-700 bg-orange-50 border-orange-200',
+                 'D-': 'text-rose-700 bg-rose-50 border-rose-200'
+        };
 
             if (document.getElementById('kpi-avg-cost-grade')) {
                 const activeBadgeClass = gradeBadgeClasses[grade] || 'text-slate-600 bg-slate-100 border-slate-200';
@@ -3612,12 +3628,12 @@ function updateKPIs() {
             else if (d.gradeCategory === 'B') gradeClass = 'bg-blue-100 text-blue-800 border border-blue-200';
             else if (d.gradeCategory === 'C') gradeClass = 'bg-purple-100 text-purple-800 border border-purple-200'; 
             else if (d.gradeCategory === 'D') gradeClass = 'bg-orange-100 text-orange-800 border border-orange-200';
-            else if (d.gradeCategory === 'D2') gradeClass = 'bg-red-100 text-red-800 border border-red-200';
+            else if (d.gradeCategory === 'D-') gradeClass = 'bg-red-100 text-red-800 border border-red-200';
             gradeBadgeHtml = `<span class="px-2 py-0.5 rounded-md text-[9px] font-black ${gradeClass}">${d.gradeCategory}</span>`;
         }
 
         const isInactive = d.manager && d.manager.trim().includes('거래X');
-        const isD2Grade = d.gradeCategory === 'D2';
+        const isD2Grade = d.gradeCategory === 'D-';
 
         let rowBgClass = 'hover:bg-red-50/40 border-b border-slate-100';
         if (isInactive) {
@@ -3878,7 +3894,7 @@ function renderCharts() {
             if (filteredData.length === 0) return;
 
             // 🎯 1. 농가 등급별 점유율 (도넛 차트)
-            const gCounts = { A: 0, B: 0, C: 0, D: 0, D2: 0 };
+            const gCounts = { A: 0, B: 0, C: 0, D: 0, 'D-': 0 };
             filteredData.forEach(d => { if (gCounts[d.gradeCategory] !== undefined) gCounts[d.gradeCategory]++; });
 
             if (activeCharts['grade']) {
@@ -3888,7 +3904,7 @@ function renderCharts() {
                 activeCharts['grade'] = new Chart(document.getElementById('chart-grades'), {
                     type: 'doughnut',
                     data: { 
-                        labels: ['A', 'B', 'C', 'D', 'D2'], 
+                        labels: ['A', 'B', 'C', 'D', 'D-'], 
                         datasets: [{ 
                             data: Object.values(gCounts), 
                             backgroundColor: ['#64B41E', '#3b82f6', '#8b5cf6', '#f97316', '#F51932'] 
@@ -5194,11 +5210,30 @@ function renderDashboardPanel() {
 
     document.getElementById('dash-kpi-days-sub').innerText = `${inDate} ~ ${outDate}`;
 
+    // 🎯 지표별 raw 수치 파싱
     const inWeight = parseSettlementNum(targetRow["전입평체"]);
+    const outWeight = parseSettlementNum(targetRow["출하평체"] || targetRow["평균출하체중"] || targetRow["출하 체중"]);
     const adg = parseSettlementNum(targetRow["일당증체량"]);
-    
-    document.getElementById('dash-kpi-inweight').innerText = `${inWeight.toFixed(1)} kg`;
-    document.getElementById('dash-kpi-adg').innerText = `${adg.toFixed(1)} g`;
+    const fcr = parseSettlementNum(targetRow["사료요구율"]);
+
+    // 🎯 두당 1일 급여량 연산: (총사료급여량 / 평균사육일수) / 출하두수
+    const totalFeed = parseSettlementNum(targetRow["총사료급여량"] || targetRow["총 사료 급여량"] || targetRow["사료급여량"]);
+    const avgDays = parseSettlementNum(targetRow["사육일수"] || targetRow["평균사육일수"]) || 1;
+    const heads = parseSettlementNum(targetRow["출하두수"]) || 1;
+
+    let dailyFeed = 0;
+    if (totalFeed > 0 && avgDays > 0 && heads > 0) {
+    dailyFeed = (totalFeed / avgDays) / heads;
+    } else {
+    dailyFeed = parseSettlementNum(targetRow["두당1일급여량"] || targetRow["1일급여량"]);
+    }
+
+    // 🎯 화면 요소 바인딩
+    if (document.getElementById('dash-kpi-inweight')) document.getElementById('dash-kpi-inweight').innerText = `${inWeight.toFixed(1)} kg`;
+    if (document.getElementById('dash-kpi-outweight')) document.getElementById('dash-kpi-outweight').innerText = `${outWeight > 0 ? outWeight.toFixed(1) : '-'} kg`;
+    if (document.getElementById('dash-kpi-dailyfeed')) document.getElementById('dash-kpi-dailyfeed').innerText = `${dailyFeed > 0 ? dailyFeed.toFixed(2) : '-'} kg`;
+    if (document.getElementById('dash-kpi-adg')) document.getElementById('dash-kpi-adg').innerText = `${adg.toFixed(1)} g`;
+    if (document.getElementById('dash-kpi-fcr')) document.getElementById('dash-kpi-fcr').innerText = `${fcr > 0 ? fcr.toFixed(2) : '-'}`;
 
     renderDashProfileChart(targetRow);
     renderSelectedBatchMetricsTable(targetRow);
@@ -5280,7 +5315,6 @@ function renderDashProfileChart(targetRow) {
     const farmStat = settlementFarmStats[farm];
     const dept = farmStat ? farmStat.dept : '';
 
-    // 💡 [핵심] rawData ➔ settlementRawData 참조로 수정
     const groupRows = settlementRawData.filter(r => r["사업부"] === dept && r["출하 년도"] === year);
 
     const pGrowth = calcSettlementTopPercentile(groupRows.map(r => r["기간육성율"]), targetRow["기간육성율"]);
@@ -5292,6 +5326,27 @@ function renderDashProfileChart(targetRow) {
 
     const rawRanks = [pGrowth, pFcr, pAdg, pPay, pG1, pOff];
     const barHeights = rawRanks.map(r => 101 - r);
+
+    // 🎯 깔끔하고 또렷한 상위 50% 검정 가로 점선 플러그인 (라벨 제거)
+    const targetLinePlugin = {
+        id: 'targetLinePlugin',
+        afterDraw: (chart) => {
+            const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+            if (!y) return;
+
+            const yVal = y.getPixelForValue(50); // 상위 50% 위치
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([5, 4]); // 5px 선, 4px 공백 점선
+            ctx.lineWidth = 2;       // 선 두께
+            ctx.strokeStyle = '#0f172a'; // 선명한 차콜/검정 계열
+            ctx.moveTo(left, yVal);
+            ctx.lineTo(right, yVal);
+            ctx.stroke();
+            ctx.restore();
+        }
+    };
 
     dashProfileChartObj = new Chart(ctx, {
         type: 'bar',
@@ -5341,7 +5396,6 @@ function renderDashProfileChart(targetRow) {
                 }
             },
             plugins: {
-                // 💡 막대 그래프 중앙의 숫자 값 노출 제거
                 datalabels: { display: false }, 
                 legend: { display: false },
                 tooltip: {
@@ -5353,7 +5407,8 @@ function renderDashProfileChart(targetRow) {
                     }
                 }
             }
-        }
+        },
+        plugins: [targetLinePlugin] // 🎯 플러그인 등록
     });
 }
 
