@@ -9626,7 +9626,9 @@ function buildContribAchievePlan(m, base, inputs, next, peerSrc) {
                 if (!(gain > 0)) return;
                 // 한 지표를 계속 끌어올릴수록 추가 개선이 점점 어려워진다(체감) → 누적 난이도에 비례해 한계 비용 가중
                 const accDiff = diffOf[k](valAt(k, pos[k])) - diffOf[k](cur[k]);
-                const cost = ((diffOf[k](valAt(k, pos[k] + 1)) - diffOf[k](valAt(k, pos[k]))) + 0.002) * (1 + CONTRIB_EFFORT_CONVEXITY * accDiff);
+                // 상위 10% 영역에 들어가는 구간은 '절대적으로 어려운 영역'으로 보고 한계 비용을 추가 가중
+                const topZone = diffOf[k].betterShare(valAt(k, pos[k] + 1)) <= CONTRIB_TOP_ZONE_SHARE ? CONTRIB_TOP_ZONE_PENALTY : 1;
+                const cost = ((diffOf[k](valAt(k, pos[k] + 1)) - diffOf[k](valAt(k, pos[k]))) + 0.002) * (1 + CONTRIB_EFFORT_CONVEXITY * accDiff) * topZone;
                 const eff = gain / cost;
                 if (!best || eff > best.eff) best = { k, b, eff };
             });
@@ -9700,9 +9702,34 @@ function buildContribAchievePlan(m, base, inputs, next, peerSrc) {
     activeKeys.forEach(k => {
         const d = diffOf[k](finalP[k]) - diffOf[k](cur[k]);
         const only = { ...cur, [k]: finalP[k] };
+        const unit = CONTRIB_DISPLAY_UNIT[k];
+        const shareAfter = diffOf[k].betterShare(finalP[k]);
+
+        // 🎯 난이도 판정 = 추월 점수 + 도달 위치 규칙
+        //   ① 상위 10% 영역 진입 또는 비교군(A등급) 평균 도달 → 추월 비율과 무관하게 '상'
+        //   ② 최빈 구간을 넘어서는 개선(2단계 영역) → 최소 '중'
+        //   ③ 최빈 구간 이내 개선(현실적 목표) → 최대 '중'
+        const scoreLevel = d < 0.25 ? '하' : (d < 0.7 ? '중' : '상');
+        const enteredTop = shareAfter <= CONTRIB_TOP_ZONE_SHARE && diffOf[k].betterShare(cur[k]) > CONTRIB_TOP_ZONE_SHARE;
+        const reachedCap = Math.abs(finalP[k] - cap[k]) < unit / 2 && Math.abs(cap[k] - cur[k]) >= unit / 2;
+        const beyondMode = (finalP[k] - stage1End[k]) * Math.sign(dir[k]) >= unit / 2;
+        let level, levelReason;
+        if (enteredTop || reachedCap) {
+            level = '상';
+            levelReason = enteredTop ? '상위 10% 진입' : `${tgt.label} 평균 도달`;
+        } else if (beyondMode) {
+            level = scoreLevel === '하' ? '중' : scoreLevel;
+            levelReason = '평균 수준 초과';
+        } else {
+            level = scoreLevel === '상' ? '중' : scoreLevel;
+            levelReason = '평균 수준 이내';
+        }
+
         info[k] = {
             difficulty: d,
-            level: d < 0.25 ? '하' : (d < 0.7 ? '중' : '상'),
+            level,
+            levelReason,
+            shareAfter,
             contrib: base0P - evalP(clampP(only)).r.bepCost,
             // 표시 자릿수로 반올림해 변동이 없으면 미변동으로 취급
             moved: Math.abs(finalP[k] - cur[k]) >= CONTRIB_DISPLAY_UNIT[k] / 2
@@ -9723,6 +9750,11 @@ function buildContribAchievePlan(m, base, inputs, next, peerSrc) {
 
 // 🎯 지표별 화면 표시 단위 (FCR 소수 2자리 / 육성율·지급율 소수 1자리 / 약품비 원 단위)
 const CONTRIB_DISPLAY_UNIT = { fcr: 0.01, rearingRate: 0.1, inHeadMedCost: 1, payRate: 0.1 };
+
+// 🎯 상위 영역 기준 — 개선 후 나보다 우수한 농가가 10% 이하이면 '상위 10% 진입'
+const CONTRIB_TOP_ZONE_SHARE = 0.10;
+// 🎯 상위 10% 영역 진입 구간의 배분 비용 가중 배수 (클수록 종합안이 상위 10% 진입을 피함)
+const CONTRIB_TOP_ZONE_PENALTY = 3;
 
 // 🎯 누적 난이도 가중 계수 — 클수록 한 지표에 몰지 않고 여러 지표로 고르게 분산
 const CONTRIB_EFFORT_CONVEXITY = 3;
@@ -9751,7 +9783,9 @@ function makeContribDifficultyFn(peerSrc, key, higherIsBetter) {
         const smallerShare = Math.min(1, Math.max(0, rankBelow / n));
         return higherIsBetter ? (1 - smallerShare) : smallerShare;
     };
-    return v => -Math.log(Math.max(0.005, betterShare(v)));
+    const fn = v => -Math.log(Math.max(0.005, betterShare(v)));
+    fn.betterShare = betterShare;   // 위치 판정용 (v 도달 시 나보다 우수한 농가 비율)
+    return fn;
 }
 
 // 🎯 [신규] 2개 이상 지표를 함께 개선해서는 목표에 못 미칠 때 — 단독 달성 가능한 지표 중 가장 현실적인 1개로 종합안을 대체
@@ -9884,7 +9918,7 @@ function renderContribAchievePanel() {
                 const moved = inf ? inf.moved : Math.abs(to - from) > 1e-9;
                 const badges = (moved && inf)
                     ? `<span class="ml-1 px-1 py-0.5 rounded text-[9px] font-black bg-slate-800 text-white">${inf.rank}순위</span>`
-                      + `<span class="ml-0.5 px-1 py-0.5 rounded text-[9px] font-black ${LEVEL_CLS[inf.level]}">난이도 ${inf.level}</span>`
+                      + `<span class="ml-0.5 px-1 py-0.5 rounded text-[9px] font-black ${LEVEL_CLS[inf.level]}" title="${inf.levelReason} · 개선 후 우수 농가 비율 ${(inf.shareAfter * 100).toFixed(0)}%">난이도 ${inf.level}</span>`
                     : '';
                 const keepMsg = plan.stage === 'single'
                     ? '현 수준 유지'
@@ -9906,8 +9940,8 @@ function renderContribAchievePanel() {
                     <span class="text-blue-700">${plan.stage === 'single'
                         ? '▶ 2개 이상 지표를 함께 개선해서는 목표에 도달하기 어려워, 가장 현실적인 단일 지표 개선안을 표시합니다.'
                         : plan.stage === 1
-                        ? '▶ 1단계 달성 — 난이도 대비 BEP 절감 효과가 큰 지표부터, 최빈 구간 이내에서 개선하면 목표에 도달합니다.'
-                        : '▶ 2단계 필요 — 최빈 구간까지 개선 후, 난이도 대비 효과가 큰 지표부터 비교군 평균 방향으로 추가 개선합니다.'}</span>
+                        ? '▶ [단기 목표 가능] 평균 수준 개선안 — 지표들을 대다수 농가 수준까지만 개선해도 목표에 도달합니다. 1순위 지표부터 개선하세요.'
+                        : '▶ [상위권 도달 필요] 고도화 개선안 (장기 플랜) — 평균 수준 개선만으로는 부족하여, 일부 지표를 상위권(A등급 평균) 수준까지 끌어올려야 합니다.'}</span>
                 </div>
                 <div class="space-y-1">
                     ${row('보정FCR',        plan.cur.fcr,           c.fcr,           '',   2, false, 'fcr')}
