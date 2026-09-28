@@ -4238,7 +4238,6 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     }
 
     // 🎯 5. 대시보드 요약 KPI 연산
-    const periodFarmsWithHead = filteredData.filter(d => d.periodHeadcountTotal > 0);
     currentKPIs.totalHead = filteredData.reduce((sum, d) => sum + (d.periodHeadcountTotal || 0), 0);
     currentKPIs.totalPur = filteredData.reduce((sum, d) => sum + (d.periodPurchaseTotal || 0), 0);
     currentKPIs.avgCost = currentKPIs.totalHead > 0 ? Math.round(currentKPIs.totalPur / currentKPIs.totalHead) : 0;
@@ -5607,30 +5606,6 @@ function formatSettlementRankLabel(rank) {
     return `하위 ${100 - rank}%`;
 }
 
-function calcSettlementGeometricMean(arr) {
-    const valid = arr.map(v => parseSettlementNum(v)).filter(v => v > 0);
-    if (!valid.length) return 0;
-    const sumLog = valid.reduce((acc, val) => acc + Math.log(val), 0);
-    return Math.exp(sumLog / valid.length);
-}
-
-function calcSettlementWeightedCostAverage(rowsGroup) {
-    let totalCostSum = 0;
-    let totalHeadSum = 0;
-
-    rowsGroup.forEach(r => {
-        const heads = parseSettlementNum(r["출하두수"] || r["출하 두수"]) || 1;
-        const costPerHead = parseSettlementCost(r["출하 두당 사육비"] || r["출하두당사육비"]);
-        
-        if (costPerHead > 0 && heads > 0) {
-            totalCostSum += (costPerHead * heads);
-            totalHeadSum += heads;
-        }
-    });
-
-    return totalHeadSum > 0 ? Math.round(totalCostSum / totalHeadSum) : 0;
-}
-
 function calcSettlementTopPercentile(arr, value, lowerIsBetter = false) {
     if (!arr || !arr.length) return 50;
     const validArr = arr.filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
@@ -5853,10 +5828,6 @@ function fetchSettlementData() {
     }
     
     filterFarmsByDept('diag');
-}
-
-function initSettlementDeptDropdown() {
-    // fetchSettlementData 내부에서 드롭다운 초기화까지 일괄 처리되므로 공란 유지
 }
 
 // 🎯 사업부 선택 필터 및 사용자 권한 범위 기준으로 농장 목록 산출 (기간 제한 없음)
@@ -6520,23 +6491,6 @@ function onSettlementPeriodChange() {
 
     // 5) 하단 시각화 및 산점도 차트 갱신
     renderPeriodMetricsAndScatter(farm, deptAvgs, startYM, endYM);
-}
-
-// 5. 출하두수 가중평균 계산 유틸 함수
-function calcWeightedAvg(rowsGroup, propKey) {
-    let totalWeightedVal = 0;
-    let totalHeadSum = 0;
-
-    rowsGroup.forEach(r => {
-        const heads = parseSettlementNum(r["출하두수"]) || 0;
-        const val = parseSettlementNum(r[propKey]) || 0;
-        if (val > 0 && heads > 0) {
-            totalWeightedVal += (val * heads);
-            totalHeadSum += heads;
-        }
-    });
-
-    return totalHeadSum > 0 ? (totalWeightedVal / totalHeadSum) : 0;
 }
 
 // 6. 기간 백분위 위치 계산 유틸 함수
@@ -7326,7 +7280,6 @@ function updateCompareFarmDropdown(validFarms) {
     menu.innerHTML = validFarms.length
         ? validFarms.map((f, idx) => {
             const checked = selectedCompareFarms.includes(f);
-            const swatchColor = getCompareFarmColor(selectedCompareFarms.indexOf(f) >= 0 ? selectedCompareFarms.indexOf(f) : idx);
             return `
                 <label class="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer">
                     <input type="checkbox" value="${contribTipAttr(f)}" ${checked ? 'checked' : ''} onchange="onCompareFarmCheckboxToggle(this)" class="w-3.5 h-3.5 accent-emerald-600 shrink-0">
@@ -7713,7 +7666,6 @@ function selectTrendMetric(key) {
 
 window.addEventListener('beforeunload', function () {
     const savedLoginTime = sessionStorage.getItem('pageLoginTime');
-    const savedSessionId = sessionStorage.getItem('currentSessionId');
 
     if (currentUserEmail && savedLoginTime) {
         const leaveTime = new Date().getTime();
@@ -8985,10 +8937,7 @@ function returnToContribAnalysis() {
 }
 
 // 🎯 다양한 모달 호출 함수명(호환용 별칭) 일괄 바인딩
-function showContribModalDetail(farmCode) { openContribInlineDetailModal(farmCode); }
 function openContribDetailModal(farmCode) { openContribInlineDetailModal(farmCode); }
-function showContribFarmDetailModal(farmCode) { openContribInlineDetailModal(farmCode); }
-function renderContribModalSimulation(farmCode) { openContribInlineDetailModal(farmCode); }
 
 // 🎯 [신규] 변동 가능 지표 입력창 표시 자릿수 (표시만 반올림, 연산은 원본 정밀도)
 const SIM_INPUT_DECIMALS = {
@@ -9716,13 +9665,13 @@ function buildContribAchievePlan(m, base, inputs, next, peerSrc) {
         let level, levelReason;
         if (enteredTop || reachedCap) {
             level = '상';
-            levelReason = enteredTop ? '상위 10% 진입' : `${tgt.label} 평균 도달`;
+            levelReason = enteredTop ? '상위 10% 수준' : 'A등급 수준';
         } else if (beyondMode) {
             level = scoreLevel === '하' ? '중' : scoreLevel;
-            levelReason = '평균 수준 초과';
+            levelReason = level === '상' ? '개선 폭 큼' : '평균 이상';
         } else {
             level = scoreLevel === '상' ? '중' : scoreLevel;
-            levelReason = '평균 수준 이내';
+            levelReason = '평균 이내';
         }
 
         info[k] = {
@@ -9919,6 +9868,7 @@ function renderContribAchievePanel() {
                 const badges = (moved && inf)
                     ? `<span class="ml-1 px-1 py-0.5 rounded text-[9px] font-black bg-slate-800 text-white">${inf.rank}순위</span>`
                       + `<span class="ml-0.5 px-1 py-0.5 rounded text-[9px] font-black ${LEVEL_CLS[inf.level]}" title="${inf.levelReason} · 개선 후 우수 농가 비율 ${(inf.shareAfter * 100).toFixed(0)}%">난이도 ${inf.level}</span>`
+                      + (inf.level === '상' ? `<span class="ml-0.5 text-[9px] font-semibold text-rose-500">${inf.levelReason}</span>` : '')
                     : '';
                 const keepMsg = plan.stage === 'single'
                     ? '현 수준 유지'
@@ -9936,12 +9886,7 @@ function renderContribAchievePanel() {
             body = `
                 <div class="mb-1.5 text-[10px] font-bold text-slate-500 leading-snug">
                     <b class="text-slate-700">${plan.next.grade}등급 달성 목표 : BEP ${plan.next.target.toLocaleString()} 원/kg 이하</b><br>
-                    ${plan.tgt ? `지표 개선 상한 기준 : <b class="text-slate-700">${plan.tgt.label} ${plan.tgt.count.toLocaleString()}개소</b> (출하두수 가중평균)<br>` : ''}
-                    <span class="text-blue-700">${plan.stage === 'single'
-                        ? '▶ 2개 이상 지표를 함께 개선해서는 목표에 도달하기 어려워, 가장 현실적인 단일 지표 개선안을 표시합니다.'
-                        : plan.stage === 1
-                        ? '▶ [단기 목표 가능] 평균 수준 개선안 — 지표들을 대다수 농가 수준까지만 개선해도 목표에 도달합니다. 1순위 지표부터 개선하세요.'
-                        : '▶ [상위권 도달 필요] 고도화 개선안 (장기 플랜) — 평균 수준 개선만으로는 부족하여, 일부 지표를 상위권(A등급 평균) 수준까지 끌어올려야 합니다.'}</span>
+                    ${plan.tgt ? `지표 개선 상한 기준 : <b class="text-slate-700">${plan.tgt.label} ${plan.tgt.count.toLocaleString()}개소</b> (출하두수 가중평균)` : ''}
                 </div>
                 <div class="space-y-1">
                     ${row('보정FCR',        plan.cur.fcr,           c.fcr,           '',   2, false, 'fcr')}
@@ -9949,6 +9894,21 @@ function renderContribAchievePanel() {
                     ${row('입식두당 약품비', plan.cur.inHeadMedCost, c.inHeadMedCost, '원', 0, false, 'inHeadMedCost')}
                     ${row('지급율',          plan.cur.payRate,       c.payRate,       '%',  1, true,  'payRate')}
                 </div>
+                ${(plan.indicatorInfo && Object.values(plan.indicatorInfo).some(x => x.moved)) ? `
+                <div class="mt-1.5 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[9px] font-semibold text-slate-500 leading-relaxed">
+                    <div class="flex items-start gap-1.5">
+                        <span class="shrink-0 px-1 py-0.5 rounded font-black bg-slate-800 text-white">순위</span>
+                        <span>BEP 절감 효과가 큰 순서입니다. <b class="text-slate-700">1순위</b>가 목표 달성에 가장 크게 기여합니다.</span>
+                    </div>
+                    <div class="flex items-start gap-1.5 mt-1">
+                        <span class="shrink-0 px-1 py-0.5 rounded font-black bg-slate-200 text-slate-700">난이도</span>
+                        <span>
+                            <b class="px-1 rounded bg-emerald-100 text-emerald-700">하</b> 쉬움 (조금만 개선) ·
+                            <b class="px-1 rounded bg-amber-100 text-amber-700">중</b> 보통 (평균 수준까지 개선) ·
+                            <b class="px-1 rounded bg-rose-100 text-rose-700">상</b> 어려움 (상위권 수준까지 개선)
+                        </span>
+                    </div>
+                </div>` : ''}
                 <div class="mt-1.5 pt-1.5 border-t border-slate-200 space-y-0.5">
                     ${line('달성 BEP 원가', `${won(r.bepCost)} 원/kg`, 'text-amber-600')}
                     ${line('두당 공헌이익 개선', `+${won(r.profit - plan.at(0).r.profit)} 원`, 'text-emerald-600')}
@@ -10169,17 +10129,6 @@ const CONTRIB_BEP_METRIC_CONFIG = {
     fcr:           { label: '보정FCR',              unit: '',  digits: 2, color: '#059669' },
     inHeadMedCost: { label: '약품비 (원)',          unit: '원', digits: 0, color: '#DB2777' }
 };
-
-// 🎯 [신규] BEP 원가 추이 차트 전용 색상 유틸 — hex를 지정 투명도의 rgba로 변환 (지표 라인을 연하게 처리해 BEP 라인 강조)
-function hexToRgba(hex, alpha) {
-    const clean = String(hex).replace('#', '');
-    const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
-    const bigint = parseInt(full, 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
 
 function renderContribBepMetricTrendChart(monthly, metricKey, baseBEP, simBEP) {
     const canvas = document.getElementById('chart-contrib-bep-metric-trend');
@@ -11189,17 +11138,6 @@ function resetModalSimulationInputs() {
     }
 }
 
-// 수치 유틸리티
-function getInputValueNum(elementId, fallbackVal) {
-    try {
-        const el = document.getElementById(elementId);
-        if (!el || el.value === "") return fallbackVal;
-        const val = parseFloat(el.value);
-        return isNaN(val) ? fallbackVal : val;
-    } catch (e) {
-        return fallbackVal;
-    }
-}
 </script>
 <!-- 🎯 공용 연/월 선택 Month Picker 팝업 (정산 성적 / 이익기여도 / 약품비 대시보드) -->
 <div id="ym-picker-popup" class="hidden fixed z-[100] w-60 bg-white border border-slate-200 rounded-xl shadow-xl p-3" onclick="event.stopPropagation()"></div>
