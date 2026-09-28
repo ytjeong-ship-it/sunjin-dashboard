@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>선진한마을 - 비육농장 약품비 및 정산 분석 시스템</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23ffffff'/%3E%3Ctext x='50' y='50' dominant-baseline='central' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='70' font-weight='900' font-style='italic' fill='%23F51932'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="favicon.png" type="image/png">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
@@ -710,7 +710,7 @@ html {
                             </div>
 
                             <select id="filter-dept" onchange="syncAndApplyFilters('dept', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                                <option value="">사업부 전체</option>
+                                <option value="">한마을BU</option>
                                 <option value="F사업팀">F사업팀</option>
                                 <option value="중부사업부">중부사업부</option>
                                 <option value="호남사업부">호남사업부</option>
@@ -967,7 +967,7 @@ html {
                         </div>
 
                         <select id="chart-filter-dept" onchange="syncAndApplyFilters('dept', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                            <option value="">사업부 전체</option>
+                            <option value="">한마을BU</option>
                             <option value="F사업팀">F사업팀</option>
                             <option value="중부사업부">중부사업부</option>
                             <option value="호남사업부">호남사업부</option>
@@ -2111,6 +2111,18 @@ let currentSessionId = null;
         let filteredData = [];
         let activeCharts = {};
         let activeDept = 'ALL';
+        // 🎯 일반 권한 + 소속 사업부 2개 이상일 때 '내 사업부 전체'를 나타내는 activeDept 값
+        const MY_DEPT_KEY = '__MY__';
+        function getMyDashboardDepts() {
+            const userDeptRaw = window.currentUser ? String(window.currentUser.dept || '') : (sessionStorage.getItem('user_dept') || "");
+            const myDepts = userDeptRaw.split(/[,/]/).map(d => d.trim()).filter(Boolean);
+            const depts = [...new Set((parsedData || []).map(d => d.dept))].filter(Boolean);
+            return myDepts.length > 0 ? depts.filter(d => myDepts.includes(d)) : depts;
+        }
+        function isInActiveDept(d) {
+            if (activeDept === MY_DEPT_KEY) return getMyDashboardDepts().includes(d.dept);
+            return d.dept === activeDept;
+        }
         let summaryRows = [];
         let rawReceivedRows = [];
         let lastFetchLatencyMs = 0;
@@ -4072,20 +4084,29 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     `;
 });
 
-        let optHtml = '<option value="">사업부 전체</option>';
+        let optHtml = '<option value="">한마을BU</option>';
         depts.forEach(d => { optHtml += `<option value="${d}">${d}</option>`; });
         if (deptMain) { deptMain.innerHTML = optHtml; deptMain.value = (activeDept === 'ALL' ? '' : activeDept); deptMain.disabled = false; }
         if (deptChart) { deptChart.innerHTML = optHtml; deptChart.value = (activeDept === 'ALL' ? '' : activeDept); deptChart.disabled = false; }
     } else {
         // [일반 사용자 권한]: 본인 소속 부서 전용 탭으로 한정 매핑
         const availableDepts = myDepts.length > 0 ? depts.filter(d => myDepts.includes(d)) : depts;
+        const isMultiDept = availableDepts.length > 1;
 
-        availableDepts.forEach((d, idx) => {
+        // 🎯 소속 사업부 2개 이상: '내 사업부' 통합 탭을 기본값으로 제공
+        if (activeDept === 'ALL') activeDept = isMultiDept ? MY_DEPT_KEY : (availableDepts[0] || 'ALL');
+
+        if (isMultiDept) {
+            const myCount = parsedData.filter(item => availableDepts.includes(item.dept)).length;
+            html += `
+                <button onclick="syncAndApplyFilters('dept', '${MY_DEPT_KEY}')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === MY_DEPT_KEY ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
+                    내 사업부 (${myCount})
+                </button>
+            `;
+        }
+
+        availableDepts.forEach(d => {
             const count = parsedData.filter(item => item.dept === d).length;
-            
-            if (activeDept === 'ALL' && idx === 0) {
-                activeDept = d;
-            }
 
             html += `
                 <button onclick="syncAndApplyFilters('dept', '${d}')" class="px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${activeDept === d ? 'tab-active' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}">
@@ -4094,7 +4115,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             `;
         });
 
-        let optHtml = '';
+        let optHtml = isMultiDept ? `<option value="${MY_DEPT_KEY}">내 사업부 전체</option>` : '';
         availableDepts.forEach(d => { optHtml += `<option value="${d}">${d}</option>`; });
         if (deptMain) { deptMain.innerHTML = optHtml; deptMain.value = activeDept; deptMain.disabled = (availableDepts.length <= 1); }
         if (deptChart) { deptChart.innerHTML = optHtml; deptChart.value = activeDept; deptChart.disabled = (availableDepts.length <= 1); }
@@ -4112,8 +4133,8 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     // 🎯 '사업부 전체(ALL)' 조회 시 유전자사업부 농가의 지역(GGP, GP 등)은 드롭다운 목록에서 제외
     const targetFarms = activeDept === 'ALL' 
         ? parsedData.filter(d => d.dept !== '유전자사업부') 
-        : parsedData.filter(d => d.dept === activeDept);
-        
+        : parsedData.filter(isInActiveDept);
+
     const regions = [...new Set(targetFarms.map(d => d.region))].filter(Boolean).sort();
     
     let optionsHtml = '<option value="">지역 전체</option>';
@@ -4133,7 +4154,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             if (!sel) return;
 
             const prevValue = sel.value; 
-            const targetFarms = activeDept === 'ALL' ? parsedData : parsedData.filter(d => d.dept === activeDept);
+            const targetFarms = activeDept === 'ALL' ? parsedData : parsedData.filter(isInActiveDept);
             const grades = [...new Set(targetFarms.map(d => d.rearingGrade))].filter(Boolean).sort();
             
             let optionsHtml = '<option value="">육성율 등급 전체</option>';
@@ -4163,10 +4184,10 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     filteredData = parsedData.filter(d => {
         const isTargetDept = (activeDept === 'ALL') 
             ? (d.dept !== '유전자사업부') 
-            : (d.dept === activeDept);
+            : isInActiveDept(d);
 
         return (d.farmName.toLowerCase().includes(search) || d.farmCode.toLowerCase().includes(search)) &&
-               (dept === '' || d.dept === dept) &&
+               (dept === '' || dept === MY_DEPT_KEY || d.dept === dept) &&
                (region === '' || d.region === region) &&
                (size === '' || d.farmSize === size) &&
                (rearingGrade === '' || d.rearingGrade === rearingGrade) &&
@@ -4765,7 +4786,7 @@ function renderCharts() {
             let chartLabels = [];
             let chartAvgs = [];
 
-            if (activeDept && activeDept !== 'ALL') {
+            if (activeDept && activeDept !== 'ALL' && activeDept !== MY_DEPT_KEY) {
                 const deptFarms = filteredData.filter(d => d.dept === activeDept);
                 const regions = [...new Set(deptFarms.map(d => d.region))].filter(Boolean).sort();
                 
@@ -7806,10 +7827,34 @@ function populateContribDeptDropdown() {
     const deptSelect = document.getElementById('contrib-sel-dept');
     if (!deptSelect) return;
     const depts = [...new Set(settlementRawData.map(r => r["사업부"]))].filter(Boolean).sort();
-    
-    let optionsHtml = '<option value="">전체 사업부</option>';
-    depts.forEach(d => { optionsHtml += `<option value="${d}">${d}</option>`; });
+
+    // 🎯 정산 성적 분석 탭과 동일한 권한 기준: 일반 권한 + 소속 사업부 1개 → 해당 사업부로 고정
+    const userRole = String((window.currentUser ? window.currentUser.role : "") || (sessionStorage.getItem('user_role') || "일반")).toLowerCase();
+    const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
+    const userDept = (window.currentUser ? window.currentUser.dept : "") || (sessionStorage.getItem('user_dept') || "");
+    const myDepts = String(userDept).split(/[,/]/).map(d => d.replace(/\s+/g, '').trim()).filter(Boolean);
+    const matchedDepts = isAdmin ? [] : depts.filter(d => {
+        const nd = String(d).replace(/\s+/g, '');
+        return myDepts.some(md => md.includes(nd) || nd.includes(md));
+    });
+
+    let optionsHtml;
+    if (matchedDepts.length === 1) {
+        optionsHtml = `<option value="${matchedDepts[0]}">${matchedDepts[0]}</option>`;
+        deptSelect.innerHTML = optionsHtml;
+        deptSelect.value = matchedDepts[0];
+        deptSelect.disabled = true;
+        deptSelect.dataset.lockedDept = matchedDepts[0];
+        return;
+    }
+
+    const list = matchedDepts.length > 1 ? matchedDepts : depts;
+    optionsHtml = `<option value="">${matchedDepts.length > 1 ? '내 사업부 전체' : '전체 사업부'}</option>`;
+    list.forEach(d => { optionsHtml += `<option value="${d}">${d}</option>`; });
     deptSelect.innerHTML = optionsHtml;
+    deptSelect.value = '';
+    deptSelect.disabled = false;
+    delete deptSelect.dataset.lockedDept;
 }
 
 // 🎯 [신규] 자돈 수매 테이블 인덱스 (1회만 구축 → 경고 중복 출력 방지)
@@ -8616,7 +8661,7 @@ function resetContributionFilters() {
     if (marketPriceEl) marketPriceEl.value = '';
     if (feedPriceEl) feedPriceEl.value = '';
     if (searchEl) searchEl.value = '';
-    if (deptEl) deptEl.value = '';
+    if (deptEl) deptEl.value = deptEl.dataset.lockedDept || '';   // 🎯 단일 사업부 사용자는 고정값 유지
 
     // 🎯 [추가] 정렬도 기본값(관리등급 낮은 순)으로 복원
     contribSortField = 'grade';
@@ -8923,7 +8968,8 @@ function returnToContribAnalysis() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v === undefined || v === null) ? '' : v; };
     set('sim-market-price',   ctx.marketPrice);
     set('sim-feed-price',     ctx.feedPrice);
-    set('contrib-sel-dept',   ctx.dept);
+    const deptEl = document.getElementById('contrib-sel-dept');
+    set('contrib-sel-dept',   (deptEl && deptEl.dataset.lockedDept) || ctx.dept);
     set('contrib-search-farm', ctx.search);
     set('contrib-start-ym',   ctx.startYM);
     set('contrib-end-ym',     ctx.endYM);
