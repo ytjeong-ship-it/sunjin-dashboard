@@ -8611,7 +8611,7 @@ function sortAndRenderContribTable() {
     let html = '';
     viewList.forEach(item => {                      // 🎯 [수정] contribCalculatedList → viewList
         const profitClass = item.profit >= 0 ? 'text-emerald-600 font-extrabold' : 'text-rose-600 font-extrabold';
-        const totalProfitClass = item.totalProfit >= 0 ? 'text-sunjin-red font-black' : 'text-rose-600 font-black';
+        const totalProfitClass = item.totalProfit >= 0 ? 'text-emerald-600 font-black' : 'text-rose-600 font-black';
 
         // 🎯 [수정] 관리등급 배지를 gradeColors 단일 소스 기반 인라인 스타일로 통일
         const gradeVal = item.grade || getContribGradeByBEP(item.bepCost);
