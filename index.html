@@ -1909,6 +1909,11 @@ html {
                     <span class="w-2.5 h-2.5 rounded-full bg-sunjin-orange"></span>
                     BEP 원가 분포 및 농가 위치 시뮬레이션
                 </h4>
+                <!-- 🎯 [신규] 비교 모집단 선택 (전체 / 내 사업부) — 분포·AI 코멘트·원가 벤치마크 공통 -->
+                <div id="contrib-bench-scope-toggle" class="hidden flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg">
+                    <button type="button" data-scope="all" onclick="setContribBenchScope('all')" class="contrib-bench-scope-btn px-2.5 py-1 rounded-md text-[10px] font-bold transition-all">전체</button>
+                    <button type="button" data-scope="mine" onclick="setContribBenchScope('mine')" class="contrib-bench-scope-btn px-2.5 py-1 rounded-md text-[10px] font-bold transition-all">내 사업부</button>
+                </div>
             </div>
             <!-- 범례 안내 -->
             <div class="flex items-center justify-between text-[10px] font-bold mb-2 bg-slate-50 p-2 rounded-lg border border-slate-200/60">
@@ -2514,6 +2519,7 @@ function handleLogout() {
     filteredData = [];
     rawReceivedRows = [];
     settlementRawData = [];
+    settlementBenchmarkData = [];
     settlementFarmStats = {};
     settlementFarmDeptMap = {};
 
@@ -3437,32 +3443,9 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             parseLEADExcel(data);
 
             // 정산 성적 데이터 바인딩
-            settlementRawData = fetchedSettlement;
-
-            settlementRawData.forEach((r, idx) => {
-                r._origIndex = idx;
-                const getVal = (keyName) => {
-                    if (r[keyName] !== undefined && r[keyName] !== null && r[keyName] !== '') return r[keyName];
-                    const foundKey = Object.keys(r).find(k => k.trim().replace(/\s+/g, '') === keyName.trim().replace(/\s+/g, ''));
-                    return foundKey ? r[foundKey] : 0;
-                };
-
-                r["농장명"] = String(getVal("농장명") || getVal("농장 명") || '').trim();
-                r["사업부"] = String(getVal("사업부") || getVal("사업 부") || '').trim();
-                r["출하 년도"] = parseSettlementNum(getVal("출하 년도") || getVal("출하년도"));
-                r["출하 월"] = parseSettlementNum(getVal("출하 월") || getVal("출하월"));
-                r["출하두수"] = parseSettlementNum(getVal("출하두수"));
-                r["기간증체량"] = parseSettlementNum(getVal("기간증체량"));
-                r["기간육성율"] = parseSettlementNum(getVal("기간육성율"));
-                r["일당증체량"] = parseSettlementNum(getVal("일당증체량"));
-                r["지급율(%)"] = parseSettlementNum(getVal("지급율(%)") || getVal("지급율"));
-                r["1등급이상출현율(%)"] = parseSettlementNum(getVal("1등급이상출현율(%)"));
-                r["사료요구율"] = parseSettlementNum(getVal("보정사료요구율") || getVal("보정 사료요구율") || getVal("사료요구율"));
-                r["출하 두당 사육비"] = parseSettlementCost(getVal("출하 두당 사육비") || getVal("출하두당사육비"));
-                r["전입평체"] = parseSettlementNum(getVal("전입평체"));
-                r["사육일수"] = parseSettlementNum(getVal("평균사육일수") || getVal("평균 사육일수") || getVal("사육일수"));
-                r["비고"] = String(getVal("비고") || '').trim();
-            });
+            settlementRawData = normalizeSettlementRows(fetchedSettlement);
+            // 🎯 [신규] 벤치마크 원천 (없으면 빈 배열 → 기존처럼 settlementRawData 로 폴백)
+            settlementBenchmarkData = normalizeSettlementRows(Array.isArray(resData.benchmarkRows) ? resData.benchmarkRows : []);
 
             generateSettlementFarmStats();
             fetchSettlementData();
@@ -5676,6 +5659,38 @@ function submitNewPassword() {
 // 🎯 정산 성적 분석 전용 자바스크립트 로직 (충돌 방지 네임스페이스 적용)
 // =================================================================
 let settlementRawData = [];
+// 🎯 [신규] 벤치마크 전용 정산 원천 (백엔드 benchmarkRows — 일반 권한일 때 전체 사업부, 농장명 제거)
+//    이익기여도 탭의 BEP 분포 / AI 코멘트 / 원가 항목별 벤치마크에서만 사용한다.
+let settlementBenchmarkData = [];
+
+// 🎯 [신규] 정산 원천 행 컬럼명·숫자 정규화 (settlementRawData / settlementBenchmarkData 공용)
+function normalizeSettlementRows(rows) {
+    (rows || []).forEach((r, idx) => {
+        r._origIndex = idx;
+        const getVal = (keyName) => {
+            if (r[keyName] !== undefined && r[keyName] !== null && r[keyName] !== '') return r[keyName];
+            const foundKey = Object.keys(r).find(k => k.trim().replace(/\s+/g, '') === keyName.trim().replace(/\s+/g, ''));
+            return foundKey ? r[foundKey] : 0;
+        };
+
+        r["농장명"] = String(getVal("농장명") || getVal("농장 명") || '').trim();
+        r["사업부"] = String(getVal("사업부") || getVal("사업 부") || '').trim();
+        r["출하 년도"] = parseSettlementNum(getVal("출하 년도") || getVal("출하년도"));
+        r["출하 월"] = parseSettlementNum(getVal("출하 월") || getVal("출하월"));
+        r["출하두수"] = parseSettlementNum(getVal("출하두수"));
+        r["기간증체량"] = parseSettlementNum(getVal("기간증체량"));
+        r["기간육성율"] = parseSettlementNum(getVal("기간육성율"));
+        r["일당증체량"] = parseSettlementNum(getVal("일당증체량"));
+        r["지급율(%)"] = parseSettlementNum(getVal("지급율(%)") || getVal("지급율"));
+        r["1등급이상출현율(%)"] = parseSettlementNum(getVal("1등급이상출현율(%)"));
+        r["사료요구율"] = parseSettlementNum(getVal("보정사료요구율") || getVal("보정 사료요구율") || getVal("사료요구율"));
+        r["출하 두당 사육비"] = parseSettlementCost(getVal("출하 두당 사육비") || getVal("출하두당사육비"));
+        r["전입평체"] = parseSettlementNum(getVal("전입평체"));
+        r["사육일수"] = parseSettlementNum(getVal("평균사육일수") || getVal("평균 사육일수") || getVal("사육일수"));
+        r["비고"] = String(getVal("비고") || '').trim();
+    });
+    return rows || [];
+}
 
 // 🎯 정산 데이터 "비고" 열에 "동물복지"가 기재된 정산건이 하나라도 있는지 판별
 function isAnimalWelfareRows(rows) {
@@ -7835,6 +7850,69 @@ let contribCalculatedList = [];
 // 🎯 [신규] 비교 모집단 — 농가 검색어를 제외한 조회 조건(돈가·사료단가·사업부·기간) 전체 농가
 //    분포 차트 / AI 코멘트 / 원가 벤치마크가 참조한다.
 let contribPeerList = [];
+// 🎯 [신규] 벤치마크 모집단 — BEP 분포 / AI 코멘트 / 원가 항목별 벤치마크 전용
+//    일반 권한도 사업부 권한과 무관하게 조회 기간 내 전체 농가와 비교한다. (관리자 = contribPeerList 와 동일)
+//    원천 = settlementBenchmarkData (백엔드 benchmarkRows). 집계값으로만 사용하며 농가명은 노출하지 않는다.
+let contribBenchmarkList = [];
+let contribBenchmarkIsAll = false;   // true = contribBenchmarkList 가 조회 범위(contribPeerList)보다 넓음 → 토글 노출
+// 🎯 [신규] 비교 모집단 토글 상태 ('all' = 전체 사업부 / 'mine' = 내 사업부·선택 사업부)
+let contribBenchScope = 'all';
+
+// 🎯 [신규] 현재 토글 기준 '전체 사업부' 비교 여부
+function isContribBenchAll() {
+    return contribBenchScope === 'all' && contribBenchmarkIsAll;
+}
+
+// 🎯 [신규] 토글 기준 비교 모집단 (분포 / AI 코멘트 / 원가 항목별 벤치마크 공용)
+function getContribBenchSrc() {
+    const src = isContribBenchAll() ? contribBenchmarkList : contribPeerList;
+    return (src && src.length > 0) ? src : (contribCalculatedList || []);
+}
+
+// 🎯 [신규] '내 사업부' 쪽 표기명 — 사업부를 선택했으면 그 이름
+function getContribMineLabel() {
+    return document.getElementById('contrib-sel-dept')?.value || '내 사업부';
+}
+
+// 🎯 [신규] 토글 노출·강조 동기화
+function syncContribBenchScopeToggle() {
+    const wrap = document.getElementById('contrib-bench-scope-toggle');
+    if (!wrap) return;
+    wrap.classList.toggle('hidden', !contribBenchmarkIsAll);
+    const cur = isContribBenchAll() ? 'all' : 'mine';
+    wrap.querySelectorAll('.contrib-bench-scope-btn').forEach(btn => {
+        const on = btn.dataset.scope === cur;
+        btn.classList.toggle('bg-white', on);
+        btn.classList.toggle('text-sunjin-red', on);
+        btn.classList.toggle('shadow-sm', on);
+        btn.classList.toggle('text-slate-500', !on);
+        if (btn.dataset.scope === 'mine') btn.textContent = getContribMineLabel();
+    });
+}
+
+// 🎯 [신규] 토글 클릭 → 분포 차트·원가 벤치마크·AI 코멘트만 다시 그린다 (시뮬레이션 입력값 유지)
+function setContribBenchScope(scope) {
+    contribBenchScope = scope === 'mine' ? 'mine' : 'all';
+    syncContribBenchScopeToggle();
+    try {
+        const m = modalOriginalMetrics;
+        if (!m || !m.base) return;
+        onSimInputDirectChange();   // 분포 차트 (현재 시뮬레이션 위치 유지)
+
+        const item = (contribCalculatedList || []).find(f => f.farmCode === m.farmCode);
+        if (item) renderContribCostBenchmarkChart(item);
+
+        renderContribAIComment(m, m.base, {
+            marketPrice:   m.marketPrice,
+            payRate:       m.payRate,
+            rearingRate:   m.rearingRate,
+            fcr:           m.fcr,
+            inHeadMedCost: m.inHeadMedCost
+        });
+    } catch (err) {
+        console.error('setContribBenchScope Error:', err);
+    }
+}
 // 🎯 [신규] 도넛 클릭으로 선택된 관리등급 ('' = 전체)
 //    렌더 시점에만 적용되며 contribCalculatedList 는 변경하지 않는다.
 let contribGradeFilter = '';
@@ -8006,20 +8084,27 @@ function applyFeedPriceGuide(marketPrice, feedPrice) {
     if (typeof applyContributionFilters === 'function') applyContributionFilters();
 }
 
+// 🎯 [신규] 공헌이익 탭 — 일반 권한 사용자의 소속 사업부 목록 (관리자 또는 매칭 없음 → [])
+function getContribMyDepts() {
+    const depts = [...new Set((settlementRawData || []).map(r => r["사업부"]))].filter(Boolean).sort();
+    const userRole = String((window.currentUser ? window.currentUser.role : "") || (sessionStorage.getItem('user_role') || "일반")).toLowerCase();
+    const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
+    if (isAdmin) return [];
+    const userDept = (window.currentUser ? window.currentUser.dept : "") || (sessionStorage.getItem('user_dept') || "");
+    const myDepts = String(userDept).split(/[,/]/).map(d => d.replace(/\s+/g, '').trim()).filter(Boolean);
+    return depts.filter(d => {
+        const nd = String(d).replace(/\s+/g, '');
+        return myDepts.some(md => md.includes(nd) || nd.includes(md));
+    });
+}
+
 function populateContribDeptDropdown() {
     const deptSelect = document.getElementById('contrib-sel-dept');
     if (!deptSelect) return;
     const depts = [...new Set(settlementRawData.map(r => r["사업부"]))].filter(Boolean).sort();
 
     // 🎯 정산 성적 분석 탭과 동일한 권한 기준: 일반 권한 + 소속 사업부 1개 → 해당 사업부로 고정
-    const userRole = String((window.currentUser ? window.currentUser.role : "") || (sessionStorage.getItem('user_role') || "일반")).toLowerCase();
-    const isAdmin = userRole.includes('관리자') || userRole.includes('admin') || userRole.includes('전체') || userRole.includes('마스터');
-    const userDept = (window.currentUser ? window.currentUser.dept : "") || (sessionStorage.getItem('user_dept') || "");
-    const myDepts = String(userDept).split(/[,/]/).map(d => d.replace(/\s+/g, '').trim()).filter(Boolean);
-    const matchedDepts = isAdmin ? [] : depts.filter(d => {
-        const nd = String(d).replace(/\s+/g, '');
-        return myDepts.some(md => md.includes(nd) || nd.includes(md));
-    });
+    const matchedDepts = getContribMyDepts();
 
     let optionsHtml;
     if (matchedDepts.length === 1) {
@@ -8368,6 +8453,11 @@ function buildContribMedicineMaps(endYM) {
         if (s.p > 0 && s.h > 0) result.deptMed[dept] = s.p / s.h;   // 두수 가중평균
     });
 
+    // 🎯 [신규] 보유 데이터 전체 두수가중 평균 — 벤치마크 농가(타 사업부) 약품비 폴백용
+    const allP = Object.values(deptSum).reduce((a, v) => a + v.p, 0);
+    const allH = Object.values(deptSum).reduce((a, v) => a + v.h, 0);
+    result.allMed = (allP > 0 && allH > 0) ? allP / allH : 0;
+
     return result;
 }
 
@@ -8380,7 +8470,8 @@ function getContribInHeadMedCost(rows, farmCode, dept, medMaps) {
 
     const fKey = String(farmCode || '').trim().toLowerCase();
     const farmVal = medMaps.farmMed[fKey] || 0;
-    const deptVal = medMaps.deptMed[String(dept || '').trim()] || 0;
+    // 🎯 [수정] 사업부 값이 없으면 fallbackMed (벤치마크 계산 시에만 지정) 사용
+    const deptVal = medMaps.deptMed[String(dept || '').trim()] || medMaps.fallbackMed || 0;
     const startYM = medMaps.dataStartYM || '';
 
     let wSum = 0, hSum = 0;
@@ -8536,6 +8627,8 @@ function applyContributionFilters(isManualTrigger = false) {
     if (!rawMarketStr || !rawFeedStr || isNaN(marketPriceInput) || isNaN(feedPriceInput) || marketPriceInput <= 0 || feedPriceInput <= 0) {
         contribCalculatedList = [];
         contribPeerList = [];          // 🎯 [추가] 비교 모집단도 함께 초기화
+        contribBenchmarkList = [];
+        contribBenchmarkIsAll = false;
         tbody.innerHTML = `
             <tr>
                 <td colspan="13" class="py-20 text-center text-slate-400 bg-white font-bold">
@@ -8561,38 +8654,65 @@ function applyContributionFilters(isManualTrigger = false) {
     //    종합 대시보드 기간 필터의 영향을 받지 않음
     const medMaps = buildContribMedicineMaps(endYM);
 
-    // 🎯 [수정] 농가 검색어를 제외한 조건으로만 1차 필터 → 비교 모집단의 원천
-    const filteredRows = (settlementRawData || []).filter(r => {
-        const year = parseSettlementNum(r["출하 년도"] || r["출하년도"]);
-        const month = parseSettlementNum(r["출하 월"] || r["출하월"]);
-        const ym = `${year}-${String(month).padStart(2, '0')}`;
+    // 🎯 [신규] 일반 권한 사용자는 벤치마크(분포·AI 코멘트·원가 항목) 모집단을 전체 사업부로 확장
+    //    리스트·KPI 는 기존대로 소속 사업부 범위만 사용한다.
+    const myDepts = getContribMyDepts();
+    const isScoped = myDepts.length > 0;
+    const isInScope = r => selectedDept ? (r["사업부"] === selectedDept) : (!isScoped || myDepts.includes(r["사업부"]));
 
-        const isPeriodMatch = (!startYM || !endYM) ? true : (ym >= startYM && ym <= endYM);
-        const isDeptMatch = (!selectedDept) ? true : (r["사업부"] === selectedDept);
-        const hasShipment = parseSettlementNum(r["출하두수"] || r["출하 두수"]) > 0;
+    // 🎯 [수정] 농가 검색어를 제외한 조건(기간·출하실적)으로 행 필터 → 농가별 그룹 → 공헌이익 계산
+    const buildFarmList = (srcRows, deptFilter, maps) => {
+        const farmGroups = {};
+        (srcRows || []).forEach(r => {
+            const year = parseSettlementNum(r["출하 년도"] || r["출하년도"]);
+            const month = parseSettlementNum(r["출하 월"] || r["출하월"]);
+            const ym = `${year}-${String(month).padStart(2, '0')}`;
 
-        return isPeriodMatch && isDeptMatch && hasShipment;
-    });
+            const isPeriodMatch = (!startYM || !endYM) ? true : (ym >= startYM && ym <= endYM);
+            const hasShipment = parseSettlementNum(r["출하두수"] || r["출하 두수"]) > 0;
+            if (!isPeriodMatch || !hasShipment || (deptFilter && !deptFilter(r))) return;
 
-    const farmGroups = {};
-    filteredRows.forEach(r => {
-        const fKey = String(r["농장코드"] || r["농장명"]).trim();
-        if (!farmGroups[fKey]) farmGroups[fKey] = [];
-        farmGroups[fKey].push(r);
-    });
+            const fKey = String(r["농장코드"] || r["농장명"]).trim();
+            if (!farmGroups[fKey]) farmGroups[fKey] = [];
+            farmGroups[fKey].push(r);
+        });
 
-    // 🎯 [수정] ① 비교 모집단 — 검색어 무관, 농가별 계산은 여기서 1회만 수행
-    contribPeerList = [];
-    Object.keys(farmGroups).forEach(fKey => {
-        const rows = farmGroups[fKey];
-        const aggregated = calculateSettlementPeriodMetrics(rows);
-        if (aggregated) {
-            const result = calculateSingleFarmContribution(aggregated, rows, marketPriceInput, feedPriceInput, medMaps);
-            if (result) contribPeerList.push(result);
-        }
-    });
+        const out = [];
+        Object.keys(farmGroups).forEach(fKey => {
+            const rows = farmGroups[fKey];
+            const aggregated = calculateSettlementPeriodMetrics(rows);
+            if (aggregated) {
+                const result = calculateSingleFarmContribution(aggregated, rows, marketPriceInput, feedPriceInput, maps);
+                if (result) out.push(result);
+            }
+        });
+        return out;
+    };
 
-    // 🎯 [수정] ② 표시용 리스트 — 모집단을 검색어로 걸러 낸다 (재계산 없음)
+    // 🎯 ① 비교 모집단(리스트·KPI) — 권한 범위 내 농가만
+    contribPeerList = buildFarmList(settlementRawData, isInScope, medMaps);
+
+    // 🎯 ② 벤치마크 모집단(분포·AI 코멘트·원가 항목) — 전체 사업부
+    //    일반 권한 : 백엔드 benchmarkRows 가 있으면 그것을, 없으면 수신된 정산 원천 전체를 사용한다.
+    //               타 사업부 농가는 약품비 원천이 없을 수 있으므로 전체 평균(allMed)으로 폴백한다.
+    //    관리자     : 사업부를 선택한 경우에만 별도 산출 (미선택이면 조회 범위 = 전체)
+    if (isScoped) {
+        const hasBench = Array.isArray(settlementBenchmarkData) && settlementBenchmarkData.length > 0;
+        const benchMaps = Object.assign({}, medMaps, { fallbackMed: medMaps.allMed || 0 });
+        contribBenchmarkList = hasBench
+            ? buildFarmList(settlementBenchmarkData, null, benchMaps)
+            : buildFarmList(settlementRawData, null, benchMaps);
+        contribBenchmarkIsAll = true;
+    } else if (selectedDept) {
+        contribBenchmarkList = buildFarmList(settlementRawData, null, medMaps);
+        contribBenchmarkIsAll = true;
+    } else {
+        contribBenchmarkList = contribPeerList;
+        contribBenchmarkIsAll = false;
+    }
+    syncContribBenchScopeToggle();
+
+    // 🎯 [수정] ③ 표시용 리스트 — 모집단을 검색어로 걸러 낸다 (재계산 없음)
     //    slice() 로 배열을 분리해야 표 정렬이 모집단 순서를 흔들지 않는다.
     contribCalculatedList = searchKeyword
         ? contribPeerList.filter(f =>
@@ -10898,7 +11018,7 @@ function renderContribAIComment(m, sim, inputs) {
 
     const won = v => Math.round(v).toLocaleString();
     // 순위·백분위·농가군 평균의 모집단 = '검색어 제외 전체 농가'
-    const peerSrc = (typeof contribPeerList !== 'undefined' && contribPeerList.length > 0) ? contribPeerList : (contribCalculatedList || []);
+    const peerSrc = getContribBenchSrc();
     const list = peerSrc.map(f => Number(f.bepCost) || 0).filter(v => v > 0);
 
     const bep      = Number(sim.bepCost) || 0;
@@ -10946,7 +11066,7 @@ function renderContribAIComment(m, sim, inputs) {
 
             <div class="mt-1.5 text-slate-600 leading-relaxed">
                 BEP 원가 <b class="text-amber-600">${won(bep)} 원/kg</b>
-                · 조회 대상 <b>${total.toLocaleString()}</b>개 농가 중
+                · ${isContribBenchAll() ? '전체 사업부' : (contribBenchmarkIsAll ? getContribMineLabel() : '조회 대상')} <b>${total.toLocaleString()}</b>개 농가 중
                 <b class="text-slate-900">${rank.toLocaleString()}위</b>
                 (상위 <b class="text-sunjin-red">${pct.toFixed(1)}%</b>)
             </div>
@@ -11435,12 +11555,13 @@ function renderContribCostBenchmarkChart(item) {
 
     // 비교군 : A등급 농가 평균 → 없으면 조회 대상 전체 평균
     // 🎯 [수정] 농가 검색과 무관하게 '검색어 제외 전체 농가'를 비교군으로 사용
-    const peerSrc = (typeof contribPeerList !== 'undefined' && contribPeerList.length > 0) ? contribPeerList : (contribCalculatedList || []);
+    const peerSrc = getContribBenchSrc();
+    const scopePrefix = isContribBenchAll() ? '전체 사업부 ' : (contribBenchmarkIsAll ? getContribMineLabel() + ' ' : '');
     let peers = peerSrc.filter(f => getContribGradeByBEP(f.bepCost) === 'A' && f.farmCode !== item.farmCode);
-    let peerLabel = 'A등급 평균';
+    let peerLabel = `${scopePrefix}A등급 평균`;
     if (peers.length === 0) {
         peers = peerSrc.filter(f => f.farmCode !== item.farmCode && (Number(f.bepCost) || 0) > 0);
-        peerLabel = '조회 대상 전체 평균';
+        peerLabel = scopePrefix ? `${scopePrefix}평균` : '조회 대상 전체 평균';
     }
     if (noteEl) noteEl.textContent = peers.length > 0 ? `${peerLabel} (${peers.length}개소) 대비` : '비교 대상 없음';
     if (peers.length === 0) return;
@@ -11514,9 +11635,10 @@ function renderSimBEPDistributionChart(baseBEP, simBEP, farmListParam) {
 
         // 1. 데이터 수집
         // 🎯 [수정] 농가 검색 시에도 분포 곡선은 '검색어 제외 전체 농가' 기준으로 그린다.
-        //    contribPeerList 가 비어 있을 때만 기존 경로로 폴백.
-        const rawList = (typeof contribPeerList !== 'undefined' && Array.isArray(contribPeerList) && contribPeerList.length > 0)
-            ? contribPeerList
+        //    토글(전체 / 내 사업부) 기준 모집단이 비어 있을 때만 기존 경로로 폴백.
+        const benchSrc = isContribBenchAll() ? contribBenchmarkList : contribPeerList;
+        const rawList = benchSrc.length > 0
+            ? benchSrc
             : (farmListParam || window.contribCalculatedList || window.currentFilteredData || window.globalFarmData || []);
 
         // 🎯 [신규] 비교 모집단 표기 — 검색 중이면 모집단이 리스트와 다름을 명시
@@ -11524,9 +11646,10 @@ function renderSimBEPDistributionChart(baseBEP, simBEP, farmListParam) {
         if (distNoteEl) {
             const kw = document.getElementById('contrib-search-farm')?.value.trim() || '';
             const peerN = Array.isArray(rawList) ? rawList.length : 0;
+            const scopeText = isContribBenchAll() ? '전체 사업부' : (contribBenchmarkIsAll ? getContribMineLabel() : '조회 조건 전체');
             distNoteEl.textContent = kw
-                ? `※ 비교 모집단 : 농가 검색어("${kw}") 제외, 조회 조건 전체 ${peerN.toLocaleString()}개 농가`
-                : `※ 비교 모집단 : 조회 조건 전체 ${peerN.toLocaleString()}개 농가`;
+                ? `※ 비교 모집단 : 농가 검색어("${kw}") 제외, ${scopeText} ${peerN.toLocaleString()}개 농가`
+                : `※ 비교 모집단 : ${scopeText} ${peerN.toLocaleString()}개 농가`;
         }
 
         let bepValues = [];
