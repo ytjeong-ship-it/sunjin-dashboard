@@ -1677,8 +1677,8 @@ html {
                 <div class="flex items-center gap-1 shrink-0">
                 <button type="button" id="btn-contrib-3m" onclick="setQuickContribPeriod(3)" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all">최근 3개월</button>
                 <button type="button" id="btn-contrib-6m" onclick="setQuickContribPeriod(6)" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all">최근 6개월</button>
-                <button type="button" id="btn-contrib-12m" onclick="setQuickContribPeriod(12)" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all">최근 1년</button>
-                <button type="button" id="btn-contrib-all" onclick="setQuickContribPeriod('all')" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-sunjin-red text-white shadow-sm transition-all">전체</button>
+                <button type="button" id="btn-contrib-12m" onclick="setQuickContribPeriod(12)" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-sunjin-red text-white shadow-sm transition-all">최근 1년</button>
+                <button type="button" id="btn-contrib-all" onclick="setQuickContribPeriod('all')" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all">전체</button>
             </div>
 
                 <div class="flex items-center gap-1 text-xs font-bold text-slate-600">
@@ -1712,7 +1712,7 @@ html {
 <div id="contrib-kpi-panel" class="hidden flex flex-col gap-3">
 
     <!-- KPI 카드 7종 -->
-    <div id="contrib-kpi-cards" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"></div>
+    <div id="contrib-kpi-cards" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3"></div>
 
     <!-- 등급 기준표 / 등급별 분포 / 사업부별 분포 -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -7889,8 +7889,14 @@ function initContributionAnalysisTab() {
                 el.min = allYms[0];
                 el.max = allYms[allYms.length - 1];
             });
-            if (startInput) startInput.value = allYms[0];                    // 제일 첫 달
-            if (endInput) endInput.value = allYms[allYms.length - 1];        // 제일 마지막 달
+            // 🎯 [수정] 기본 조회 기간 = 최근 1년 (마지막 달 기준 12개월)
+            const latestYM = allYms[allYms.length - 1];
+            const [ly, lm] = latestYM.split('-').map(Number);
+            const sd = new Date(ly, lm - 1 - 11, 1);
+            let startYM = `${sd.getFullYear()}-${String(sd.getMonth() + 1).padStart(2, '0')}`;
+            if (startYM < allYms[0]) startYM = allYms[0];
+            if (startInput) startInput.value = startYM;
+            if (endInput) endInput.value = latestYM;                         // 제일 마지막 달
         }
         // 🎯 [삭제] 데이터가 없을 때 '2025-11' ~ '2026-08' 강제 지정 제거 → 달력을 빈 상태로 유지
 
@@ -7928,6 +7934,12 @@ function setupContribTabOnce() {
             el.oninput = null;
 
             el.addEventListener('change', function () {
+                // 🎯 [신규] 기준 돈가 입력 시 십의 자리 반올림 값 기준 적정 사료단가를 기준 사료단가에 자동 입력
+                if (id === 'sim-market-price') {
+                    const mp = Number(el.value) || 0;
+                    const feedEl = document.getElementById('sim-feed-price');
+                    if (mp > 0 && feedEl) feedEl.value = getSuggestedFeedPrice(Math.round(mp / 100) * 100);
+                }
                 if (typeof applyContributionFilters === 'function') applyContributionFilters();
             });
             el.addEventListener('keydown', function (e) {
@@ -8798,8 +8810,18 @@ function sortAndRenderContribTable() {
 
         const tips = buildContribAmountTips(item);  // 🎯 [추가] 금액 4종 산출 근거 툴팁
 
+        // 🎯 [신규] 행 배경 — 약품비 분석 종합 대시보드와 동일 (담당자 미지정 = 회색 우선, D-등급 = 붉은색)
+        const managerPlain = String(item.manager || '').replace(/<[^>]*>/g, '').trim();
+        const isNoManager = !managerPlain || managerPlain === '미지정';
+        let rowBgClass = 'hover:bg-red-50/40 border-b border-slate-100';
+        if (isNoManager) {
+            rowBgClass = 'bg-slate-200/90 text-slate-500 hover:bg-slate-300 border-b border-slate-300';
+        } else if (gradeVal === 'D-') {
+            rowBgClass = 'bg-red-100/90 hover:bg-red-200/90 text-slate-900 border-b border-red-200';
+        }
+
         html += `
-              <tr onclick="openContribDetailModal('${item.farmCode}')" class="hover:bg-red-50/40 border-b border-slate-100 cursor-pointer transition-colors">
+              <tr onclick="openContribDetailModal('${item.farmCode}')" class="${rowBgClass} cursor-pointer transition-colors">
                 <td class="py-3 px-2 text-center text-slate-600 font-medium border-r border-slate-100">${item.dept}</td>
                 <td class="py-3 px-2 text-center font-extrabold text-slate-900 border-r border-slate-100 hover:text-sunjin-red">${item.farmName}</td>
                 <td class="py-3 px-2 text-center text-slate-500 font-medium border-r border-slate-100">${item.manager || '<span class="text-slate-400 font-medium italic">미지정</span>'}</td>
@@ -9173,7 +9195,7 @@ function resetContributionFilters() {
     contribSortField = 'grade';
     contribSortAsc = false;
 
-    setQuickContribPeriod('all');
+    setQuickContribPeriod(12);   // 🎯 [수정] 기본 조회 기간 = 최근 1년
     applyContributionFilters(false);
 
     const cardEl = document.getElementById('contrib-inline-detail-section');
@@ -11205,12 +11227,10 @@ function renderContribKpiPanel() {
         const achieved = list.filter(f => f.bepCost <= CONTRIB_TARGET_BEP);
         const achieveRate = farmCount > 0 ? (achieved.length / farmCount * 100) : 0;
 
-        let lossAmt = 0, lossFarms = 0;
+        let lossFarms = 0;
         list.forEach(f => {
             const b = Number(f.bepCost) || 0;
             if (b <= CONTRIB_TARGET_BEP) return;
-            const denom = (Number(f.outWeight) || 0) * ((Number(f.payRate) || 0) / 100);
-            lossAmt += (b - CONTRIB_TARGET_BEP) * denom * (Number(f.outHeads) || 0);
             lossFarms++;
         });
 
@@ -11219,10 +11239,10 @@ function renderContribKpiPanel() {
 
         // ── KPI 카드 ──
         const card = (label, main, sub, tone) => `
-            <div class="bg-white border ${tone || 'border-slate-200'} rounded-2xl px-3.5 py-3 shadow-sm">
-                <p class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider truncate">${label}</p>
-                <h4 class="text-base font-black text-slate-900 mt-1 truncate">${main}</h4>
-                <p class="text-[10px] font-bold text-slate-400 mt-0.5 truncate">${sub || '&nbsp;'}</p>
+            <div class="bg-white border ${tone || 'border-slate-200'} rounded-2xl px-5 py-4 shadow-sm">
+                <p class="text-xs font-extrabold text-slate-500 uppercase tracking-wider truncate">${label}</p>
+                <h4 class="text-xl font-black text-slate-900 mt-1.5 truncate">${main}</h4>
+                <p class="text-[11px] font-bold text-slate-400 mt-1 truncate">${sub || '&nbsp;'}</p>
             </div>`;
 
         const cardsEl = document.getElementById('contrib-kpi-cards');
@@ -11232,8 +11252,7 @@ function renderContribKpiPanel() {
                 card('총 정산 건수', `${num(settleCount)} <span class="text-xs font-bold text-slate-500">건</span>`, `농장당 평균 ${(settleCount / farmCount).toFixed(1)}건`) +
                 card('총 출하두수', `${num(totalHeads)} <span class="text-xs font-bold text-slate-500">두</span>`, `농장당 평균 ${num(totalHeads / farmCount)}두`) +
                 card('평균 BEP 원가', `${num(bepWeighted)} <span class="text-xs font-bold text-slate-500">원/kg</span>`, `단순 ${num(bepSimple)} · 중앙값 ${num(bepMedian)}`, 'border-amber-200') +
-                card(`BEP ${num(CONTRIB_TARGET_BEP)}원 달성`, `${num(achieved.length)} <span class="text-xs font-bold text-slate-500">개소</span>`, `달성률 ${achieveRate.toFixed(1)}%`, 'border-emerald-200') +
-                card('BEP 미달 기회손실', `${num(lossAmt)} <span class="text-xs font-bold text-slate-500">원</span>`, `${num(lossFarms)}개소 · BEP 초과분 누계`, 'border-rose-200');
+                card(`BEP ${num(CONTRIB_TARGET_BEP)}원 달성`, `${num(achieved.length)} <span class="text-xs font-bold text-slate-500">개소</span>`, `달성률 ${achieveRate.toFixed(1)}%`, 'border-emerald-200');
         }
 
         // ── 등급 기준표 ──
