@@ -2520,6 +2520,7 @@ function handleLogout() {
     rawReceivedRows = [];
     settlementRawData = [];
     settlementBenchmarkData = [];
+    settlementBenchmarkMed = [];
     settlementFarmStats = {};
     settlementFarmDeptMap = {};
 
@@ -3446,6 +3447,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             settlementRawData = normalizeSettlementRows(fetchedSettlement);
             // 🎯 [신규] 벤치마크 원천 (없으면 빈 배열 → 기존처럼 settlementRawData 로 폴백)
             settlementBenchmarkData = normalizeSettlementRows(Array.isArray(resData.benchmarkRows) ? resData.benchmarkRows : []);
+            settlementBenchmarkMed = parseBenchmarkMedRows(resData.benchmarkMedRows);
 
             generateSettlementFarmStats();
             fetchSettlementData();
@@ -5662,6 +5664,28 @@ let settlementRawData = [];
 // 🎯 [신규] 벤치마크 전용 정산 원천 (백엔드 benchmarkRows — 일반 권한일 때 전체 사업부, 농장명 제거)
 //    이익기여도 탭의 BEP 분포 / AI 코멘트 / 원가 항목별 벤치마크에서만 사용한다.
 let settlementBenchmarkData = [];
+// 🎯 [신규] 벤치마크 전용 약품비 원천 (백엔드 benchmarkMedRows — 일반 권한일 때 전체 사업부 LEAD 행)
+//    { farmCode, dept, purchaseVals, headcountVals } 형태. 관리자 parsedData 와 동일한 약품비 산출에 사용한다.
+let settlementBenchmarkMed = [];
+
+// 🎯 [신규] benchmarkMedRows(LEAD 원본 열 위치 유지, 식별 열 공란) → 약품비 산출용 객체
+//    parseLEADExcel() 이 만든 mappings(열 위치)를 그대로 사용하므로 반드시 그 이후에 호출한다.
+function parseBenchmarkMedRows(rows) {
+    if (!Array.isArray(rows) || rows.length === 0 || typeof mappings === 'undefined') return [];
+    const out = [];
+    rows.forEach(r => {
+        if (!Array.isArray(r)) return;
+        const farmCode = String(r[mappings.farmCode] || '').trim();
+        if (!farmCode) return;
+        out.push({
+            farmCode,
+            dept: String(r[mappings.dept] || '').trim(),
+            purchaseVals: (mappings.purchase || []).map(m => cleanNum(r[m.idx])),
+            headcountVals: (mappings.headcount || []).map(m => cleanNum(r[m.idx]))
+        });
+    });
+    return out;
+}
 
 // 🎯 [신규] 정산 원천 행 컬럼명·숫자 정규화 (settlementRawData / settlementBenchmarkData 공용)
 function normalizeSettlementRows(rows) {
@@ -8367,14 +8391,16 @@ function computeContribCostBreakdown(p) {
 //   · 기준창 : 공헌이익 탭 조회 종료월 기준 직전 6개월 (데이터 보유 범위 내로 보정)
 //   · 농장값 : Σ약품매입액 ÷ Σ입식두수
 //   · 사업부 : 소속 농장 전체의 Σ약품매입액 ÷ Σ입식두수 (두수 가중평균)
-function buildContribMedicineMaps(endYM) {
+function buildContribMedicineMaps(endYM, srcData) {
+    // 🎯 [수정] 원천 지정 가능 (기본 parsedData / 일반 권한은 전체 사업부 settlementBenchmarkMed)
+    const medSrc = Array.isArray(srcData) ? srcData : parsedData;
     const result = {
         farmMed: {}, deptMed: {},
         dataStartYM: '', dataEndYM: '',
         windowStart: '', windowEnd: '', clamped: false
     };
 
-    if (!Array.isArray(parsedData) || parsedData.length === 0) {
+    if (!Array.isArray(medSrc) || medSrc.length === 0) {
         console.warn('[공헌이익] 약품비 원천(parsedData) 없음 → 약품비 0원 처리');
         return result;
     }
@@ -8391,7 +8417,7 @@ function buildContribMedicineMaps(endYM) {
 
     // 1. 약품매입액 실측이 존재하는 최초/최종 연월을 데이터에서 자동 도출 (2025-11 하드코딩 없음)
     const monthHasData = {};
-    parsedData.forEach(d => {
+    medSrc.forEach(d => {
         const pv = d.purchaseVals || [];
         purMonths.forEach((ym, i) => { if ((pv[i] || 0) > 0) monthHasData[ym] = true; });
     });
@@ -8429,7 +8455,7 @@ function buildContribMedicineMaps(endYM) {
     // 3. 농장별 / 사업부별 6개월 누계 합산
     const deptSum = {};
 
-    parsedData.forEach(d => {
+    medSrc.forEach(d => {
         const fKey = String(d.farmCode || '').trim().toLowerCase();
         const dept = String(d.dept || '').trim();
         const pv = d.purchaseVals || [];
@@ -8652,7 +8678,10 @@ function applyContributionFilters(isManualTrigger = false) {
 
     // 🎯 [수정] getMedicineCostMaps() → 공헌이익 탭 전용 약품비 맵 (조회 종료월 기준 6개월)
     //    종합 대시보드 기간 필터의 영향을 받지 않음
-    const medMaps = buildContribMedicineMaps(endYM);
+    //    🎯 [수정] 일반 권한 + 전체 사업부 약품비(benchmarkMedRows) 수신 시 그것을 원천으로 사용
+    //       → 관리자와 동일한 약품비 집계 창·사업부 평균이 적용되어 동일 농가 = 동일 결과
+    const hasBenchMed = Array.isArray(settlementBenchmarkMed) && settlementBenchmarkMed.length > 0;
+    const medMaps = buildContribMedicineMaps(endYM, hasBenchMed ? settlementBenchmarkMed : undefined);
 
     // 🎯 [신규] 일반 권한 사용자는 벤치마크(분포·AI 코멘트·원가 항목) 모집단을 전체 사업부로 확장
     //    리스트·KPI 는 기존대로 소속 사업부 범위만 사용한다.
@@ -8698,7 +8727,8 @@ function applyContributionFilters(isManualTrigger = false) {
     //    관리자     : 사업부를 선택한 경우에만 별도 산출 (미선택이면 조회 범위 = 전체)
     if (isScoped) {
         const hasBench = Array.isArray(settlementBenchmarkData) && settlementBenchmarkData.length > 0;
-        const benchMaps = Object.assign({}, medMaps, { fallbackMed: medMaps.allMed || 0 });
+        // 전체 사업부 약품비가 없을 때(구버전 백엔드)만 전체 평균으로 폴백
+        const benchMaps = hasBenchMed ? medMaps : Object.assign({}, medMaps, { fallbackMed: medMaps.allMed || 0 });
         contribBenchmarkList = hasBench
             ? buildFarmList(settlementBenchmarkData, null, benchMaps)
             : buildFarmList(settlementRawData, null, benchMaps);
