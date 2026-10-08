@@ -3362,6 +3362,24 @@ function switchMainTab(tab) {
             return mStr;
         }
 
+// 🎯 Apps Script 응답 수신 + 일시 오류 자동 재시도
+//    재배포 직후 등에 script.googleusercontent.com 이 404/HTML 을 돌려주는 경우가 있어,
+//    HTTP 오류·JSON 파싱 실패 시 1.5초 → 3초 간격으로 최대 2회 다시 요청한다.
+//    (인증 실패처럼 서버가 정상 JSON 으로 돌려준 { error } 는 재시도하지 않는다)
+function fetchJsonWithRetry(url, retries = 2, delayMs = 1500) {
+    return fetch(url)
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
+            return res.json();
+        })
+        .catch(err => {
+            if (retries <= 0) throw err;
+            console.warn(`데이터 요청 실패 → ${delayMs / 1000}초 후 재시도 (남은 횟수 ${retries}):`, err.message);
+            return new Promise(resolve => setTimeout(resolve, delayMs))
+                .then(() => fetchJsonWithRetry(url, retries - 1, delayMs * 2));
+        });
+}
+
 function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     const loadingOverlay = document.getElementById('loading-overlay');
     const errorAlert = document.getElementById('error-alert');
@@ -3382,10 +3400,9 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     urlObj.searchParams.set('email', currentUserEmail);
     urlObj.searchParams.set('password', currentUserPassword);
 
-    const p1 = fetch(urlObj.toString()).then(res => {
+    const p1 = fetchJsonWithRetry(urlObj.toString()).then(data => {
         lastFetchLatencyMs = Math.round(performance.now() - startTime);
-        if (!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
-        return res.json();
+        return data;
     });
 
     // 2. 정산 성적 분석 데이터 요청 (p2)
@@ -3395,7 +3412,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     settleUrl.searchParams.set('password', currentUserPassword);
     settleUrl.searchParams.set('t', new Date().getTime());
 
-    const p2 = fetch(settleUrl.toString()).then(res => res.json()).catch(err => {
+    const p2 = fetchJsonWithRetry(settleUrl.toString()).catch(err => {
         console.error("정산 데이터 수신 오류:", err);
         return [];
     });
@@ -3407,7 +3424,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
     contribUrl.searchParams.set('password', currentUserPassword);
     contribUrl.searchParams.set('t', new Date().getTime());
 
-    const p3 = fetch(contribUrl.toString()).then(res => res.json()).catch(err => {
+    const p3 = fetchJsonWithRetry(contribUrl.toString()).catch(err => {
         console.error("공헌이익 기준정보 수신 오류:", err);
         return {};
     });
