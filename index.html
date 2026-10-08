@@ -3363,20 +3363,22 @@ function switchMainTab(tab) {
         }
 
 // 🎯 Apps Script 응답 수신 + 일시 오류 자동 재시도
-//    재배포 직후 등에 script.googleusercontent.com 이 404/HTML 을 돌려주는 경우가 있어,
-//    HTTP 오류·JSON 파싱 실패 시 1.5초 → 3초 간격으로 최대 2회 다시 요청한다.
+//    구글 서버가 불안정할 때 script.googleusercontent.com 이 404/HTML 을 간헐적으로 돌려주는 경우가 있어,
+//    HTTP 오류·JSON 파싱 실패 시 1.5 → 3 → 6 → 6초 간격으로 최대 4회 다시 요청한다. (매 시도마다 새 요청 키 사용)
 //    (인증 실패처럼 서버가 정상 JSON 으로 돌려준 { error } 는 재시도하지 않는다)
-function fetchJsonWithRetry(url, retries = 2, delayMs = 1500) {
-    return fetch(url)
+function fetchJsonWithRetry(url, retries = 4, delayMs = 1500) {
+    const u = new URL(url);
+    u.searchParams.set('t', Date.now());   // 재시도마다 캐시를 피하도록 타임스탬프 갱신
+    return fetch(u.toString(), { cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
             return res.json();
         })
         .catch(err => {
-            if (retries <= 0) throw err;
+            if (retries <= 0) throw new Error(`구글 서버 응답이 불안정합니다. 잠시 후 다시 시도해 주세요. (${err.message})`);
             console.warn(`데이터 요청 실패 → ${delayMs / 1000}초 후 재시도 (남은 횟수 ${retries}):`, err.message);
             return new Promise(resolve => setTimeout(resolve, delayMs))
-                .then(() => fetchJsonWithRetry(url, retries - 1, delayMs * 2));
+                .then(() => fetchJsonWithRetry(url, retries - 1, Math.min(delayMs * 2, 6000)));
         });
 }
 
@@ -3483,15 +3485,22 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             hideLoginModal();
             checkAndShowNotice();
             // 🎯 로그인(또는 세션 복원) 완료 시점부터 이용시간 측정 (측정 오류가 로그인을 막지 않도록 격리)
-            try { if (!usageTracker) startUsageTracking(); } catch (usageErr) { console.error("이용시간 측정 시작 오류:", usageErr); }
+            //    새 로그인이면 새 세션ID 로 시작, 새로고침 복원이면 기존 세션을 이어서 센다
+            try {
+                if (isLoginAttempt) resetUsageSession();
+                if (!usageTracker) startUsageTracking();
+            } catch (usageErr) { console.error("이용시간 측정 시작 오류:", usageErr); }
 
-            if (isLoginAttempt || isManual) {
+            // 🎯 접속로그 '로그인' 행은 실제 로그인 시에만 기록 (동기화 버튼·새로고침 복원은 제외)
+            //    세션ID 를 함께 남겨, 이후 이용시간이 이 행에 채워지도록 한다
+            if (isLoginAttempt) {
                 const logUrl = new URL(GOOGLE_SHEET_API_URL.trim());
                 logUrl.searchParams.set('action', 'addLog');
                 logUrl.searchParams.set('email', currentUserEmail);
                 logUrl.searchParams.set('password', currentUserPassword);
                 logUrl.searchParams.set('category', '로그인');
                 logUrl.searchParams.set('details', '시스템 접속 (대시보드 진입)');
+                logUrl.searchParams.set('sessionId', usageTracker ? usageTracker.sessionId : getUsageSessionId());
                 logUrl.searchParams.set('t', new Date().getTime());
 
                 fetch(logUrl.toString()).catch(err => console.error("Log send error:", err));
@@ -7868,24 +7877,45 @@ function selectTrendMetric(key) {
 // =================================================================
 // 🎯 탭별 이용시간 측정 (백그라운드·무활동 시간 제외)
 //    - 브라우저 탭이 숨겨진 시간은 '백그라운드', 화면은 보이지만 5분 이상 조작이 없으면 '무활동'으로 분리
-//    - 창 닫기/새로고침(pagehide) · 로그아웃 시점에 그동안 누적된 시간을 '접속로그' 시트(구분: 이용시간)로 전송 후 초기화
-//    - 같은 브라우저 세션(새로고침 포함)은 동일한 세션ID 로 묶인다
+//    - 로그인 시 접속로그에 '로그인' 행(F열 세션ID)을 남기고, 창 닫기/새로고침(pagehide) · 로그아웃 시점에
+//      같은 세션ID 행의 G열부터 누적 이용시간을 덮어쓴다 → 접속 1회 = 1행
+//    - 같은 브라우저 세션(새로고침 포함)은 동일한 세션ID 로 묶이고 시간은 누적된다
 // =================================================================
 const USAGE_IDLE_LIMIT_MS = 5 * 60 * 1000;
 let usageTracker = null;
 
-function startUsageTracking() {
+function getUsageSessionId() {
     let sessionId = sessionStorage.getItem('usage_session_id');
     if (!sessionId) {
         sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         sessionStorage.setItem('usage_session_id', sessionId);
     }
+    return sessionId;
+}
+
+// 새 로그인 = 새 세션 (이전 세션ID·누적값 폐기)
+function resetUsageSession() {
+    usageTracker = null;
+    sessionStorage.removeItem('usage_session_id');
+    sessionStorage.removeItem('usage_totals');
+}
+
+function startUsageTracking() {
+    // 새로고침 시에도 같은 세션의 누적값을 이어서 센다 (접속로그의 같은 행을 누적값으로 덮어쓰기 위함)
+    let saved = {};
+    try { saved = JSON.parse(sessionStorage.getItem('usage_totals') || '{}') || {}; } catch (e) { saved = {}; }
+    const savedTabs = saved.tabMs || {};
     const now = Date.now();
     usageTracker = {
-        sessionId,
-        tabMs: { dashboard: 0, chart: 0, settlement: 0, contribution: 0 },
-        hiddenMs: 0,
-        idleMs: 0,
+        sessionId: getUsageSessionId(),
+        tabMs: {
+            dashboard: savedTabs.dashboard || 0,
+            chart: savedTabs.chart || 0,
+            settlement: savedTabs.settlement || 0,
+            contribution: savedTabs.contribution || 0
+        },
+        hiddenMs: saved.hiddenMs || 0,
+        idleMs: saved.idleMs || 0,
         hidden: document.hidden,
         segStart: now,
         lastActivity: now
@@ -7921,19 +7951,21 @@ function flushUsage(reason) {
     if (!usageTracker || !currentUserEmail) return;
     accumulateUsage();
     const t = usageTracker;
+    try {
+        sessionStorage.setItem('usage_totals', JSON.stringify({ tabMs: t.tabMs, hiddenMs: t.hiddenMs, idleMs: t.idleMs }));
+    } catch (e) {}
+
     const sec = ms => Math.round(ms / 1000);
     const activeSec = Object.values(t.tabMs).reduce((a, b) => a + sec(b), 0);
     if (activeSec + sec(t.hiddenMs) + sec(t.idleMs) < 1) return;
 
-    // 접속로그 시트에 '이용시간' 구분으로 기록 — 상세내용(E열)은 요약, 항목별 초 단위 값은 F열부터 각 칸에 기록
-    const fmt = s => s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`;
-
+    // 접속로그에서 같은 세션ID 의 로그인 행을 찾아 G열부터 누적 이용시간으로 덮어쓴다 (행이 없으면 새 행 추가)
     const url = new URL(GOOGLE_SHEET_API_URL.trim());
     url.searchParams.set('action', 'addLog');
     url.searchParams.set('email', currentUserEmail);
     url.searchParams.set('password', currentUserPassword);
     url.searchParams.set('category', '이용시간');
-    url.searchParams.set('details', `실이용 ${fmt(activeSec)}`);
+    url.searchParams.set('details', '시스템 접속 (대시보드 진입)');
     url.searchParams.set('sessionId', t.sessionId);
     url.searchParams.set('reason', reason);
     Object.keys(t.tabMs).forEach(k => url.searchParams.set(k, sec(t.tabMs[k])));
@@ -7943,10 +7975,6 @@ function flushUsage(reason) {
 
     const sent = navigator.sendBeacon && navigator.sendBeacon(url.toString());
     if (!sent) fetch(url.toString(), { method: 'POST', keepalive: true }).catch(() => {});
-
-    Object.keys(t.tabMs).forEach(k => { t.tabMs[k] = 0; });
-    t.hiddenMs = 0;
-    t.idleMs = 0;
 }
 
 ['mousemove', 'mousedown', 'keydown', 'wheel', 'scroll', 'touchstart'].forEach(evt => {
