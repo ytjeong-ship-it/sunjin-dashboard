@@ -735,7 +735,7 @@ html {
                             </select>
 
                             <select id="filter-rearing-grade" onchange="syncAndApplyFilters('rearingGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                                <option value="">기간육성율 등급 전체</option>
+                                <option value="">육성율 등급 전체</option>
                             </select>
 
                             <select id="filter-cost-grade" onchange="syncAndApplyFilters('costGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
@@ -788,8 +788,8 @@ html {
                                 <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('manager')">담당CM <span id="sort-manager"></span></th>
                                 <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('farmSize')">농장규모 <span id="sort-farmSize"></span></th>
                                 <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('breedingSize')">사육규모 <span id="sort-breedingSize"></span></th>
-                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('rearingGrade')">기간육성율 <span id="sort-rearingGrade"></span></th>
-                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('avgRearingRate')">평균 기간육성율 <span id="sort-avgRearingRate"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('rearingGrade')">육성율 <span id="sort-rearingGrade"></span></th>
+                                <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('avgRearingRate')">평균 육성율 <span id="sort-avgRearingRate"></span></th>
                                 <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 bg-slate-900 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('medicineCost')">입식두당약품비 <span id="sort-medicineCost"></span></th>
                                 <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('shipmentCost')">출하두당약품비 <span id="sort-shipmentCost"></span></th>
                                 <th class="sticky top-0 bg-slate-800 z-10 py-3 border-r border-slate-700/60 cursor-pointer hover:bg-slate-700 transition" onclick="toggleSort('gradeCategory')">등급 <span id="sort-gradeCategory"></span></th>
@@ -999,7 +999,7 @@ html {
                         </select>
 
                         <select id="chart-filter-rearing-grade" onchange="syncAndApplyFilters('rearingGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
-                            <option value="">기간육성율 등급 전체</option>
+                            <option value="">육성율 등급 전체</option>
                         </select>
 
                         <select id="chart-filter-cost-grade" onchange="syncAndApplyFilters('costGrade', this.value)" class="text-xs rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 focus:outline-none focus:border-sunjin-red transition cursor-pointer">
@@ -1049,13 +1049,13 @@ html {
                     <div>
                         <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
                             <span class="w-3 h-3 bg-sunjin-orange rounded-full"></span>
-                            기간육성율 vs 입식두당 약품비 4사분면 성적 분석
+                            육성율 vs 입식두당 약품비 4사분면 성적 분석
                         </h3>
                     </div>
                     <div class="flex flex-wrap gap-2 text-[10px] font-bold">
-                        <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-md border border-emerald-300">1사분면 (좌상단): 약품비 저 / 기간육성율 고 (우수)</span>
+                        <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-md border border-emerald-300">1사분면 (좌상단): 약품비 저 / 육성율 고 (우수)</span>
                         <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md border border-yellow-300">2·3사분면: 중간 영역</span>
-                        <span class="px-2 py-1 bg-rose-100 text-rose-800 rounded-md border border-rose-300">4사분면 (우하단): 약품비 고 / 기간육성율 저 (중점관리)</span>
+                        <span class="px-2 py-1 bg-rose-100 text-rose-800 rounded-md border border-rose-300">4사분면 (우하단): 약품비 고 / 육성율 저 (중점관리)</span>
                     </div>
                 </div>
                 <div class="w-full h-[450px]">
@@ -1566,7 +1566,7 @@ html {
                             </div>
 
                             <div class="flex flex-wrap gap-1.5 mb-3" id="scatter-metric-btn-group">
-                                <button onclick="selectScatterMetric('growth')" id="btn-scatter-growth" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sunjin-red text-white shadow-sm transition-all">기간육성율</button>
+                                <button onclick="selectScatterMetric('growth')" id="btn-scatter-growth" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sunjin-red text-white shadow-sm transition-all">육성율</button>
                                 <button onclick="selectScatterMetric('fcr')" id="btn-scatter-fcr" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">보정 FCR</button>
                                 <button onclick="selectScatterMetric('adg')" id="btn-scatter-adg" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">일당증체량</button>
                                 <button onclick="selectScatterMetric('pay')" id="btn-scatter-pay" class="scatter-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">지급율</button>
@@ -1609,7 +1609,7 @@ html {
                             </div>
 
                             <div class="flex flex-wrap gap-1 mb-2" id="metric-btn-group">
-                                <button onclick="selectTrendMetric('growth')" id="btn-metric-growth" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-sunjin-red text-white shadow-sm transition-all">기간육성율</button>
+                                <button onclick="selectTrendMetric('growth')" id="btn-metric-growth" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-sunjin-red text-white shadow-sm transition-all">육성율</button>
                                 <button onclick="selectTrendMetric('fcr')" id="btn-metric-fcr" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">보정 FCR</button>
                                 <button onclick="selectTrendMetric('adg')" id="btn-metric-adg" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">일당증체량</button>
                                 <button onclick="selectTrendMetric('pay')" id="btn-metric-pay" class="metric-btn px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">지급율</button>
@@ -3448,7 +3448,6 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             // 🎯 [신규] 벤치마크 원천 (없으면 빈 배열 → 기존처럼 settlementRawData 로 폴백)
             settlementBenchmarkData = normalizeSettlementRows(Array.isArray(resData.benchmarkRows) ? resData.benchmarkRows : []);
             settlementBenchmarkMed = parseBenchmarkMedRows(resData.benchmarkMedRows);
-            console.log(`[공헌이익] 벤치마크 수신 — 정산 ${settlementBenchmarkData.length}행 / 약품비 원천 ${Array.isArray(resData.benchmarkMedRows) ? resData.benchmarkMedRows.length : '미수신'}행 → ${settlementBenchmarkMed.length}농가`);
 
             generateSettlementFarmStats();
             fetchSettlementData();
@@ -4210,7 +4209,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             const targetFarms = activeDept === 'ALL' ? parsedData : parsedData.filter(isInActiveDept);
             const grades = [...new Set(targetFarms.map(d => d.rearingGrade))].filter(Boolean).sort();
             
-            let optionsHtml = '<option value="">기간육성율 등급 전체</option>';
+            let optionsHtml = '<option value="">육성율 등급 전체</option>';
             grades.forEach(g => {
                 let label = g.includes('등급') ? g : `${g}등급`;
                 optionsHtml += `<option value="${g}">${label}</option>`;
@@ -4530,8 +4529,8 @@ function updateKPIs() {
         '담당CM': plain(d.manager) || '미지정',
         '농장규모': plain(d.farmSize) || '-',
         '사육규모(두)': Math.round(num(d.breedingSize)),
-        '기간육성율': plain(d.rearingGrade),
-        '평균 기간육성율(%)': pct(d.avgRearingRate),
+        '육성율': plain(d.rearingGrade),
+        '평균 육성율(%)': pct(d.avgRearingRate),
         '입식두당약품비(원)': d.medicineCost > 0 ? Math.round(d.medicineCost) : '',
         '출하두당약품비(원)': d.shipmentCost > 0 ? Math.round(d.shipmentCost) : '',
         '등급': d.gradeCategory || '-',
@@ -4541,8 +4540,8 @@ function updateKPIs() {
     const ws = XLSX.utils.json_to_sheet(rows);
     ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.max(10, k.length * 2) }));
     ws['!cols'][3] = { wch: 22 };
-    // 숫자 열 서식 (평균 기간육성율은 소수 1자리, 나머지는 천 단위 구분)
-    const pctCol = Object.keys(rows[0]).indexOf('평균 기간육성율(%)');
+    // 숫자 열 서식 (평균 육성율은 소수 1자리, 나머지는 천 단위 구분)
+    const pctCol = Object.keys(rows[0]).indexOf('평균 육성율(%)');
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let r = 1; r <= range.e.r; r++) {
         for (let c = 0; c <= range.e.c; c++) {
@@ -5174,7 +5173,7 @@ function renderCharts() {
                             callbacks: {
                                 label: (c) => {
                                     const p = c.raw;
-                                    return ` ${p.farmName} (${p.dept}): 약품비 ${formatWon(p.x)} / 기간육성율 ${p.y.toFixed(1)}%`;
+                                    return ` ${p.farmName} (${p.dept}): 약품비 ${formatWon(p.x)} / 육성율 ${p.y.toFixed(1)}%`;
                                 }
                             }
                         }
@@ -5189,7 +5188,7 @@ function renderCharts() {
                         y: {
                             min: 80,
                             max: 100, 
-                            title: { display: true, text: '평균 기간육성율 (%)', font: { weight: 'bold' } },
+                            title: { display: true, text: '평균 육성율 (%)', font: { weight: 'bold' } },
                             ticks: { callback: v => v.toFixed(0) + '%', font: { weight: 'bold' } }
                         }
                     }
@@ -5236,7 +5235,7 @@ function renderCharts() {
                         ctx.fillStyle = '#ffffff';
                         ctx.fillText(xText, xVal + 7, top + 19);
 
-                        const yText = ` 한마을BU 평균 기간육성율: ${buY.toFixed(1)}% `;
+                        const yText = ` 한마을BU 평균 육성율: ${buY.toFixed(1)}% `;
                         ctx.fillStyle = '#1e1b4b';
                         ctx.fillRect(left + 6, yVal - 22, ctx.measureText(yText).width + 6, 18);
                         ctx.fillStyle = '#ffffff';
@@ -6725,7 +6724,7 @@ function renderPeriodMetricsAndScatter(selectedFarm, deptAvgs, startYM, endYM) {
     const pG1 = calcPeriodPercentile(deptAvgs.map(a => a.grade1), farmAvg.grade1);
 
     const metrics = [
-        { name: "기간육성율", val: `${farmAvg.growth.toFixed(1)}%`, rank: pGrowth, rankLabel: formatSettlementRankLabel(pGrowth) },
+        { name: "육성율", val: `${farmAvg.growth.toFixed(1)}%`, rank: pGrowth, rankLabel: formatSettlementRankLabel(pGrowth) },
         { name: "보정 FCR", val: `${farmAvg.fcr.toFixed(2)}`, rank: pFcr, rankLabel: formatSettlementRankLabel(pFcr) },
         { name: "일당증체량", val: `${farmAvg.adg.toFixed(1)}g`, rank: pAdg, rankLabel: formatSettlementRankLabel(pAdg) },
         { name: "지급율", val: `${farmAvg.pay.toFixed(1)}%`, rank: pPay, rankLabel: formatSettlementRankLabel(pPay) },
@@ -6780,7 +6779,7 @@ function renderPeriodMetricsAndScatter(selectedFarm, deptAvgs, startYM, endYM) {
     const propKey = metricKeyMap[activeScatterMetric] || 'growth';
 
     const metricMap = {
-        growth: { label: '기간육성율 (%)', unit: '%' },
+        growth: { label: '육성율 (%)', unit: '%' },
         fcr: { label: '보정 FCR', unit: '' },
         adg: { label: '일당증체량 (g)', unit: 'g' },
         pay: { label: '지급율 (%)', unit: '%' },
@@ -7121,7 +7120,7 @@ function renderSelectedBatchMetricsTable(targetRow) {
     const mG1 = calcSettlementTopPercentile(groupRows.map(r => r["1등급이상출현율(%)"]), targetRow["1등급이상출현율(%)"]);
 
     const metrics = [
-        { name: "기간육성율", val: `${parseSettlementNum(targetRow["기간육성율"]).toFixed(1)}%`, rank: mGrowth, rankLabel: formatSettlementRankLabel(mGrowth) },
+        { name: "육성율", val: `${parseSettlementNum(targetRow["기간육성율"]).toFixed(1)}%`, rank: mGrowth, rankLabel: formatSettlementRankLabel(mGrowth) },
         { name: "보정 FCR", val: `${parseSettlementNum(targetRow["사료요구율"]).toFixed(2)}`, rank: mFcr, rankLabel: formatSettlementRankLabel(mFcr) },
         { name: "일당증체량", val: `${parseSettlementNum(targetRow["일당증체량"]).toFixed(1)}g`, rank: mAdg, rankLabel: formatSettlementRankLabel(mAdg) },
         { name: "지급율", val: `${parseSettlementNum(targetRow["지급율(%)"]).toFixed(1)}%`, rank: mPay, rankLabel: formatSettlementRankLabel(mPay) },
@@ -7209,7 +7208,7 @@ function renderDashProfileChart(targetRow) {
     dashProfileChartObj = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['기간육성율', '보정 FCR', '일당증체량', '지급율', '1등급이상'],
+            labels: ['육성율', '보정 FCR', '일당증체량', '지급율', '1등급이상'],
             datasets: [{
                 label: '백분위 위치',
                 data: barHeights,
@@ -7281,7 +7280,7 @@ function renderScatterChart(targetYear, targetSelectedRow) {
     const deptLabel = deptFilterVal || '전체';
 
     const metricMap = {
-        growth: { label: '기간육성율 (%)', prop: '기간육성율', unit: '%' },
+        growth: { label: '육성율 (%)', prop: '기간육성율', unit: '%' },
         fcr: { label: '보정 FCR', prop: '사료요구율', unit: '' },
         adg: { label: '일당증체량 (g)', prop: '일당증체량', unit: 'g' },
         pay: { label: '지급율 (%)', prop: '지급율(%)', unit: '%' },
@@ -7726,7 +7725,7 @@ function renderMonthlyTrendChart3Years(monthlyData) {
     }
 
     const metricConfigs = {
-        growth: { label: '기간육성율 (%)', props: ['growth', '기간육성율', '육성율'], unit: '%', digits: 1, color: '#FE1B0E' },
+        growth: { label: '육성율 (%)', props: ['growth', '기간육성율', '육성율'], unit: '%', digits: 1, color: '#FE1B0E' },
         fcr: { label: '보정 FCR', props: ['fcr', '사료요구율', 'FCR'], unit: '', digits: 2, color: '#7FC31C' },
         adg: { label: '일당증체량 (g)', props: ['adg', '일당증체량', '증체량'], unit: 'g', digits: 1, color: '#0284c7' },
         pay: { label: '지급율 (%)', props: ['pay', '지급율(%)', '지급율'], unit: '%', digits: 1, color: '#9333ea' },
@@ -8351,7 +8350,7 @@ function computeContribCostBreakdown(p) {
     const outWeight    = Number(p.outWeight) || 0;     // 출하 평체(kg)
     const inWeight     = Number(p.inWeight) || 0;      // 전입 평체(kg)
     const fcr          = Number(p.fcr) || 0;
-    const rearingRate  = Number(p.rearingRate) || 0;   // 육성율(%)
+    const rearingRate  = Number(p.rearingRate) || 0;   // 기간육성율(%)
     const payRate      = Number(p.payRate) || 0;       // 지급율(%)
     const marketPrice  = Number(p.marketPrice) || 0;   // 돈가(원/kg)
     const feedPrice    = Number(p.feedPrice) || 0;     // 사료단가(원/kg)
@@ -9669,7 +9668,7 @@ function openContribDetailModal(farmCode) { openContribInlineDetailModal(farmCod
 const SIM_INPUT_DECIMALS = {
     marketPrice: 0,   // 돈가 (원/kg)
     payRate: 1,       // 지급율 (%)
-    rearingRate: 1,   // 육성율 (%)
+    rearingRate: 1,   // 기간육성율 (%)
     fcr: 2,           // FCR
     medCost: 0        // 입식두당 약품비 (원)
 };
@@ -9785,7 +9784,7 @@ function renderModalTableBody() {
                    + `─────────────\n= ${won(base.pigCost)} 원/두`,
             lossCost: `③ 자돈 폐사매몰 = 자돈수매비 × (1 - 육성율)\n`
                     + `자돈수매비    ${won(base.pigCost)} 원\n`
-                    + `육성율      ${f1(m.rearingRate)} %\n`
+                    + `육성율    ${f1(m.rearingRate)} %\n`
                     + `─────────────\n= ${won(base.lossCost)} 원/두`,
             feedCost: `④ 사료비 = (출하평체 - 전입평체) × 보정 FCR × 사료단가\n`
                     + `출하평체   ${f1(m.outWeight)} kg\n`
@@ -9797,7 +9796,7 @@ function renderModalTableBody() {
                        + `─────────────\n= ${won(base.entrustCost)} 원/두`,
             medCost: `⑥ 약품비 = 입식두당 약품비 ÷ 육성율\n`
                    + `입식두당 약품비   ${won(m.inHeadMedCost)} 원\n`
-                   + `육성율          ${f1(m.rearingRate)} %\n`
+                   + `육성율        ${f1(m.rearingRate)} %\n`
                    + `─────────────\n= ${won(base.medCost)} 원/두`,
             etcCost: `⑦ 운반비 / 간접제조·관리비 = (자돈+출하 운반비) + (간접제조경비+관리비)\n`
                    + `운반비             ${won(m.transCost)} 원\n`
