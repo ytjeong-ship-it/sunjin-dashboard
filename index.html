@@ -1776,7 +1776,7 @@ html {
                                 <th id="contrib-th-dept" class="sticky top-0 bg-slate-800 py-2.5 border-r border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="sortContribTable('dept')">사업부 <span class="contrib-sort-ind">⇳</span></th>
                                 <th id="contrib-th-farmName" class="sticky top-0 bg-slate-800 py-2.5 border-r border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="sortContribTable('farmName')">농장 <span class="contrib-sort-ind">⇳</span></th>
                                 <th id="contrib-th-manager" class="sticky top-0 bg-slate-800 py-2.5 border-r border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="sortContribTable('manager')">담당자 <span class="contrib-sort-ind">⇳</span></th>
-                                <th id="contrib-th-rearingRate" class="sticky top-0 bg-slate-800 py-2.5 border-r border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="sortContribTable('rearingRate')">기간육성율 <span class="contrib-sort-ind">⇳</span></th>
+                                <th id="contrib-th-rearingRate" class="sticky top-0 bg-slate-800 py-2.5 border-r border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="sortContribTable('rearingRate')">육성율 <span class="contrib-sort-ind">⇳</span></th>
                                 <th id="contrib-th-fcr" class="sticky top-0 bg-slate-800 py-2.5 border-r border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="sortContribTable('fcr')">보정 FCR <span class="contrib-sort-ind">⇳</span></th>
                                 <th id="contrib-th-payRate" class="sticky top-0 bg-slate-800 py-2.5 border-r border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="sortContribTable('payRate')">지급율 <span class="contrib-sort-ind">⇳</span></th>
                                 <th id="contrib-th-outHeads" class="sticky top-0 bg-slate-800 py-2.5 border-r border-slate-700 cursor-pointer hover:bg-slate-700 transition" onclick="sortContribTable('outHeads')">출하두수 <span class="contrib-sort-ind">⇳</span></th>
@@ -1951,7 +1951,7 @@ html {
         </div>
         <div class="flex flex-wrap gap-1.5 mb-2" id="contrib-bep-metric-btn-group">
             <button onclick="selectContribBepMetric('payRate')" id="btn-contrib-bep-payRate" class="contrib-bep-metric-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sunjin-red text-white shadow-sm transition-all">지급율</button>
-            <button onclick="selectContribBepMetric('rearingRate')" id="btn-contrib-bep-rearingRate" class="contrib-bep-metric-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">기간육성율</button>
+            <button onclick="selectContribBepMetric('rearingRate')" id="btn-contrib-bep-rearingRate" class="contrib-bep-metric-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">육성율</button>
             <button onclick="selectContribBepMetric('fcr')" id="btn-contrib-bep-fcr" class="contrib-bep-metric-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">보정 FCR</button>
             <button onclick="selectContribBepMetric('inHeadMedCost')" id="btn-contrib-bep-inHeadMedCost" class="contrib-bep-metric-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">약품비</button>
         </div>
@@ -3448,6 +3448,7 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
             // 🎯 [신규] 벤치마크 원천 (없으면 빈 배열 → 기존처럼 settlementRawData 로 폴백)
             settlementBenchmarkData = normalizeSettlementRows(Array.isArray(resData.benchmarkRows) ? resData.benchmarkRows : []);
             settlementBenchmarkMed = parseBenchmarkMedRows(resData.benchmarkMedRows);
+            console.log(`[공헌이익] 벤치마크 수신 — 정산 ${settlementBenchmarkData.length}행 / 약품비 원천 ${Array.isArray(resData.benchmarkMedRows) ? resData.benchmarkMedRows.length : '미수신'}행 → ${settlementBenchmarkMed.length}농가`);
 
             generateSettlementFarmStats();
             fetchSettlementData();
@@ -8350,7 +8351,7 @@ function computeContribCostBreakdown(p) {
     const outWeight    = Number(p.outWeight) || 0;     // 출하 평체(kg)
     const inWeight     = Number(p.inWeight) || 0;      // 전입 평체(kg)
     const fcr          = Number(p.fcr) || 0;
-    const rearingRate  = Number(p.rearingRate) || 0;   // 기간육성율(%)
+    const rearingRate  = Number(p.rearingRate) || 0;   // 육성율(%)
     const payRate      = Number(p.payRate) || 0;       // 지급율(%)
     const marketPrice  = Number(p.marketPrice) || 0;   // 돈가(원/kg)
     const feedPrice    = Number(p.feedPrice) || 0;     // 사료단가(원/kg)
@@ -9023,7 +9024,7 @@ function downloadContribExcel() {
         '농장코드': plain(item.farmCode),
         '농장': plain(item.farmName),
         '담당자': plain(item.manager) || '미지정',
-        '기간육성율(%)': Number(Number(item.rearingRate).toFixed(1)),
+        '육성율(%)': Number(Number(item.rearingRate).toFixed(1)),
         '보정 FCR': Number(Number(item.fcr).toFixed(2)),
         '지급율(%)': Number(Number(item.payRate).toFixed(1)),
         '출하두수(두)': Math.round(item.outHeads),
@@ -9668,7 +9669,7 @@ function openContribDetailModal(farmCode) { openContribInlineDetailModal(farmCod
 const SIM_INPUT_DECIMALS = {
     marketPrice: 0,   // 돈가 (원/kg)
     payRate: 1,       // 지급율 (%)
-    rearingRate: 1,   // 기간육성율 (%)
+    rearingRate: 1,   // 육성율 (%)
     fcr: 2,           // FCR
     medCost: 0        // 입식두당 약품비 (원)
 };
@@ -9782,9 +9783,9 @@ function renderModalTableBody() {
                    + `전입평체 증체 보정   (${f1(m.inWeight)}-28)×3,000 = ${won((m.inWeight - 28) * 3000)} 원\n`
                    + `쿼터비               2,000 원\n`
                    + `─────────────\n= ${won(base.pigCost)} 원/두`,
-            lossCost: `③ 자돈 폐사매몰 = 자돈수매비 × (1 - 기간육성율)\n`
+            lossCost: `③ 자돈 폐사매몰 = 자돈수매비 × (1 - 육성율)\n`
                     + `자돈수매비    ${won(base.pigCost)} 원\n`
-                    + `기간육성율    ${f1(m.rearingRate)} %\n`
+                    + `육성율      ${f1(m.rearingRate)} %\n`
                     + `─────────────\n= ${won(base.lossCost)} 원/두`,
             feedCost: `④ 사료비 = (출하평체 - 전입평체) × 보정 FCR × 사료단가\n`
                     + `출하평체   ${f1(m.outWeight)} kg\n`
@@ -9794,9 +9795,9 @@ function renderModalTableBody() {
                     + `─────────────\n= ${won(base.feedCost)} 원/두`,
             entrustCost: `⑤ 위탁사육비 = 출하두당 위탁사육비 (정산 데이터 실측값)\n`
                        + `─────────────\n= ${won(base.entrustCost)} 원/두`,
-            medCost: `⑥ 약품비 = 입식두당 약품비 ÷ 기간육성율\n`
+            medCost: `⑥ 약품비 = 입식두당 약품비 ÷ 육성율\n`
                    + `입식두당 약품비   ${won(m.inHeadMedCost)} 원\n`
-                   + `기간육성율        ${f1(m.rearingRate)} %\n`
+                   + `육성율          ${f1(m.rearingRate)} %\n`
                    + `─────────────\n= ${won(base.medCost)} 원/두`,
             etcCost: `⑦ 운반비 / 간접제조·관리비 = (자돈+출하 운반비) + (간접제조경비+관리비)\n`
                    + `운반비             ${won(m.transCost)} 원\n`
@@ -9846,8 +9847,8 @@ function renderModalTableBody() {
                 baseIndicator: bi.rearingRate,
                 calcVal: formatWon(base.lossCost),
                 calcTip: calcTips.lossCost,
-                formula: '자돈수매비 × (1 - 기간육성율)',
-                indicatorName: '기간육성율',
+                formula: '자돈수매비 × (1 - 육성율)',
+                indicatorName: '육성율',
                 inputHtml: makeInputWrapper('sim-input-rearingRate', show(iv.rearingRate, SIM_INPUT_DECIMALS.rearingRate), '%', '0.1'),
                 simVal: formatWon(sim.lossCost), gapNum: sim.lossCost - base.lossCost
             },
@@ -9878,7 +9879,7 @@ function renderModalTableBody() {
                 baseIndicator: bi.medCost,
                 calcVal: formatWon(base.medCost),
                 calcTip: calcTips.medCost,
-                formula: '입식두당 약품비 ÷ 기간육성율',
+                formula: '입식두당 약품비 ÷ 육성율',
                 indicatorName: '입식두당 약품비',
                 inputHtml: makeInputWrapper('sim-input-medCost', show(iv.inHeadMedCost, SIM_INPUT_DECIMALS.medCost), '원', '1'),
                 simVal: formatWon(sim.medCost), gapNum: sim.medCost - base.medCost
@@ -10592,7 +10593,7 @@ function renderContribAchievePanel() {
     const TABS = [
         { k: 'combo', n: '종합' },
         { k: 'fcr',   n: '보정 FCR' },
-        { k: 'rear',  n: '기간육성율' },
+        { k: 'rear',  n: '육성율' },
         { k: 'med',   n: '입식두당 약품비' },
         { k: 'pay',   n: '지급율' }
     ];
@@ -10651,7 +10652,7 @@ function renderContribAchievePanel() {
                 </div>
                 <div class="space-y-1">
                     ${row('보정 FCR',       plan.cur.fcr,           c.fcr,           '',   2, false, 'fcr')}
-                    ${row('기간육성율',      plan.cur.rearingRate,   c.rearingRate,   '%',  1, true,  'rearingRate')}
+                    ${row('육성율',      plan.cur.rearingRate,   c.rearingRate,   '%',  1, true,  'rearingRate')}
                     ${row('입식두당 약품비', plan.cur.inHeadMedCost, c.inHeadMedCost, '원', 0, false, 'inHeadMedCost')}
                     ${row('지급율',          plan.cur.payRate,       c.payRate,       '%',  1, true,  'payRate')}
                 </div>
@@ -10683,7 +10684,7 @@ function renderContribAchievePanel() {
         const S = plan.single || {};
         const map = {
             fcr:  { n: '보정 FCR',       unit: '',   dec: 2, up: false },
-            rear: { n: '기간육성율',      unit: '%',  dec: 1, up: true  },
+            rear: { n: '육성율',      unit: '%',  dec: 1, up: true  },
             med:  { n: '입식두당 약품비', unit: '원', dec: 0, up: false },
             pay:  { n: '지급율',          unit: '%',  dec: 1, up: true  }
         }[contribAchieveTab];
@@ -10886,7 +10887,7 @@ function buildContribMonthlyBEP(rows, m, farmCode, dept) {
 //    좌측 축 = 선택된 계산된 값 지표의 월별 값, 우측 축 = 월별 실적 BEP(실선) · 기간 평균/시뮬레이션(점선)
 const CONTRIB_BEP_METRIC_CONFIG = {
     payRate:       { label: '지급율 (%)',          unit: '%',  digits: 1, color: '#F97316' },
-    rearingRate:   { label: '기간육성율 (%)',       unit: '%',  digits: 1, color: '#7C3AED' },
+    rearingRate:   { label: '육성율 (%)',       unit: '%',  digits: 1, color: '#7C3AED' },
     fcr:           { label: '보정 FCR',             unit: '',  digits: 2, color: '#059669' },
     inHeadMedCost: { label: '약품비 (원)',          unit: '원', digits: 0, color: '#DB2777' }
 };
@@ -11172,7 +11173,7 @@ function renderContribAIComment(m, sim, inputs) {
             const baseProfit = aPlan.at(0).r.profit;
             const rows = [
                 ['보정 FCR', aPlan.cur.fcr, c.fcr, '', 2, false],
-                ['기간육성율', aPlan.cur.rearingRate, c.rearingRate, '%', 1, true],
+                ['육성율', aPlan.cur.rearingRate, c.rearingRate, '%', 1, true],
                 ['입식두당 약품비', aPlan.cur.inHeadMedCost, c.inHeadMedCost, '원', 0, false],
                 ['지급율', aPlan.cur.payRate, c.payRate, '%', 1, true]
             ];
@@ -11263,7 +11264,7 @@ function renderContribAIComment(m, sim, inputs) {
             ? { ok: true, curKey: 'inHeadMedCost', target: tM }
             : { ok: false, curKey: 'inHeadMedCost', note: '(0원이어도 미달)' };
     } else {
-        single.med = { ok: false, curKey: 'inHeadMedCost', note: '(기간육성율 정보 없음)' };
+        single.med = { ok: false, curKey: 'inHeadMedCost', note: '(육성율 정보 없음)' };
     }
 
     // ④ 지급율 — 매출원가는 불변, BEP 분모만 변화
