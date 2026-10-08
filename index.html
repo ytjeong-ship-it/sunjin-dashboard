@@ -2172,8 +2172,6 @@ html {
         const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyxSUlvb-ONYHqi6rZmkx-P6wA9Q6LNh5iCjAwQf3fQ3nF0xlJUz7ACfNCxD7I9BFjV/exec";
         const AUTO_REFRESH_INTERVAL = 3600000;
 
-let pageLoginTime = null;
-let currentSessionId = null;
 
         let currentUserEmail = sessionStorage.getItem('user_email') || "";
         let currentUserPassword = sessionStorage.getItem('user_password') || "";
@@ -2506,6 +2504,10 @@ let currentSortField = 'medicineCost';
 }
 
 function handleLogout() {
+    // 🎯 0. 세션 정보가 지워지기 전에 이용시간 전송
+    flushUsage('로그아웃');
+    usageTracker = null;
+
     // 🎯 1. 브라우저 세션 저장소 완전 삭제 (이전 권한 잔재 원천 차단)
     sessionStorage.clear();
     
@@ -3133,6 +3135,7 @@ function enableReplyEditMode(replyId) {
         }
 
 function switchMainTab(tab) {
+    accumulateUsage();   // 🎯 이전 탭 이용시간 마감 후 전환
     currentMainTab = tab;
 
     // 1. 메인 뷰 4종 (종합대시보드 / 차트분석 / 정산성적 / 공헌이익분석) 토글
@@ -3462,6 +3465,8 @@ function fetchGoogleSheetData(isManual = false, isLoginAttempt = false) {
 
             hideLoginModal();
             checkAndShowNotice();
+            // 🎯 로그인(또는 세션 복원) 완료 시점부터 이용시간 측정 (측정 오류가 로그인을 막지 않도록 격리)
+            try { if (!usageTracker) startUsageTracking(); } catch (usageErr) { console.error("이용시간 측정 시작 오류:", usageErr); }
 
             if (isLoginAttempt || isManual) {
                 const logUrl = new URL(GOOGLE_SHEET_API_URL.trim());
@@ -7843,27 +7848,103 @@ function selectTrendMetric(key) {
     }
 }
 
-window.addEventListener('beforeunload', function () {
-    const savedLoginTime = sessionStorage.getItem('pageLoginTime');
+// =================================================================
+// 🎯 탭별 이용시간 측정 (백그라운드·무활동 시간 제외)
+//    - 브라우저 탭이 숨겨진 시간은 '백그라운드', 화면은 보이지만 5분 이상 조작이 없으면 '무활동'으로 분리
+//    - 창 닫기/새로고침(pagehide) · 로그아웃 시점에 그동안 누적된 시간을 '접속로그' 시트(구분: 이용시간)로 전송 후 초기화
+//    - 같은 브라우저 세션(새로고침 포함)은 동일한 세션ID 로 묶인다
+// =================================================================
+const USAGE_IDLE_LIMIT_MS = 5 * 60 * 1000;
+let usageTracker = null;
 
-    if (currentUserEmail && savedLoginTime) {
-        const leaveTime = new Date().getTime();
-        const durationSec = Math.round((leaveTime - parseInt(savedLoginTime)) / 1000);
-        
-        const minutes = Math.floor(durationSec / 60);
-        const seconds = durationSec % 60;
-        const durationStr = minutes > 0 ? `${minutes}분 ${seconds}초` : `${seconds}초`;
-
-        const logUrl = new URL(GOOGLE_SHEET_API_URL.trim());
-        logUrl.searchParams.set('action', 'addLog');
-        logUrl.searchParams.set('email', currentUserEmail);
-        logUrl.searchParams.set('password', currentUserPassword);
-        logUrl.searchParams.set('category', '체류시간');
-        logUrl.searchParams.set('details', `총 체류시간: ${durationStr} (${durationSec}초)`);
-        logUrl.searchParams.set('t', new Date().getTime());
-
-        navigator.sendBeacon(logUrl.toString());
+function startUsageTracking() {
+    let sessionId = sessionStorage.getItem('usage_session_id');
+    if (!sessionId) {
+        sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        sessionStorage.setItem('usage_session_id', sessionId);
     }
+    const now = Date.now();
+    usageTracker = {
+        sessionId,
+        tabMs: { dashboard: 0, chart: 0, settlement: 0, contribution: 0 },
+        hiddenMs: 0,
+        idleMs: 0,
+        hidden: document.hidden,
+        segStart: now,
+        lastActivity: now
+    };
+}
+
+// 직전 구간(segStart ~ 지금)의 시간을 현재 상태(탭/백그라운드/무활동)에 배분
+function accumulateUsage() {
+    if (!usageTracker) return;
+    const t = usageTracker;
+    const now = Date.now();
+    const elapsed = Math.max(0, now - t.segStart);
+    if (t.hidden) {
+        t.hiddenMs += elapsed;
+    } else {
+        const activeEnd = Math.min(now, t.lastActivity + USAGE_IDLE_LIMIT_MS);
+        const activePart = Math.max(0, activeEnd - t.segStart);
+        if (t.tabMs[currentMainTab] !== undefined) t.tabMs[currentMainTab] += activePart;
+        t.idleMs += elapsed - activePart;
+    }
+    t.segStart = now;
+}
+
+function markUsageActivity() {
+    if (!usageTracker) return;
+    const now = Date.now();
+    if (now - usageTracker.lastActivity < 1000) return;   // 1초 이내 반복 이벤트는 무시
+    accumulateUsage();
+    usageTracker.lastActivity = now;
+}
+
+function flushUsage(reason) {
+    if (!usageTracker || !currentUserEmail) return;
+    accumulateUsage();
+    const t = usageTracker;
+    const sec = ms => Math.round(ms / 1000);
+    const activeSec = Object.values(t.tabMs).reduce((a, b) => a + sec(b), 0);
+    if (activeSec + sec(t.hiddenMs) + sec(t.idleMs) < 1) return;
+
+    // 접속로그 시트에 '이용시간' 구분으로 기록 — 상세내용(E열)은 요약, 항목별 초 단위 값은 F열부터 각 칸에 기록
+    const fmt = s => s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`;
+
+    const url = new URL(GOOGLE_SHEET_API_URL.trim());
+    url.searchParams.set('action', 'addLog');
+    url.searchParams.set('email', currentUserEmail);
+    url.searchParams.set('password', currentUserPassword);
+    url.searchParams.set('category', '이용시간');
+    url.searchParams.set('details', `실이용 ${fmt(activeSec)}`);
+    url.searchParams.set('sessionId', t.sessionId);
+    url.searchParams.set('reason', reason);
+    Object.keys(t.tabMs).forEach(k => url.searchParams.set(k, sec(t.tabMs[k])));
+    url.searchParams.set('hidden', sec(t.hiddenMs));
+    url.searchParams.set('idle', sec(t.idleMs));
+    url.searchParams.set('t', Date.now());
+
+    const sent = navigator.sendBeacon && navigator.sendBeacon(url.toString());
+    if (!sent) fetch(url.toString(), { method: 'POST', keepalive: true }).catch(() => {});
+
+    Object.keys(t.tabMs).forEach(k => { t.tabMs[k] = 0; });
+    t.hiddenMs = 0;
+    t.idleMs = 0;
+}
+
+['mousemove', 'mousedown', 'keydown', 'wheel', 'scroll', 'touchstart'].forEach(evt => {
+    window.addEventListener(evt, markUsageActivity, { passive: true, capture: true });
+});
+
+document.addEventListener('visibilitychange', function () {
+    if (!usageTracker) return;
+    accumulateUsage();
+    usageTracker.hidden = document.hidden;
+    if (!document.hidden) usageTracker.lastActivity = Date.now();
+});
+
+window.addEventListener('pagehide', function () {
+    flushUsage('창닫기/새로고침');
 });
 // =================================================================
 // 🎯 공헌이익 분석 전용 자바스크립트 엔진 (인라인 카드 및 드롭다운 체크박스 통합)
