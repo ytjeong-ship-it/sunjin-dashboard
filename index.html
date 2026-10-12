@@ -2371,10 +2371,23 @@ let currentSortField = 'medicineCost';
                 selectedStartYM = startObj ? startObj.month : startVal;
                 selectedEndYM = endObj ? endObj.month : endVal;
 
-                activePeriodMode = 'custom';
-                if (document.getElementById('btn-period-3m')) document.getElementById('btn-period-3m').className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
-                if (document.getElementById('btn-period-6m')) document.getElementById('btn-period-6m').className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
-                if (document.getElementById('btn-period-all')) document.getElementById('btn-period-all').className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+                // 🎯 선택 구간이 최근 3개월/6개월/전체와 같으면 해당 버튼을 활성 표시 (공헌이익 탭에서 넘어온 경우 포함)
+                const firstIso = toIsoMonthStr(mappings.costTrend[0].month);
+                const isoAt = idx => toIsoMonthStr((mappings.costTrend[Math.max(0, idx)] || mappings.costTrend[0]).month);
+                let matchedMode = 'custom';
+                if (endVal === maxIsoYM) {
+                    if (startVal === firstIso) matchedMode = 'all';
+                    else if (startVal === isoAt(maxValidIdx - 2)) matchedMode = '3m';
+                    else if (startVal === isoAt(maxValidIdx - 5)) matchedMode = '6m';
+                }
+                activePeriodMode = matchedMode;
+
+                const activeStyle = "px-2.5 py-1 rounded-lg text-xs font-bold bg-sunjin-red text-white shadow-sm transition-all";
+                const inactiveStyle = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+                [['btn-period-3m', '3m'], ['btn-period-6m', '6m'], ['btn-period-all', 'all']].forEach(([id, mode]) => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.className = matchedMode === mode ? activeStyle : inactiveStyle;
+                });
 
                 applyFilters();
             }
@@ -2740,8 +2753,7 @@ function openCommentDrawer() {
     urlObj.searchParams.set('password', currentUserPassword);
     urlObj.searchParams.set('t', new Date().getTime());
 
-    fetch(urlObj.toString())
-        .then(res => res.json())
+    fetchJsonWithRetry(urlObj.toString())   // 🎯 조회는 일시 404 시 자동 재시도
         .then(comments => {
             if (!Array.isArray(comments)) comments = [];
 
@@ -4810,8 +4822,7 @@ function updateKPIs() {
     urlObj.searchParams.set('password', currentUserPassword);
     urlObj.searchParams.set('t', new Date().getTime());
 
-    fetch(urlObj.toString())
-        .then(res => res.json())
+    fetchJsonWithRetry(urlObj.toString())   // 🎯 조회는 일시 404 시 자동 재시도
         .then(comments => {
             const count = Array.isArray(comments) ? comments.length : 0;
             const badge = document.getElementById('detail-comment-badge');
@@ -8514,10 +8525,10 @@ function computeContribCostBreakdown(p) {
 // 🎯 [신규] 공헌이익 탭 전용 약품비 맵 (종합 대시보드 기간 필터와 완전 분리)
 //   · 원천   : parsedData[].purchaseVals[] (월별 약품매입액) / headcountVals[] (월별 입식두수)
 //              → d.medicineCost 는 대시보드 필터가 덮어쓰므로 사용하지 않음
-//   · 기준창 : 공헌이익 탭 조회 종료월 기준 직전 6개월 (데이터 보유 범위 내로 보정)
+//   · 기준창 : 공헌이익 탭 조회 기간과 동일 (데이터 보유 범위 내로 보정)
 //   · 농장값 : Σ약품매입액 ÷ Σ입식두수
 //   · 사업부 : 소속 농장 전체의 Σ약품매입액 ÷ Σ입식두수 (두수 가중평균)
-function buildContribMedicineMaps(endYM, srcData) {
+function buildContribMedicineMaps(startYM, endYM, srcData) {
     // 🎯 [수정] 원천 지정 가능 (기본 parsedData / 일반 권한은 전체 사업부 settlementBenchmarkMed)
     const medSrc = Array.isArray(srcData) ? srcData : parsedData;
     const result = {
@@ -8559,26 +8570,31 @@ function buildContribMedicineMaps(endYM, srcData) {
     result.dataStartYM = dataMinYM;
     result.dataEndYM = dataMaxYM;
 
-    // 2. 기준 6개월 창 : 조회 종료월 기준, 데이터 보유 범위를 벗어나면 보정
-    let winEnd = String(endYM || '').trim();
-    if (!/^\d{4}-\d{2}$/.test(winEnd)) winEnd = dataMaxYM;
-    if (winEnd > dataMaxYM) { winEnd = dataMaxYM; result.clamped = true; }
-    if (winEnd < dataMinYM) { winEnd = dataMinYM; result.clamped = true; }
+    // 2. 기준 창 : 공헌이익 조회 기간과 동일 (약품비 분석 탭에서 같은 기간 조회 시 '평균 입식 두당 약품비'와 일치)
+    //    데이터 보유 범위와 겹치는 구간만 사용, 전혀 겹치지 않으면 보유 범위 전체(사업부 평균 산출용)
+    const isYM = v => /^\d{4}-\d{2}$/.test(v);
+    let winStart = String(startYM || '').trim();
+    let winEnd   = String(endYM || '').trim();
+    if (!isYM(winStart)) winStart = dataMinYM;
+    if (!isYM(winEnd))   winEnd   = dataMaxYM;
 
-    const wy = parseInt(winEnd.split('-')[0], 10);
-    const wm = parseInt(winEnd.split('-')[1], 10);
-    const sd = new Date(wy, wm - 1 - 5, 1);                       // 종료월 포함 직전 6개월
-    let winStart = `${sd.getFullYear()}-${String(sd.getMonth() + 1).padStart(2, '0')}`;
-    if (winStart < dataMinYM) winStart = dataMinYM;
+    if (winEnd < dataMinYM || winStart > dataMaxYM) {
+        winStart = dataMinYM;
+        winEnd   = dataMaxYM;
+        result.clamped = true;
+    } else {
+        if (winStart < dataMinYM) { winStart = dataMinYM; result.clamped = true; }
+        if (winEnd   > dataMaxYM) { winEnd   = dataMaxYM; result.clamped = true; }
+    }
 
     result.windowStart = winStart;
     result.windowEnd = winEnd;
 
     if (result.clamped) {
-        console.warn(`[공헌이익] 조회 종료월이 약품비 데이터 범위(${dataMinYM} ~ ${dataMaxYM})를 벗어나 ${winStart} ~ ${winEnd} 로 보정되었습니다.`);
+        console.warn(`[공헌이익] 조회 기간이 약품비 데이터 범위(${dataMinYM} ~ ${dataMaxYM})를 벗어나 ${winStart} ~ ${winEnd} 로 보정되었습니다.`);
     }
 
-    // 3. 농장별 / 사업부별 6개월 누계 합산
+    // 3. 농장별 / 사업부별 기간 누계 합산
     const deptSum = {};
 
     medSrc.forEach(d => {
@@ -8614,7 +8630,7 @@ function buildContribMedicineMaps(endYM, srcData) {
 }
 
 // 🎯 [신규] 선택 기간의 입식두당 약품비 (출하 연월 단위 판정 + 출하두수 가중평균)
-//   · 출하 연월 ≥ 약품비 집계 개시월 → 해당 농장 실측 6개월 평균 (농장값 없으면 사업부 평균)
+//   · 출하 연월 ≥ 약품비 집계 개시월 → 해당 농장 조회 기간 실측 평균 (농장값 없으면 사업부 평균)
 //   · 출하 연월 <  약품비 집계 개시월 → 사업부 평균 (실측 자료 미존재 구간)
 function getContribInHeadMedCost(rows, farmCode, dept, medMaps) {
     const empty = { inHeadMedCost: 0, actualHeads: 0, substitutedHeads: 0, noSourceHeads: 0 };
@@ -8639,7 +8655,7 @@ function getContribInHeadMedCost(rows, farmCode, dept, medMaps) {
 
         let val = 0;
         if (startYM && ym >= startYM && farmVal > 0) {
-            val = farmVal;          // 실측 구간 : 농장 6개월 평균
+            val = farmVal;          // 실측 구간 : 농장 조회 기간 평균
             actualHeads += heads;
         } else if (deptVal > 0) {
             val = deptVal;          // 미실측 구간 또는 농장값 부재 : 사업부 두수가중 평균
@@ -8802,12 +8818,12 @@ function applyContributionFilters(isManualTrigger = false) {
     const selectedDept = document.getElementById('contrib-sel-dept')?.value || '';
     const searchKeyword = document.getElementById('contrib-search-farm')?.value.trim().toLowerCase() || '';
 
-    // 🎯 [수정] getMedicineCostMaps() → 공헌이익 탭 전용 약품비 맵 (조회 종료월 기준 6개월)
+    // 🎯 [수정] getMedicineCostMaps() → 공헌이익 탭 전용 약품비 맵 (공헌이익 조회 기간과 동일)
     //    종합 대시보드 기간 필터의 영향을 받지 않음
     //    🎯 [수정] 일반 권한 + 전체 사업부 약품비(benchmarkMedRows) 수신 시 그것을 원천으로 사용
     //       → 관리자와 동일한 약품비 집계 창·사업부 평균이 적용되어 동일 농가 = 동일 결과
     const hasBenchMed = Array.isArray(settlementBenchmarkMed) && settlementBenchmarkMed.length > 0;
-    const medMaps = buildContribMedicineMaps(endYM, hasBenchMed ? settlementBenchmarkMed : undefined);
+    const medMaps = buildContribMedicineMaps(startYM, endYM, hasBenchMed ? settlementBenchmarkMed : undefined);
 
     // 🎯 [신규] 일반 권한 사용자는 벤치마크(분포·AI 코멘트·원가 항목) 모집단을 전체 사업부로 확장
     //    리스트·KPI 는 기존대로 소속 사업부 범위만 사용한다.
@@ -8909,7 +8925,10 @@ function calculateSingleFarmContribution(agg, rows, mPrice, fPrice, medMaps) {
     const entrustCost = (agg.costPerHeadRaw  != null ? agg.costPerHeadRaw  : agg.costPerHead)  || 0;
 
     // 🎯 [수정] 약품비 : 출하 연월 단위 판정 + 출하두수 가중평균 (공헌이익 탭 전용 산출)
-    const maps = medMaps || buildContribMedicineMaps(document.getElementById('contrib-end-ym')?.value || '');
+    const maps = medMaps || buildContribMedicineMaps(
+        document.getElementById('contrib-start-ym')?.value || '',
+        document.getElementById('contrib-end-ym')?.value || ''
+    );
     const medRes = getContribInHeadMedCost(rows, farmCode, dept, maps);
     const inHeadMedCost = medRes.inHeadMedCost;
 
@@ -9661,7 +9680,7 @@ function hideContribReturnBanner() {
     if (bar) bar.classList.add('hidden');
 }
 
-// ⑥ 약품비 클릭 → 종합 대시보드 해당 농장 상세 (기간 전체 고정)
+// ⑥ 약품비 클릭 → 종합 대시보드 해당 농장 상세 (기간 동일 적용, 약품비 집계 구간으로 보정)
 function goToDashboardMedicineDetail() {
     const m = modalOriginalMetrics;
     if (!m) return;
@@ -9684,16 +9703,53 @@ function goToDashboardMedicineDetail() {
 
     contribReturnCtx = captureContribReturnCtx();
 
-    // 약품비 데이터는 2025년 11월부터 집계되어 공헌이익 분석 기간과 구간을 맞출 수 없음 → [전체] 고정
-    if (typeof setPeriodFilter === 'function') setPeriodFilter('all');
+    // 공헌이익 조회 기간을 약품비 집계 구간(2025년 11월~)에 맞춰 잘라 적용. 겹치는 구간이 없을 때만 [전체]
+    const periodMsg = applyContribPeriodToDashboard(contribReturnCtx);
 
     // 이 함수가 내부에서 switchMainTab('dashboard') 및 스크롤까지 처리한다.
     showSelectedRatioAndDetailsByCode(hit.farmCode);
 
     showContribReturnBanner('종합 대시보드 · 약품비 상세');
-    if (typeof showNotification === 'function') {
-        showNotification('ℹ️ 약품비 집계는 2025년 11월부터 시작되므로 조회 기간을 [전체]로 적용했습니다.', 'info');
+    if (periodMsg && typeof showNotification === 'function') showNotification(periodMsg, 'info');
+}
+
+// 공헌이익 기간(YYYY-MM)을 종합 대시보드 기간 필터로 옮긴다. 안내가 필요하면 메시지를 반환.
+function applyContribPeriodToDashboard(ctx) {
+    const trend = (typeof mappings !== 'undefined' && Array.isArray(mappings.costTrend)) ? mappings.costTrend : [];
+    const reqStart = toIsoMonthStr(ctx && ctx.startYM);
+    const reqEnd   = toIsoMonthStr(ctx && ctx.endYM);
+
+    if (!trend.length || !reqStart || !reqEnd) {
+        setPeriodFilter('all');
+        return '';
     }
+
+    const minIso = toIsoMonthStr(trend[0].month);
+    const maxIdx = getRealValidMaxMonthIdx();
+    const maxIso = toIsoMonthStr((trend[maxIdx] || trend[trend.length - 1]).month);
+
+    // 약품비 집계 구간과 겹치지 않으면 [전체]
+    if (reqEnd < minIso || reqStart > maxIso) {
+        setPeriodFilter('all');
+        return `ℹ️ 선택한 기간(${reqStart} ~ ${reqEnd})에는 약품비 집계 데이터가 없어 조회 기간을 [전체]로 적용했습니다.`;
+    }
+
+    const start = reqStart < minIso ? minIso : reqStart;
+    const end   = reqEnd   > maxIso ? maxIso : reqEnd;
+    const startInput = document.getElementById('date-start-month');
+    const endInput   = document.getElementById('date-end-month');
+    if (!startInput || !endInput) {
+        setPeriodFilter('all');
+        return '';
+    }
+    startInput.value = start;
+    endInput.value   = end;
+    onCustomMonthChange();
+
+    if (start !== reqStart || end !== reqEnd) {
+        return `ℹ️ 약품비 집계 구간에 맞춰 조회 기간을 ${start} ~ ${end} 로 조정했습니다.`;
+    }
+    return '';
 }
 
 // ⑤ 위탁사육비 클릭 → 정산 성적 분석 해당 농장 (기간 동일 적용)
@@ -10901,31 +10957,26 @@ function getContribGradeZoneColor(grade) {
     return getContribGradeColor(grade) + '24';
 }
 
-// 🎯 [신규] 농장별 월별 실측 입식두당 약품비(LEAD 시트) + 사업부 누적 평균(전체 기간, 두수 가중)
-//    · 해당 농장·해당 월에 실측 자료가 있으면 그 값을 쓰고, 없으면 사업부 누적 평균으로 대체한다.
+// 🎯 [신규] 농장별 월별 입식두당 약품비 = 약품비 상세의 '입식두당 약품비 추이'(시트 6개월 추이값) 그대로
+//    · 해당 농장·해당 월의 6개월 추이값이 있으면 그 값을 쓰고, 없으면(집계 이전 월 등) 사업부 누적 평균으로 대체한다.
+//    · 월 단위 매입액 ÷ 입식두수는 입식 유무에 따라 값이 튀므로 사용하지 않는다.
 function buildContribMedicineMonthlyMap(farmCode, dept) {
     const result = { byMonth: {}, deptCumAvg: 0 };
     if (!Array.isArray(parsedData) || parsedData.length === 0) return result;
 
-    const purMonths  = (typeof mappings !== 'undefined' && Array.isArray(mappings.purchase))
-                       ? mappings.purchase.map(mm => toIsoMonthStr(mm.month)) : [];
-    const headMonths = (typeof mappings !== 'undefined' && Array.isArray(mappings.headcount))
-                       ? mappings.headcount.map(mm => toIsoMonthStr(mm.month)) : [];
-    if (purMonths.length === 0 || headMonths.length === 0) return result;
+    const trendMonths = (typeof mappings !== 'undefined' && Array.isArray(mappings.costTrend))
+                       ? mappings.costTrend.map(mm => toIsoMonthStr(mm.month)) : [];
 
     const fKey = String(farmCode || '').trim().toLowerCase();
     const deptKey = String(dept || '').trim();
 
-    // 1. 해당 농장의 월별 실측값 (약품매입액 ÷ 입식두수, 월 단위)
+    // 1. 해당 농장의 월별 6개월 추이값 (약품비 상세 '입식두당 약품비 추이'와 동일)
     const farmRow = parsedData.find(d => String(d.farmCode || '').trim().toLowerCase() === fKey);
     if (farmRow) {
-        const pv = farmRow.purchaseVals || [];
-        const hv = farmRow.headcountVals || [];
-        purMonths.forEach((ym, i) => {
-            const hIdx = headMonths.indexOf(ym);
-            const h = hIdx >= 0 ? (hv[hIdx] || 0) : 0;
-            const p = pv[i] || 0;
-            if (h > 0 && p > 0) result.byMonth[ym] = p / h;
+        const tv = farmRow.costTrendVals || [];
+        trendMonths.forEach((ym, i) => {
+            const v = tv[i] || 0;
+            if (v > 0) result.byMonth[ym] = v;
         });
     }
 
@@ -10971,7 +11022,7 @@ function buildContribMonthlyBEP(rows, m, farmCode, dept) {
     //    (정산 회차 '개수'가 아니라 실제 달 기준 — 출하가 뜸한 농가는 36건이 훨씬 더 긴 기간에 걸쳐 있을 수 있다)
     const recentYms = filterRecentCalendarMonths(Object.keys(map).sort(), ym => ym, 36);
 
-    // 🎯 [신규] 월별 실측 약품비 + 사업부 누적 평균 대체 (LEAD 시트 원본 기준)
+    // 🎯 [신규] 월별 6개월 추이 약품비 + 사업부 누적 평균 대체 (LEAD 시트 원본 기준)
     const medMonthly = buildContribMedicineMonthlyMap(farmCode, dept);
 
     return recentYms.map(ym => {
